@@ -1,0 +1,29 @@
+.page-title {
+    font-size: 3em; /* Adjust size as needed */
+    text-align: center; /* Center the title */
+    margin-top: 20px; /* Add some space above */
+    color: #000000; /* Choose a color for the title */
+}
+
+.button-container {
+    display: flex;
+    justify-content: center; /* Center-align buttons horizontally */
+    gap: 10px; /* Space between buttons */
+}
+
+body {
+    background-color: rgb(48, 112, 150);
+}
+
+.nav-items a {
+    text-decoration: red;
+}
+.nav-items button {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    padding: 10px 30px; /* Padding */
+    border: darkgreen; /* No border */
+    cursor: pointer; /* Pointer cursor */
+    font-size: 16px; /* Font size */
+    margin: 5px; /* Margin between buttons */
+}
