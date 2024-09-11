@@ -1,0 +1,31 @@
+.page-title {
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-size: 3em;
+    text-align: center;
+    margin-top: 20px;
+    color: #000000;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center; /* Center-align buttons horizontally */
+    gap: 10px; /* Space between buttons */
+}
+
+.nav-items a {
+    text-decoration: red;
+}
+.nav-items button {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    padding: 10px 30px; /* Padding */
+    border: darkgreen; /* No border */
+    cursor: pointer; /* Pointer cursor */
+    font-size: 16px; /* Font size */
+    margin: 5px; /* Margin between buttons */
+}
+
+
+body {
+    background-color: cyan;
+}
