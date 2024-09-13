@@ -12,7 +12,7 @@
 }
 
 body {
-    background-color: rgb(48, 112, 150);
+    background-color: rgb(187, 121, 100);
 }
 
 .nav-items a {
@@ -26,4 +26,14 @@ body {
     cursor: pointer; /* Pointer cursor */
     font-size: 16px; /* Font size */
     margin: 5px; /* Margin between buttons */
+}
+
+.wave {
+    border-radius: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    width: auto;
+    position: absolute;
+    top: 100px;
+    left: 0px;
 }
