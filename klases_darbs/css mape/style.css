@@ -1,12 +1,16 @@
 body {
-    background-color: lightblue;
+    background-image: url('https://wallpapers.com/images/hd/summer-beach-background-wfhrz1qvcg2304h7.jpg');
 }
 
 .flex-container {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;    /* for responsive button wrapping purposes */
     /* background-color: DodgerBlue; */
     background-color: lightgreen;
     justify-content: center;
+    outline: 2px solid green;
+    border-radius: 20px;
 }
   
 .flex-container > div {
@@ -21,11 +25,49 @@ body {
     text-align: center;
 }
 
+.upper_menu {
+    background-color: green;
+    border-radius: 10px;
+    padding: 5px;
+    outline: 2px solid black;
+    justify-content: center;
+    display: flex;
+    
+    button {
+        font-family: cursive;
+    }
+}
+
+.button-container {
+    display: flex; /* Enables flexbox */
+    justify-content: center; /* Centers buttons horizontally */
+    align-items: center; /* Centers buttons vertically */
+}
+
+button {
+    background-color: lightgreen;
+    color: black;
+    padding: 5px 20px;
+    cursor: pointer;
+    margin: 2px;
+    font-size: 20px;
+}
+
+
+.improvision {
+    background-color: #85e978;
+    outline: 2px solid green;
+    border-radius: 20px;
+    width: 100%;
+    padding: 0 10px;
+    font-family: cursive;
+}
+
 .flex-container button {
     background-color: #FFFFFF; /* Green background */
     color: black; /* White text */
     padding: 10px 30px; /* Padding */
-    border-color: green; /* No border */
+    border-color: green;
     cursor: pointer; /* Pointer cursor */
     font-size: 16px; /* Font size */
     margin: 20px; /* Margin between buttons */
@@ -48,7 +90,7 @@ button:hover {
 }
 
 @media (max-width: 800px) {
-    body { background-color: lightblue; }
+    body { background-image: url('https://wallpapers.com/images/hd/summer-beach-background-wfhrz1qvcg2304h7.jpg'); }
     .column {
         flex: 1 1 calc(50% - 5px);
         max-width: 100%;
@@ -61,7 +103,7 @@ button:hover {
 }
 
 @media (max-width: 600px) {
-    body { background-color: lightblue; }
+    body { background-image: url('https://wallpapers.com/images/hd/summer-beach-background-wfhrz1qvcg2304h7.jpg'); }
     .column {
         flex: 1 1 calc(100% - 5px);
         max-width: 100%;
