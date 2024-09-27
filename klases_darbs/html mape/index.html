@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="image1.png" type="image/png">
     <title>Svētītais MENU</title>
     <link rel="stylesheet" href="../css mape/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <nav class="upper_menu">
+        <img src="image1.png" class="website-icon">
         <div class="button-container">
-            <a href="../../RalphMania/Home/Home.html"><button class="centered_button">Home</button></a>
-            <a href="../../RalphMania/About/About.html"><button>About</button></a>
-            <a href="../../RalphMania/Contacts/Contacts.html"><button>Contacts</button></a>
+            <a href="../../RalphMania/Home/Home.html"><button class="centered_button"><i class="fa-duotone fa-solid fa-house" style="--fa-primary-color: #4c7651; --fa-secondary-color: #4c7651;"></i> Home</button></a>
+            <a href="../../RalphMania/About/About.html"><button><i class="fa-regular fa-user"></i> About</button></a>
+            <a href="../../RalphMania/Contacts/Contacts.html"><button><i class="fa-duotone fa-solid fa-phone" style="--fa-primary-color: #4c7651; --fa-secondary-color: #4c7651;"></i> Contacts</button></a>
+        </div>
+
+        <div class="darkmodebutton">
+            <button id="dark-mode-toggle">Dark Mode</button>
         </div>
     </nav>
 
@@ -31,5 +38,8 @@
         <a href="https://www.youtube.com/watch?v=LpJsZeU79Fo"><button><div><div>Līčijs</div><img src="Lychee.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">Ļoti sulīgs un normāls auglis, diezgan eksotisks</div></div></button></a>
         <a href="https://www.youtube.com/watch?v=DN-2Eb8p9WI"><button><div><div>Chiken tenders</div><img src="chicken_tenders.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">Mmmm.. vistas pirkstiņi</div></div></button></a>
     </div>
+    
+    <!-- Link to your external JavaScript file -->
+    <script src="../js mape/dark_mode.js"></script>
 </body>
 </html>
