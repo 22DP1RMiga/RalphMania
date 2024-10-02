@@ -143,28 +143,55 @@ button:hover {
 
 /* EVERYTHING FOR DARK MODE */
 body.dark-mode {
-    background-color: #121212; /* Dark background color */
-    color: #ffffff; /* Light text color */
-}
-
-.dark-mode nav.upper_menu {
-    background: linear-gradient(to right, #2c3e50, #34495e); /* Darker navigation */
-    border-color: #2c3e50;
-}
-
-.dark-mode .flex-container {
-    background: linear-gradient(to bottom, #2c3e50, #34495e); /* Darker flex container */
-}
-
-.dark-mode button {
-    background-color: #2c3e50;
+    background-image: url('https://i.pinimg.com/originals/2b/08/39/2b0839d3e737f91dfd01b2c6d4c203c5.jpg');
     color: #ffffff;
 }
 
+.dark-mode nav.upper_menu {
+    background: linear-gradient(to right, #2c3e50, #34495e);
+
+    button {
+        background: linear-gradient(to bottom, #8091a1, #2e343a);
+        color: rgb(255, 255, 255);
+        padding: 5px 20px;
+        cursor: pointer;
+        margin: 2px;
+        font-size: 20px;
+    }
+
+    .darkmodebutton {
+        button {
+            background: linear-gradient(to right, rgb(249, 255, 249), rgb(110, 110, 110));
+            color: rgb(0, 0, 0)
+        }
+    }
+}
+
+.dark-mode .flex-container {
+    background: linear-gradient(to bottom, #2c3e50, #34495e);
+    outline: 2px solid #000000;
+    border-radius: 20px;
+}
+
+.dark-mode .upper_menu button {
+    color: #ffffff;
+}
+
+.dark-mode button {
+    background-color: #a1a1a1;
+    color: #000000;
+}
+
 .dark-mode .apraksts {
-    color: #b3b3b3; /* Light grey description text */
+    color: #000000; /* Light grey description text */
 }
 
 .dark-mode img {
     filter: brightness(0.8); /* Darken images slightly */
+}
+
+.dark-mode .improvision {
+    background: linear-gradient(to right, #2c3e50, #1b2732);
+    outline: 2px solid #000000;
+    border-radius: 20px;
 }
