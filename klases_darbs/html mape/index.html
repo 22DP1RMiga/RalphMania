@@ -10,7 +10,16 @@
 </head>
 <body>
     <nav class="upper_menu">
-        <img src="image1.png" class="website-icon">
+        <ul class="icon_n_more">
+            <li>
+                <img src="image1.png" class="website-icon">
+                <div class="dropdown-content">
+                    <a href="#">Origin</a>
+                    <a href="#">How to use the website</a>
+                </div>
+            </li>
+        </ul>
+        
         <div class="button-container">
             <a href="../../RalphMania/Home/Home.html"><button class="centered_button"><i class="fa-duotone fa-solid fa-house" style="--fa-primary-color: #4c7651; --fa-secondary-color: #4c7651;"></i> Home</button></a>
             <a href="../../RalphMania/About/About.html"><button><i class="fa-regular fa-user"></i> About</button></a>
@@ -21,7 +30,7 @@
             <button id="dark-mode-toggle">Dark Mode</button>
         </div>
     </nav>
-
+    
     <nav class="improvision">
         <div class="moved_text">
             <header>
@@ -32,14 +41,25 @@
         </div>
     </nav>
 
+    <div id="message" style="color: red; display: none;"></div> <!-- Message area -->
+
+    <div class="search-container">
+        <input type="text" placeholder="Search here..." class="search-bar" id="search-input"> <!-- Added id here -->
+        <button type="submit" class="search-button" id="search-button">Go <i class="fa-solid fa-magnifying-glass"></i></button>
+
+    </div>
+
+    <br>    <!-- New line -->
+
     <div class="flex-container">
         <a href="https://www.youtube.com/watch?v=1jv0Gx_q_OU"><button><div><div>Ābols</div><img src="apple.png" alt="APPLE" width="150px" height="100px"><div class="apraksts">Sarkans, tikai ne zaļš Ņūtona atklātais ābols</div></div></button></a>
         <a href="https://www.youtube.com/watch?v=hCt01ckOWI4"><button><div><div>Banāns</div><img src="banana.png" alt="BANANA" width="150px" height="100px"><div class="apraksts">Dzeltens, pērtiķiem mīļākais auglis</div></div></button></a>
         <a href="https://www.youtube.com/watch?v=LpJsZeU79Fo"><button><div><div>Līčijs</div><img src="Lychee.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">Ļoti sulīgs un normāls auglis, diezgan eksotisks</div></div></button></a>
-        <a href="https://www.youtube.com/watch?v=DN-2Eb8p9WI"><button><div><div>Chiken tenders</div><img src="chicken_tenders.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">Mmmm.. vistas pirkstiņi</div></div></button></a>
+        <a href="https://www.youtube.com/watch?v=DN-2Eb8p9WI"><button><div><div>Chicken tenders</div><img src="chicken_tenders.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">Mmmm.. vistas pirkstiņi</div></div></button></a>
     </div>
     
-    <!-- Link to your external JavaScript file -->
+    <!-- Link to your external JavaScript files -->
     <script src="../js mape/dark_mode.js"></script>
+    <script src="../js mape/search.js"></script>
 </body>
 </html>

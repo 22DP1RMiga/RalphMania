@@ -29,7 +29,7 @@ body {
 .upper_menu {
     background: linear-gradient(to right, green, rgb(0, 69, 0));
     border-radius: 10px;
-    padding: 5px;
+    padding: 1px;
     outline: 2px solid black;
     justify-content: space-between;
     display: flex;
@@ -48,7 +48,7 @@ body {
     
     button {
         background: linear-gradient(to right, rgb(60, 71, 60), rgb(28, 33, 28));
-        color: white
+        color: white;
     }
 }
 
@@ -57,7 +57,6 @@ body {
     height: auto;
     border-radius: 10px;
     outline: 1px solid black;
-
 }
 
 .button-container {
@@ -194,4 +193,65 @@ body.dark-mode {
     background: linear-gradient(to right, #2c3e50, #1b2732);
     outline: 2px solid #000000;
     border-radius: 20px;
+}
+
+/* EVERYTHING FOR DROPDOWN CONTENT */
+.icon_n_more {
+    position: relative; /* Ensure position is relative to position dropdown */
+    list-style-type: none;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: linear-gradient(to bottom, #f8f8f8, #838383);
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.icon_n_more:hover .dropdown-content {
+    display: block;
+    outline: 1px solid black;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: white;
+}
+
+/* EVERYTHING FOR SEARCH BAR */
+
+.search-container {
+    display: flex;
+    align-items: center; /* Aligns items vertically */
+}
+
+.search-bar {
+    padding: 5px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    outline: 1px solid black;
+}
+
+.search-button {
+    padding: 6px 10px;
+    background-color: lightgreen;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    outline: 1px solid black;
+}
+
+.search-button:hover {
+    background-color: #4c7651; /* Darker green on hover */
+    color: white; /* Change text color */
 }
