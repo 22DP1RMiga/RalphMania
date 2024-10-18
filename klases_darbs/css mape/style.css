@@ -100,9 +100,26 @@ button {
 }
 
 button:hover {
-    transform: scale(1.1);
     transition: transform 0.1s ease;
     animation: hoverUp 0.5s forwards;
+    box-shadow: 10px 10px 15px rgba(0, 0 , 0, 0.6);
+}
+
+.website-icon:hover {
+    transition: transform 0.1s ease;
+    animation: OtherHoverUp 0.5s forwards;
+    box-shadow: 10px 10px 15px rgba(0, 0 , 0, 0.6);
+}
+
+.ORIGIN:hover {
+    transition: transform 0.1s ease;
+    animation: OtherHoverUp 0.5s forwards;
+    box-shadow: 10px 10px 15px rgba(0, 0 , 0, 0.6);
+}
+
+.HOWTOWEBSITE:hover {
+    transition: transform 0.1s ease;
+    animation: OtherHoverUp 0.5s forwards;
     box-shadow: 10px 10px 15px rgba(0, 0 , 0, 0.6);
 }
 
@@ -162,6 +179,14 @@ button:hover {
         transform: translateY(0);
     } 100% {
         transform: translateY(-10px) scale(1.1);
+    }
+}
+
+@keyframes OtherHoverUp {
+    0% {
+        transform: translateY(0);
+    } 100% {
+        transform: translateY(-10px) scale(1.05);
     }
 }
 
@@ -302,6 +327,11 @@ body.dark-mode {
     }
 }
 
+.dark-mode .search-button:hover {
+    background-color: #9ea09c; /* Darker green on hover */
+    color: white; /* Change text color */
+}
+
 /* EVERYTHING FOR DROPDOWN CONTENT */
 .icon_n_more {
     position: relative; /* Ensure position is relative to position dropdown */
@@ -360,4 +390,10 @@ body.dark-mode {
 .search-button:hover {
     background-color: #66764c; /* Darker green on hover */
     color: white; /* Change text color */
+}
+
+/* EVERYTHING FOR DROPDOWN CONTENT STUFF */
+@keyframes highlight {
+    0% { background-color: yellow; }
+    100% { background-color: inherit; }
 }

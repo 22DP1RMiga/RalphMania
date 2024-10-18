@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="image1.png" type="image/png">
-    <title>Svētītais MENU</title>
+    <title>MENU</title>
     <link rel="stylesheet" href="../css mape/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -14,8 +14,8 @@
             <li>
                 <img src="image1.png" class="website-icon">
                 <div class="dropdown-content">
-                    <a href="#">Origin</a>
-                    <a href="#">How to use the website</a>
+                    <a href="#origin-section">Origin</a>
+                    <a href="#how-to-section">How to use the website</a>
                 </div>
             </li>
         </ul>
@@ -31,6 +31,7 @@
         </div>
     </nav>
     
+    <!-- IMPROVISION -->
     <nav class="improvision">
         <div class="moved_text">
             <header>
@@ -51,6 +52,7 @@
 
     <br>    <!-- New line -->
 
+    <!-- FLEX CONTAINER -->
     <div class="flex-container">
         <a href="https://www.youtube.com/watch?v=1jv0Gx_q_OU"><button><div><div>Ābols</div><img src="apple.png" alt="APPLE" width="150px" height="100px"><div class="apraksts">Sarkans, tikai ne zaļš Ņūtona atklātais ābols</div></div></button></a>
         <a href="https://www.youtube.com/watch?v=hCt01ckOWI4"><button><div><div>Banāns</div><img src="banana.png" alt="BANANA" width="150px" height="100px"><div class="apraksts">Dzeltens, pērtiķiem mīļākais auglis</div></div></button></a>
@@ -62,7 +64,7 @@
 
     <!-- ORIGIN & HOW TO USE THE WEBSITE -->
     <header class="elsestuff">
-        <div class="ORIGIN">
+        <div class="ORIGIN" id="origin-section">
             <h1>ORIGIN</h1>
             <p class="text">
                 This website was made for a task purpose to make at least 3 tickets.
@@ -73,7 +75,7 @@
 
     <br>    <!-- New line -->
 
-        <div class="HOWTOWEBSITE">
+        <div class="HOWTOWEBSITE" id="how-to-section">
             <h1>HOW TO USE THE WEBSITE</h1>
             <p class="text">
                 If you want to search for something, search "Apple" for instance to see it being highlighted.
@@ -94,5 +96,6 @@
     <!-- Link to your external JavaScript files -->
     <script src="../js mape/dark_mode.js"></script>
     <script src="../js mape/search.js"></script>
+    <script src="../js mape/dropdown.js"></script>
 </body>
 </html>
