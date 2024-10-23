@@ -144,6 +144,11 @@ button:hover {
 
     p {
         font-family: cursive;
+        text-align: center;
+    }
+
+    h1 {
+        text-align: center;
     }
 }
 
@@ -159,6 +164,11 @@ button:hover {
 
     p {
         font-family: cursive;
+        text-align: center;
+    }
+
+    h1 {
+        text-align: center;
     }
 }
 
