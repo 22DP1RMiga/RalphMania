@@ -27,7 +27,7 @@
 
             <!-- HOME -->
             <a href="../../RalphMania/Home/Home.html">
-                <button data-translate="home">
+                <button class="translate" data-translate="home">
                     <i class="fa-duotone fa-solid fa-house" style="--fa-primary-color: #4c7651; --fa-secondary-color: #4c7651;"></i>
                     <span class="translate">Home</span>
                 </button>
@@ -35,7 +35,7 @@
 
             <!-- ABOUT -->
             <a href="../../RalphMania/About/About.html">
-                <button data-translate="about">
+                <button class="translate" data-translate="about">
                     <i class="fa-regular fa-user"></i>
                     <span class="translate">About</span>
                 </button>
@@ -43,7 +43,7 @@
 
             <!-- CONTACTS -->
             <a href="../../RalphMania/Contacts/Contacts.html">
-                <button data-translate="contacts">
+                <button class="translate" data-translate="contacts">
                     <i class="fa-duotone fa-solid fa-phone" style="--fa-primary-color: #4c7651; --fa-secondary-color: #4c7651;"></i>
                     <span class="translate">Contacts</span>
                 </button>
@@ -62,7 +62,7 @@
 
         <!-- DARK MODE -->
         <div class="darkmodebutton">
-            <button id="dark-mode-toggle">Dark Mode</button>
+            <button id="dark-mode-toggle" class="translate" data-translate="darkmode">Dark Mode</button>
         </div>
     </nav>
     
@@ -89,10 +89,75 @@
 
     <!-- FLEX CONTAINER -->
     <div class="flex-container">
-        <a href="https://www.youtube.com/watch?v=1jv0Gx_q_OU"><button><div><div>Apple</div><img src="apple.png" alt="APPLE" width="150px" height="100px"><div class="apraksts">Red, just not the green Newton-discovered apple</div></div></button></a>
-        <a href="https://www.youtube.com/watch?v=hCt01ckOWI4"><button><div><div>Banana</div><img src="banana.png" alt="BANANA" width="150px" height="100px"><div class="apraksts">Yellow, monkeys' favorite fruit</div></div></button></a>
-        <a href="https://www.youtube.com/watch?v=LpJsZeU79Fo"><button><div><div>Lychee</div><img src="Lychee.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">A very juicy and normal fruit, kind of exotic</div></div></button></a>
-        <a href="https://www.youtube.com/watch?v=DN-2Eb8p9WI"><button><div><div>Chicken tenders</div><img src="chicken_tenders.png" alt="LYCHEE" width="150px" height="100px"><div class="apraksts">Mmmm.. chicken fingers</div></div></button></a>
+        
+        <!-- Apple -->
+        <a href="https://www.youtube.com/watch?v=1jv0Gx_q_OU">
+            <button>
+                <div>
+                    <div class="translate" data-translate="apple">
+                        Apple
+                    </div>
+                    <img src="apple.png" alt="APPLE" width="150px" height="100px">
+                    <div class="apraksts">
+                        <div class="translate" data-translate="appletext">
+                            Red, just not the green Newton-discovered apple
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </a>
+
+        <!-- Banana -->
+        <a href="https://www.youtube.com/watch?v=hCt01ckOWI4">
+            <button>
+                <div>
+                    <div class="translate" data-translate="banana">
+                        Banana
+                    </div>
+                    <img src="banana.png" alt="BANANA" width="150px" height="100px">
+                    <div class="apraksts">
+                        <div class="translate" data-translate="bananatext">
+                            Yellow, monkeys' favorite fruit
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </a>
+
+        <!-- Lychee -->
+        <a href="https://www.youtube.com/watch?v=LpJsZeU79Fo">
+            <button>
+                <div>
+                    <div class="translate" data-translate="lychee">
+                        Lychee
+                    </div>
+                    <img src="Lychee.png" alt="LYCHEE" width="150px" height="100px">
+                    <div class="apraksts">
+                        <div class="translate" data-translate="lycheetext">
+                            A very juicy and normal fruit, kind of exotic
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </a>
+
+        <!-- Chicken tenders -->
+        <a href="https://www.youtube.com/watch?v=DN-2Eb8p9WI">
+            <button>
+                <div>
+                    <div class="translate" data-translate="chickentenders">
+                        Chicken tenders
+                    </div>
+                    <img src="chicken_tenders.png" alt="LYCHEE" width="150px" height="100px">
+                    <div class="apraksts">
+                        <div class="translate" data-translate="tendertext">
+                            Mmmm.. chicken fingers
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </a>
+
     </div>
     
     <br>    <!-- New line -->
@@ -112,7 +177,7 @@
 
         <div class="HOWTOWEBSITE" id="how-to-section">
             <h1 class="translate" data-translate="howToTitle">HOW TO USE THE WEBSITE</h1>
-            <p class="text" data-translate="howToText">
+            <p class="text translate" data-translate="howToText">
                 If you want to search for something, search "Apple" for instance to see it being highlighted.
                 <br><br>
                 Switch to Dark Mode if you wish to have a darker screen and style.

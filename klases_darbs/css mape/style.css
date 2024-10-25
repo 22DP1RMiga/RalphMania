@@ -42,6 +42,15 @@ body {
     }
 }
 
+.language-selector {
+    display: flex;
+    justify-content: right;
+    font-family: cursive;
+    background: linear-gradient(to right, lightgreen, rgb(107, 177, 107));
+    padding: 5px;
+    outline: 2px solid black;
+}
+
 .darkmodebutton {
     display: flex;
     justify-content: right;
