@@ -252,6 +252,16 @@ body.dark-mode {
         font-size: 20px;
     }
 
+    .language-selector {
+        display: flex;
+        justify-content: right;
+        font-family: cursive;
+        /* background: linear-gradient(to bottom, #19232e, #253442); */
+        background: linear-gradient(to bottom, #496685, #719ece);
+        padding: 5px;
+        outline: 2px solid black;
+    }
+
     .darkmodebutton {
         button {
             background: linear-gradient(to right, rgb(249, 255, 249), rgb(110, 110, 110));
@@ -347,7 +357,7 @@ body.dark-mode {
 }
 
 .dark-mode .search-button:hover {
-    background-color: #9ea09c; /* Darker green on hover */
+    background: linear-gradient(to right, #2c3e50, #1b2732);; /* Darker green on hover */
     color: white; /* Change text color */
 }
 

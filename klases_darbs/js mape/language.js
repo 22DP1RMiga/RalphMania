@@ -31,6 +31,8 @@ const translations = {
         bananatext: "Yellow, monkeys' favorite fruit",
         lycheetext: "A very juicy and normal fruit, kind of exotic",
         tendertext: "Mmmm.. chicken fingers",
+        origin_drop: "Origin",
+        howTo_drop: "How to use the website",
         darkmode: "Dark Mode",
         lightmode: "Light Mode"
     },
@@ -55,6 +57,8 @@ const translations = {
         bananatext: "Dzeltens, pērtiķiem mīļākais auglis",
         lycheetext: "Ļoti sulīgs un normāls auglis, diezgan eksotisks",
         tendertext: "Mmmm.. vistu pirkstiņi",
+        origin_drop: "Izcelsme",
+        howTo_drop: "Kā lietot mājaslapu",
         darkmode: "Tumšais režīms",
         lightmode: "Gaišais režīms"
     },
@@ -79,6 +83,8 @@ const translations = {
         bananatext: "Желтый, любимый фрукт обезьян",
         lycheetext: "Очень сочный и нормальный фрукт, какая-то экзотика",
         tendertext: "Мммм.. куриные палочки",
+        origin_drop: "Источник",
+        howTo_drop: "Как пользоваться веб-сайтом",
         darkmode: "Тёмный режим",
         lightmode: "Светлый режим"
     },
@@ -103,6 +109,8 @@ const translations = {
         bananatext: "Gelb, die Lieblingsfrucht der Affen",
         lycheetext: "Eine sehr saftige und normale Frucht, irgendwie exotisch",
         tendertext: "Mmmm.. Hähnchenstäbchen",
+        origin_drop: "Herkunft",
+        howTo_drop: "So benutzen Sie die Website",
         darkmode: "Dunkler Modus",
         lightmode: "Lichtmodus"
     }
