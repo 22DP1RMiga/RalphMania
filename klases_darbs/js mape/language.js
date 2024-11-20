@@ -34,7 +34,12 @@ const translations = {
         origin_drop: "Origin",
         howTo_drop: "How to use the website",
         darkmode: "Dark Mode",
-        lightmode: "Light Mode"
+        lightmode: "Light Mode",
+        minigames_title: "MINIGAMES",
+        minigames_description: "Introducing the newest Addon to the website!",
+        minigames_text: "Well hello there! Here we have a set of games for you to try out!",
+        cookietext: "Everytime you click the cookie, you higher up a number!",
+        cookieclicker: "Cookie Clicker"
     },
 
     lv: {
@@ -60,7 +65,12 @@ const translations = {
         origin_drop: "Izcelsme",
         howTo_drop: "Kā lietot mājaslapu",
         darkmode: "Tumšais režīms",
-        lightmode: "Gaišais režīms"
+        lightmode: "Gaišais režīms",
+        minigames_title: "MINISPĒLES",
+        minigames_description: "Iepazīstinām ar jaunāko papildinājumu mājaslapā!",
+        minigames_text: "Nu sveiki! Šeit mums ir spēļu komplekts, ko varat izmēģināt!",
+        cookietext: "Katru reizi, uzklišķinot uz cepuma, jūs paaugstināsiet skaitli!",
+        cookieclicker: "Cepuma klikšķinātājs"
     },
 
     ru: {
@@ -86,7 +96,12 @@ const translations = {
         origin_drop: "Источник",
         howTo_drop: "Как пользоваться веб-сайтом",
         darkmode: "Тёмный режим",
-        lightmode: "Светлый режим"
+        lightmode: "Светлый режим",
+        minigames_title: "МИНИ-ИГРЫ",
+        minigames_description: "Представляем новейший аддон на сайте!",
+        minigames_text: "Ну, здарова! У нас есть набор игр, которые вы можете попробовать!",
+        cookietext: "Каждый раз, когда вы нажимаете на печенье, вы увеличиваете число!",
+        cookieclicker: "Печенье-кликер"
     },
 
     de: {
@@ -112,7 +127,12 @@ const translations = {
         origin_drop: "Herkunft",
         howTo_drop: "So benutzen Sie die Website",
         darkmode: "Dunkler Modus",
-        lightmode: "Lichtmodus"
+        lightmode: "Lichtmodus",
+        minigames_title: "MINISPIELEN",
+        minigames_description: "Wir stellen das neueste Add-on auf der Website vor!",
+        minigames_text: "Na, hallo! Hier haben wir eine Reihe von Spielen zum Ausprobieren für Sie!",
+        cookietext: "Jedes Mal, wenn Sie auf der Keks klicken, erhöhen Sie eine Zahl!",
+        cookieclicker: "Cookie-Clicker"
     }
 };
 

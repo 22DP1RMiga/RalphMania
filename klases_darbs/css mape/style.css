@@ -108,6 +108,59 @@ button {
     }
 }
 
+.minigames {
+    /* background: linear-gradient(to right, #85e978, #43773c); */
+    background: linear-gradient(to bottom, #d8fcdc, #9ec09a);
+    outline: 5px solid rgb(48, 167, 48);
+    border-radius: 20px;
+    width: 100%;
+    padding: 0 10px;
+    font-family: cursive;
+
+    h1 {
+        display: flex;
+        justify-content: center;
+        font-size: 40px;
+    }
+
+    h2 {
+        display: flex;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    p {
+        display: flex;
+        justify-content: center;
+        font-size: 20px;
+    }
+}
+
+.minigames-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;    /* for responsive button wrapping purposes */
+    /* background: linear-gradient(to bottom, lightgreen, #43773c); */
+    justify-content: center;
+    /* outline: 2px solid green; */
+    border-radius: 20px;
+}
+
+.minigames-container button {
+    background-color: #FFFFFF; /* Green background */
+    color: black; /* White text */
+    padding: 10px 30px; /* Padding */
+    border-color: green;
+    border-radius: 20px;
+    cursor: pointer; /* Pointer cursor */
+    font-size: 16px; /* Font size */
+    margin: 20px; /* Margin between buttons */
+
+    img {
+        border-radius: 20px;
+    }
+}
+
 button:hover {
     transition: transform 0.1s ease;
     animation: hoverUp 0.5s forwards;
@@ -342,6 +395,12 @@ body.dark-mode {
     p {
         font-family: cursive;
     }
+}
+
+.dark-mode .minigames {
+    background: linear-gradient(to right, #2c3e50, #1b2732);
+    outline: 5px solid #000000;
+    border-radius: 20px;
 }
 
 .dark-mode .bottomthings {
