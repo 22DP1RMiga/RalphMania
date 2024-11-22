@@ -1,6 +1,8 @@
 <template>
   <main>
 
+    <h1 class="gametitle"> Welcome to Cookie Clicker!</h1>
+
     <h1>{{ score }}</h1>
 
     <div class="cookie">
@@ -47,6 +49,10 @@ main {
 img {
   width: 400px;
   object-fit: cover;
+}
+
+.gametitle {
+  font-size: 50px;
 }
 
 </style>
