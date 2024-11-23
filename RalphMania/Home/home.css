@@ -8,7 +8,7 @@ body {
 }
 
 .upper_menu {
-    background-color: firebrick;
+    background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
     border-radius: 10px;
     padding: 5px;
     outline: 2px solid black;
@@ -36,7 +36,7 @@ body {
 }
 
 button {
-    background-color: rgb(229, 112, 112);
+    background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
     color: black;
     padding: 5px 20px;
     cursor: pointer;
@@ -46,7 +46,7 @@ button {
 }
 
 .improvision {
-    background-color: rgb(222, 96, 96);
+    background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
     outline: 2px solid darkred;
     border-radius: 20px;
     width: 100%;

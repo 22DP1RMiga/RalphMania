@@ -2,10 +2,19 @@ const toggleButton = document.getElementById('dark-mode-toggle');
 const body = document.body;
 
 // Load dark mode preference from local storage if exists
-const isDarkMode = localStorage.getItem('darkMode') === 'true';
+const isDarkMode = localStorage.getItem('lightMode') === 'true';
+const selectedLang = document.getElementById('language-dropdown').value;
+
+function setDarkModeText(lang) {
+    const text = isDarkMode ? translations[lang].lightmode : translations[lang].darkmode;
+    toggleButton.textContent = text;
+}
+
+// Initial setup for dark mode
 if (isDarkMode) {
     body.classList.add('dark-mode');
     toggleButton.textContent = 'Light Mode';
+    setDarkModeText(selectedLang);
 }
 
 toggleButton.addEventListener('click', () => {
