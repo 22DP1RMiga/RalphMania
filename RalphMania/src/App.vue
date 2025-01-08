@@ -10,7 +10,7 @@ import TheWelcome from './components/TheWelcome.vue'
 
         <!-- BUTTONS IN THE MIDDLE -->
         <div class="button-container">
-            <a href="../Home/Home.html"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
+            <a href="/index.html"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
             <a href="About.vue"><button><i class="fa-regular fa-user"></i> About</button></a>
             <a href="../Contacts/Contacts.html"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
         </div>
@@ -38,7 +38,7 @@ import TheWelcome from './components/TheWelcome.vue'
 
   <header>
     <img alt="RoltonsLV_icon" class="logo" src="./assets/RoltonsLV_Icon.png" width="125" height="125" />
-
+    
     <div class="wrapper">
       <HelloWorld msg="RalphMania" />
     </div>
