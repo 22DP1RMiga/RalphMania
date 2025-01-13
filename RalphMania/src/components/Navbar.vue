@@ -30,44 +30,20 @@
         text-align: center;
     }
 
-    .upper_menu {
-        background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
-        padding: 10px 0;
-        outline: 2px solid black;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: fixed; /* Keeps it at the top */
-        top: 0;
-        left: 0;
-        z-index: 1000; /* Keeps it above other elements */
-        width: 100%;
-        
-        button {
-            font-family: cursive;
-            font-weight: bold;
-        }
-
-        .upper_title {
-            font-family: Arial, Helvetica, sans-serif;
-            color: rgb(255, 196, 196);
-            font-weight: bold;
-            letter-spacing: 2px;
-            /* font-size: 24px; */
-
-            text-shadow:
-                -1px -1px 0 black, /* Top-left */
-                1px -1px 0 black,  /* Top-right */
-                -1px 1px 0 black,  /* Bottom-left */
-                -1px 1px 0 black,  /* Bottom-left */
-                1px 1px 0 black;   /* Bottom-right */
-        }
-
-        .namelogo {
-            height: 35px;
-            width: max;
-        }
+.upper_menu {
+    background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
+    border-radius: 10px;
+    padding: 5px;
+    outline: 2px solid black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    button {
+        font-family: cursive;
+        font-weight: bold;
     }
+}
 
     .RoltonsLV_Icon, .YT_logo {
         max-width: 50px; /* Set the size for the images */
@@ -77,13 +53,12 @@
     }
 
 
-    .button-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-grow: 1; /* Allows the button container to take up space in the middle */
-        padding-right: 200px;
-    }
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1; /* Allows the button container to take up space in the middle */
+}
 
     button {
         background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
