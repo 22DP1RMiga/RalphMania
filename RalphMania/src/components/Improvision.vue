@@ -16,7 +16,11 @@
 <style scoped>
     .improvision {
         background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
+<<<<<<< HEAD
         margin-top: calc(1em);
+=======
+        margin-top: calc(2em + 50px);
+>>>>>>> 1add96311b2faf7fd55d0ae072b5ec8c241b9165
         outline: 2px solid darkred;
         left: 0;
         font-family: cursive;
