@@ -22,12 +22,7 @@
 
 <style scoped>
     body {
-        background-image: url('../RalphMania/public/img/Coder_RoltonsLV.png');
-    }
-
-    .apraksts {
-        font-size: 15px;
-        text-align: center;
+        background-image: url('../RalphMania/public/img/COME UP preview.png');
     }
 
     .upper_menu {
@@ -38,6 +33,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        position: relative;
+        z-index: 10; /* Higher z-index to render on top */
         
         button {
             font-family: cursive;
@@ -56,7 +53,6 @@
         padding-left: 5px;
         height: auto;
     }
-
 
     .button-container {
         display: flex;
@@ -83,13 +79,6 @@
         box-shadow: 10px 10px 15px rgba(0, 0 , 0, 0.6);
     }
 
-    @keyframes hoverUp {
-        0% {
-            transform: translateY(0);
-        } 100% {
-            transform: translateY(-10px) scale(1.1)  ;
-        }
-    }
 
     @media (max-width: 800px) {
         body { background-image: url('Coder_RoltonsLV.png'); }
