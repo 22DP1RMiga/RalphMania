@@ -37,7 +37,6 @@
         text-align: center;
     }
 
-<<<<<<< HEAD
     .upper_menu {
         background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
         border-radius: 10px;
@@ -57,22 +56,6 @@
             width: max;
         }
     }
-=======
-.upper_menu {
-    background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
-    border-radius: 10px;
-    padding: 5px;
-    outline: 2px solid black;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    
-    button {
-        font-family: cursive;
-        font-weight: bold;
-    }
-}
->>>>>>> 1add96311b2faf7fd55d0ae072b5ec8c241b9165
 
     .RoltonsLV_Icon, .YT_logo {
         max-width: 50px; /* Set the size for the images */
@@ -82,7 +65,6 @@
     }
 
 
-<<<<<<< HEAD
     .button-container {
         display: flex;
         justify-content: center;
@@ -90,14 +72,6 @@
         flex-grow: 1; /* Allows the button container to take up space in the middle */
         padding-right: 200px;
     }
-=======
-.button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1; /* Allows the button container to take up space in the middle */
-}
->>>>>>> 1add96311b2faf7fd55d0ae072b5ec8c241b9165
 
     button {
         background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
