@@ -8,7 +8,6 @@ import Videos from '../components/Videos.vue'
   <main>
     <Navbar/>
     <Improvision/>
-<<<<<<< HEAD
     <div class="about">
       <h1>This is an about page</h1>
     </div>
@@ -25,8 +24,3 @@ import Videos from '../components/Videos.vue'
   }
 }
 </style>
-=======
-    <Videos/>
-  </main>
-</template>
->>>>>>> 1add96311b2faf7fd55d0ae072b5ec8c241b9165

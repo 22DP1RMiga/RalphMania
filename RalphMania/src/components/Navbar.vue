@@ -9,17 +9,10 @@
 
         <!-- BUTTONS IN THE MIDDLE -->
         <div class="button-container">
-<<<<<<< HEAD
             <a href="/"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
             <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
             <a href="/contacts"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
             <a href="/shop"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
-=======
-            <a href="../views/HomeView.vue"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
-            <a href="../views/AboutView.vue"><button><i class="fa-regular fa-user"></i> About</button></a>
-            <a href="../Contacts/Contacts.html"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
-            <a href="../Shop/Shop.html"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
->>>>>>> 1add96311b2faf7fd55d0ae072b5ec8c241b9165
         </div>
 
         <!-- RIGHT SIDE ICON -->
