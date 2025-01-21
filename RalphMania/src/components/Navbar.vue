@@ -91,8 +91,8 @@
         }
     }
 
-    @media (max-width: 800px) {
-        body { background-image: url('Coder_RoltonsLV.png'); }
+    @media screen and (max-width: 800px) {
+        body { background-image: url('../../public/img/Coder_RoltonsLV.png'); }
         .column {
             flex: 1 1 calc(50% - 5px);
             max-width: 100%;
@@ -101,11 +101,10 @@
             flex: 1 1 calc(50% - 5px);
             max-width: 100%;
         }
-
     }
 
-    @media (max-width: 600px) {
-        body { background-image: url('Coder_RoltonsLV.png'); }
+    @media screen and (max-width: 600px) {
+        body { background-image: url('../../public/img/Coder_RoltonsLV.png'); }
         .column {
             flex: 1 1 calc(100% - 5px);
             max-width: 100%;
@@ -115,4 +114,5 @@
             max-width: 100%;
         }
     }
+
 </style>

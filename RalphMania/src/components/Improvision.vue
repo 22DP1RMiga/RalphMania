@@ -21,5 +21,6 @@
         left: 0;
         font-family: cursive;
         padding: 20px;
+        display: flex;
     }
 </style>
