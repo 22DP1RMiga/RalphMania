@@ -49,4 +49,23 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
+// Change the background based on the route
+router.beforeEach((to, from, next) => {
+  const body = document.body;
+
+  if (to.name === 'home') {
+    body.style.backgroundImage = "url('../../public/img/Coder_RoltonsLV.png')";
+  } else if (to.name === 'about') {
+    body.style.backgroundImage = "url('../../public/img/Hostage_Adventure.png')";
+  } else if (to.name === 'contacts') {
+    body.style.backgroundImage = "url('../../public/img/Coder_RoltonsLV.png')";
+  } else if (to.name === 'shop') {
+    body.style.backgroundImage = "url('../../public/img/Coder_RoltonsLV.png')";
+  } else {
+    body.style.backgroundImage = '';  // Default background
+  }
+
+  next();
+});
+
 export default router

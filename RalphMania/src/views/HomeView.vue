@@ -2,6 +2,7 @@
 import Navbar from '../components/Navbar.vue'
 import Improvision from '../components/Improvision.vue'
 import Videos from '../components/Videos.vue'
+import Footer from '../components/Footer.vue'
 </script>
 
 <template>
@@ -9,5 +10,6 @@ import Videos from '../components/Videos.vue'
     <Navbar/>
     <Improvision/>
     <Videos/>
+    <Footer/>
   </main>
 </template>

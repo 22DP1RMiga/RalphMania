@@ -16,7 +16,7 @@ import Videos from '../components/Videos.vue'
 </template>
 
 <style>
-@media (min-width: 1024px) {
+@media screen and (min-width: 1024px) {
   .about {
     min-height: 100vh;
     display: flex;

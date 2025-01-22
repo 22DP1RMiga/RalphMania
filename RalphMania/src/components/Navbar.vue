@@ -1,4 +1,6 @@
 <script>
+    import { ref } from 'vue';
+    const isDropdownOpen = ref(false); // Track whether the dropdown is open
 </script>
 
 <template>
@@ -6,6 +8,11 @@
         <!-- LEFT SIDE ICON -->
         <img src="../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
         <img src="../../public/img/name_logo.png" class="namelogo">
+
+        <!-- HAMBURGER MENU ICON (Visible on small screens) -->
+        <div class="hamburger-menu" @click="isDropdownOpen = !isDropdownOpen">
+            <i class="fa-solid fa-bars"></i> <!-- Hamburger icon -->
+        </div>
 
         <!-- BUTTONS IN THE MIDDLE -->
         <div class="button-container">
@@ -23,6 +30,7 @@
 <style scoped>
     body {
         background-image: url('../RalphMania/public/img/Coder_RoltonsLV.png');
+        margin: 0;
     }
 
     .apraksts {
@@ -32,13 +40,17 @@
 
     .upper_menu {
         background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
-        border-radius: 10px;
         padding: 5px;
         outline: 2px solid black;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        
+        border-bottom: 2px solid #000000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+
         button {
             font-family: cursive;
             font-weight: bold;
@@ -91,28 +103,50 @@
         }
     }
 
-    @media (max-width: 800px) {
-        body { background-image: url('Coder_RoltonsLV.png'); }
-        .column {
-            flex: 1 1 calc(50% - 5px);
-            max-width: 100%;
-        }
-        .flex-container {
-            flex: 1 1 calc(50% - 5px);
-            max-width: 100%;
-        }
-
+    /* Hamburger menu for small screens */
+    .hamburger-menu {
+        display: none;
+        cursor: pointer;
+        font-size: 30px;
+        color: white;
     }
 
-    @media (max-width: 600px) {
+    /* Dropdown menu for small screens */
+    .dropdown {
+        position: absolute;
+        top: 50px;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px 0;
+        width: 100%;
+    }
+
+    /* Show the hamburger menu on small screens */
+    @media screen and (max-width: 800px) {
+        .button-container {
+            display: none; /* Hide the default button container */
+        }
+
+        .hamburger-menu {
+            display: block; /* Show the hamburger icon */
+        }
+
+        .dropdown a {
+            margin: 10px 0;
+        }
+
+        /* Style the buttons inside the dropdown */
+        .dropdown button {
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+    }
+
+    @media screen and (max-width: 600px) {
         body { background-image: url('Coder_RoltonsLV.png'); }
-        .column {
-            flex: 1 1 calc(100% - 5px);
-            max-width: 100%;
-        }
-        .flex-container {
-            flex: 1 1 calc(100% - 5px);
-            max-width: 100%;
-        }
     }
 </style>

@@ -35,6 +35,8 @@
         align-items: center;
         position: relative;
         z-index: 10; /* Higher z-index to render on top */
+        border-bottom: 2px solid #ccc;
+        
         
         button {
             font-family: cursive;
@@ -80,7 +82,7 @@
     }
 
 
-    @media (max-width: 800px) {
+    @media screen and (max-width: 800px) {
         body { background-image: url('Coder_RoltonsLV.png'); }
         .column {
             flex: 1 1 calc(50% - 5px);
@@ -93,7 +95,7 @@
 
     }
 
-    @media (max-width: 600px) {
+    @media screen and (max-width: 600px) {
         body { background-image: url('Coder_RoltonsLV.png'); }
         .column {
             flex: 1 1 calc(100% - 5px);
