@@ -83,7 +83,7 @@
 
 
     @media screen and (max-width: 800px) {
-        body { background-image: url('Coder_RoltonsLV.png'); }
+        body { background-image: url('../../public/img/Hostage_Adventure.png'); }
         .column {
             flex: 1 1 calc(50% - 5px);
             max-width: 100%;
@@ -96,7 +96,7 @@
     }
 
     @media screen and (max-width: 600px) {
-        body { background-image: url('Coder_RoltonsLV.png'); }
+        body { background-image: url('../../public/img/Hostage_Adventure.png'); }
         .column {
             flex: 1 1 calc(100% - 5px);
             max-width: 100%;

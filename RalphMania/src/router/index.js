@@ -58,13 +58,12 @@ router.beforeEach((to, from, next) => {
   } else if (to.name === 'about') {
     body.style.backgroundImage = "url('../../public/img/Hostage_Adventure.png')";
   } else if (to.name === 'contacts') {
-    body.style.backgroundImage = "url('../../public/img/Coder_RoltonsLV.png')";
+    body.style.backgroundImage = "url('../../public/img/ContactsBackground.png')";
   } else if (to.name === 'shop') {
-    body.style.backgroundImage = "url('../../public/img/Coder_RoltonsLV.png')";
+    body.style.backgroundImage = "url('../../public/img/ShopBackground.png')";
   } else {
-    body.style.backgroundImage = '';  // Default background
+    body.style.backgroundImage = ''; // Default background
   }
-
   next();
 });
 
