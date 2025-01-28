@@ -5,7 +5,6 @@
     <!-- UPPER STYLED PICTURE -->
     <nav class="upperwave">
         <img src="../../public/img/AboutPage12.png" class="aboutpage">
-        <img src="../../public/img/AboutPage12.png" class="aboutpage">
     </nav>
 </template>
 

@@ -7,10 +7,10 @@
         
         <!-- BUTTONS IN THE MIDDLE -->
         <div class="button-container">
-            <a href="/"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
-            <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
-            <a href="/contacts"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
-            <a href="/shop"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
+            <a href="https://www.youtube.com/@RoltonsLV"><button class="centered_button"><i class="fa-brands fa-youtube"></i></button></a>
+            <a href="https://www.instagram.com/ralfsmigals/"><button><i class="fa-brands fa-instagram"></i></button></a>
+            <a href="https://github.com/22DP1RMiga"><button class="centered_button"><i class="fa-brands fa-github"></i></button></a>
+            <a href="https://discord.gg/4Hzsp42ugg"><button class="centered_button"><i class="fa-brands fa-discord"></i></button></a>
         </div>
     </nav>
 </template>
@@ -21,9 +21,9 @@
         padding: 5px;
         outline: 2px solid black;
         display: flex;
-        flex-direction: column;     /* Stack the items vertically */
-        justify-content: center;    /* Center content horizontally */
-        align-items: center;        /* Center content vertically */
+        flex-direction: column; /* Stack the items vertically */
+        justify-content: center; /* Center content horizontally */
+        align-items: center; /* Center content vertically */
         border-top: 2px solid #000000;
         position: absolute;
         bottom: 0;
@@ -36,22 +36,29 @@
     }
 
     .moved-text {
-        text-align: center;   /* Center the text */
-        font-size: 16px;       /* Adjust text size */
+        text-align: center; /* Center the text */
+        font-size: 16px; /* Adjust text size */
+        color: white;
     }
 
     .button-container {
         display: flex;
         justify-content: center; /* Center the buttons horizontally */
-        align-items: center;     /* Center the buttons vertically */
+        align-items: center; /* Center the buttons vertically */
     }
 
     button {
-        color: black;
-        padding: 5px 20px;
-        cursor: pointer;
+        background: none; /* Remove background */
+        color: white; /* Text color */
+        padding: 0; /* Remove padding */
+        border: none; /* Remove border */
+        cursor: pointer; /* Keep pointer on hover */
         margin: 2px;
-        font-size: 20px;
-        border-radius: 10px;
+        font-size: 20px; /* Text size */
+        text-decoration: underline; /* Optional: underline the text for a link effect */
+    }
+
+    button:hover {
+        color: lightgray; /* Change color on hover */
     }
 </style>

@@ -8,13 +8,26 @@
         <div class="about-title-box">
             <img src="../../public/img/about_title.png" class="about-title">
         </div>
+
+        <div class="main-part">
+            <p>Founded in 2024 by RoltonsLV. He is a Latvian YouTuber with more than 200 subscribers</p>
+            <p>who decided to create a platform to help fans discover something more about his content creation.</p>
+            <br>
+            <p>This will be the official site</p>
+        </div>
     </nav>
 </template>
 
 <style scoped>
+    .main-part {
+        color: white;
+    }
+
     .about-title {
         display: block;
         margin: 0 auto;
+        height: 70px;
+        width: max;
     }
 
     .about-title-box {
