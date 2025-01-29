@@ -41,5 +41,7 @@
     .improvision {
         text-align: center; /* Centers the entire box horizontally on the page */
         margin-top: 300px;
+        position: relative;
+        z-index: 10;
     }
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-import About_Navbar from '../components/About_Navbar.vue'
+import Navbar from '../components/Navbar.vue'
 import About_UpperWave from '../components/About_UpperWave.vue'
 import About_Improvision from '../components/About_Improvision.vue'
 import Footer from '../components/Footer.vue'
@@ -7,7 +7,7 @@ import Footer from '../components/Footer.vue'
 
 <template>
   <main>
-    <About_Navbar/>
+    <Navbar/>
     <About_UpperWave/>
     <About_Improvision/>
     <Footer/>

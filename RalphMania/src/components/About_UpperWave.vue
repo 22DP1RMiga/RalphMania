@@ -19,12 +19,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
+        width: max;
         height: auto;
         z-index: 5;
     }
     .aboutpage {
         width: 100%;
-        height: auto;
+        height: max;
     }
 </style>

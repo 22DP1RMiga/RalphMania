@@ -22,5 +22,9 @@
         font-family: cursive;
         padding: 20px;
         display: flex;
+        justify-content: center; /* Centers content horizontally */
+        align-items: center; /* Centers content vertically */
+        text-align: center; /* Centers text */
+        flex-direction: column; /* Stacks elements inside */
     }
 </style>

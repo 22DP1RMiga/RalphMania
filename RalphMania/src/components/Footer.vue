@@ -19,13 +19,14 @@
     .footer {
         background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
         padding: 5px;
-        outline: 2px solid black;
+        outline: 1px solid black;
         display: flex;
         flex-direction: column; /* Stack the items vertically */
         justify-content: center; /* Center content horizontally */
         align-items: center; /* Center content vertically */
         border-top: 2px solid #000000;
         position: absolute;
+        z-index: 10; /* Higher z-index to render on top */
         bottom: 0;
         left: 0;
         width: 100%;

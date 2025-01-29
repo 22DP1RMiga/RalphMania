@@ -41,12 +41,13 @@
     .upper_menu {
         background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
         padding: 5px;
-        outline: 2px solid black;
+        outline: 1px solid black;
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 2px solid #000000;
         position: fixed;
+        z-index: 10; /* Higher z-index to render on top */
         top: 0;
         left: 0;
         width: 100%;

@@ -87,8 +87,19 @@ router.beforeEach((to, from, next) => {
 
   // CONTACTS ------------------------------------------------------------------------------------
   } else if (to.name === 'contacts') {
-    body.style.backgroundImage = "url('../../public/img/ContactsBackground.png')";
-
+    body.style.backgroundImage = "url('../../public/img/Hostage_Adventure.png')";
+    // Add a dark overlay
+    overlay = document.createElement('div');
+    overlay.id = 'background-dark-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0, 0, 0, 0.7)'; // 70% dark overlay
+    overlay.style.zIndex = '-1'; // Behind other content
+    overlay.style.pointerEvents = 'none';
+    body.appendChild(overlay);
   // SHOP ----------------------------------------------------------------------------------------
   } else if (to.name === 'shop') {
     body.style.backgroundImage = "url('../../public/img/ShopBackground.png')";

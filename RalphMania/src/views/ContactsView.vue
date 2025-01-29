@@ -1,17 +1,14 @@
 <script setup>
 import Navbar from '../components/Navbar.vue'
 import Improvision from '../components/Improvision.vue'
-import Videos from '../components/Videos.vue'
+import Footer from '../components/Footer.vue'
 </script>
 
 <template>
   <main>
     <Navbar/>
-    <Improvision/>
-    <div class="about">
-      <h1>This is an about page</h1>
-    </div>
-    <Videos/>
+    
+    <Footer/>
   </main>
 </template>
 
@@ -23,4 +20,15 @@ import Videos from '../components/Videos.vue'
     align-items: center;
   }
 }
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+  margin: auto;
+  gap: 10px;
+}
+.error { color: red; }
+.success { color: green; }
+
 </style>
