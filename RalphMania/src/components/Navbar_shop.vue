@@ -6,24 +6,17 @@
 <template>
     <nav class="upper_menu">
         <!-- LEFT SIDE ICON -->
-        <img src="../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
-        <img src="../../public/img/name_logo.png" class="namelogo">
-
-        <!-- HAMBURGER MENU ICON (Visible on small screens) -->
-        <div class="hamburger-menu" @click="isDropdownOpen = !isDropdownOpen">
-            <i class="fa-solid fa-bars"></i> <!-- Hamburger icon -->
-        </div>
+        <a href="/"><button class="centered_button"><i class="fa-solid fa-dropdown"></i> Home</button></a>
 
         <!-- BUTTONS IN THE MIDDLE -->
-        <div class="button-container">
-            <a href="/"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
-            <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
-            <a href="/contacts"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
-            <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
+        <div class="centered_logo">
+            <img src="../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
+        <img src="../../public/img/name_logo.png" class="namelogo">
         </div>
 
         <!-- RIGHT SIDE ICON -->
-        <img src="..\..\public\img\YT_logo.png" class="YT_logo">
+        <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-search"></i></button></a>
+        <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i></button></a>
     </nav>
 </template>
 
@@ -71,7 +64,7 @@
     }
 
 
-    .button-container {
+    .centered_logo {
         display: flex;
         justify-content: center;
         align-items: center;

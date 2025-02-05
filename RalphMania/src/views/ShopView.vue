@@ -1,13 +1,11 @@
 <script setup>
-import Navbar from '../components/Navbar.vue'
-import Improvision from '../components/Improvision.vue'
-import Videos from '../components/Videos.vue'
+import Navbar_shop from '../components/Navbar_shop.vue'
+import Footer from '../components/Footer.vue'
 </script>
 
 <template>
   <main>
-    <Navbar/>
-    <Improvision/>
-    <Videos/>
+    <Navbar_shop/>
+    <Footer/>
   </main>
 </template>

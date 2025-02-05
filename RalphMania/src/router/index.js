@@ -102,7 +102,9 @@ router.beforeEach((to, from, next) => {
     body.appendChild(overlay);
   // SHOP ----------------------------------------------------------------------------------------
   } else if (to.name === 'shop') {
-    body.style.backgroundImage = "url('../../public/img/ShopBackground.png')";
+    body.style.background = 'rgb(255, 255, 255)'
+  
+  // ELSE ----------------------------------------------------------------------------------------
   } else {
     body.style.backgroundImage = ''; // Default background
   }
