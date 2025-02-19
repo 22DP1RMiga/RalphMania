@@ -4,8 +4,7 @@ const isDropdownOpen = ref(false); // Track whether the dropdown is open
 </script>
 
 <template>
-    <nav class="upper_menu">   
-        <p>j</p>
+    <nav class="upper_menu">
         <!-- LEFT SIDE ICON -->
         <img src="C:/xampp/htdocs/mania/mania/public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
         <img src="C:/xampp/htdocs/mania/mania/public/img/name_logo.png" class="namelogo">
