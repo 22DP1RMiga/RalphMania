@@ -4,7 +4,8 @@
 <template>
     <!-- UPPER STYLED PICTURE -->
     <nav class="upperwave">
-        <img src="C:/xampp/htdocs/mania/mania/public/img/AboutPage12.png" class="aboutpage">
+<!--        <img src="C:/xampp/htdocs/mania/mania/public/img/AboutPage12.png" class="aboutpage">-->
+        <img src="../../../public/img/AboutPage12.png" class="aboutpage">
     </nav>
 </template>
 

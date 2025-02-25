@@ -11,7 +11,7 @@
                     <div class="spacing">
                         "COME UP" by Team Epil // (NCS Gauntlet Contest)
                     </div>
-                    <img src="C:/xampp/htdocs/mania/mania/public/img/COME UP preview.png" alt="latest" width="150px" height="100px">
+                    <img src="../../../public/img/COME UP preview.png" alt="latest" width="150px" height="100px">
                 </div>
             </button>
         </a>
@@ -23,7 +23,7 @@
                     <div class="spacing">
                         [NCS DAILY] "Placid Ivy Grove" by @chutruongwaifu
                     </div>
-                    <img src="C:/xampp/htdocs/mania/mania/public/img/Hostage_Adventure.png" alt="2nd latest">
+                    <img src="../../../public/img/Hostage_Adventure.png" alt="2nd latest">
                 </div>
             </button>
         </a>
@@ -35,7 +35,7 @@
                     <div class="spacing">
                         "hostage adventure" by truongwf // SPEEDRUN SECOND BEST 🥈 (0:12:762)
                     </div>
-                    <img src="C:/xampp/htdocs/mania/mania/public/img/PIG.png" alt="3rd latest" width="150px" height="100px">
+                    <img src="../../../public/img/PIG.png" alt="3rd latest" width="150px" height="100px">
                 </div>
             </button>
         </a>
@@ -96,7 +96,7 @@ button:hover {
 }
 
 @media (max-width: 800px) {
-    body { background-image: url('C:/xampp/htdocs/mania/mania/public/img/Coder_RoltonsLV.png'); }
+    body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
     .column {
         flex: 1 1 calc(50% - 5px);
         max-width: 100%;
@@ -109,7 +109,7 @@ button:hover {
 }
 
 @media (max-width: 600px) {
-    body { background-image: url('C:/xampp/htdocs/mania/mania/public/img/Coder_RoltonsLV.png'); }
+    body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
     .column {
         flex: 1 1 calc(100% - 5px);
         max-width: 100%;

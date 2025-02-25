@@ -6,7 +6,7 @@
 
         <!--ABOUT TITLE-->
         <div class="about-title-box">
-            <img src="C:/xampp/htdocs/mania/mania/public/img/about_title.png" class="about-title">
+            <img src="../../../public/img/about_title.png" class="about-title">
         </div>
 
         <div class="main-part">
