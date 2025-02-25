@@ -10,8 +10,8 @@ const isDropdownOpen = ref(false); // Track whether the dropdown is open
 
         <!-- BUTTONS IN THE MIDDLE -->
         <div class="centered_logo">
-            <img src="C:/xampp/htdocs/mania/mania/public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
-            <img src="C:/xampp/htdocs/mania/mania/public/img/name_logo.png" class="namelogo">
+            <img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
+            <img src="../../../public/img/name_logo.png" class="namelogo">
         </div>
 
         <!-- RIGHT SIDE ICON -->
@@ -22,7 +22,7 @@ const isDropdownOpen = ref(false); // Track whether the dropdown is open
 
 <style scoped>
 body {
-    background-image: url('C:/xampp/htdocs/mania/mania/public/img/Coder_RoltonsLV.png');
+    background-image: url('../../../public/img/Coder_RoltonsLV.png');
     margin: 0;
 }
 
@@ -141,7 +141,7 @@ button:hover {
 }
 
 @media screen and (max-width: 600px) {
-    body { background-image: url('C:/xampp/htdocs/mania/mania/public/img/Coder_RoltonsLV.png'); }
+    body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
 }
 
 </style>
