@@ -7,8 +7,8 @@ const isDropdownOpen = ref(false); // Track whether the dropdown is open
     <nav class="upper_menu">   
         <p>j</p>
         <!-- LEFT SIDE ICON -->
-        <img src="C:/xampp/htdocs/mania/mania/public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
-        <img src="C:/xampp/htdocs/mania/mania/public/img/name_logo.png" class="namelogo">
+        <img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
+        <img src="../../../public/img/name_logo.png" class="namelogo">
 
         <!-- HAMBURGER MENU ICON (Visible on small screens) -->
         <div class="hamburger-menu" @click="isDropdownOpen = !isDropdownOpen">
@@ -24,13 +24,13 @@ const isDropdownOpen = ref(false); // Track whether the dropdown is open
         </div>
 
         <!-- RIGHT SIDE ICON -->
-        <img src="C:/xampp/htdocs/mania/mania/public/img/YT_logo.png" class="YT_logo">
+        <img src="../../../public/img/YT_logo.png" class="YT_logo">
     </nav>
 </template>
 
 <style scoped>
 body {
-    background-image: url('C:/xampp/htdocs/mania/mania/public/img/Coder_RoltonsLV.png');
+    background-image: url('../../../public/img/Coder_RoltonsLV.png');
     margin: 0;
 }
 
@@ -149,7 +149,7 @@ button:hover {
 }
 
 @media screen and (max-width: 600px) {
-    body { background-image: url('C:/xampp/htdocs/mania/mania/public/img/Coder_RoltonsLV.png'); }
+    body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
 }
 
 </style>
