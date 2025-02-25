@@ -87,6 +87,7 @@ button {
     margin: 2px;
     font-size: 20px;
     border-radius: 10px;
+    outline: 1px solid black;
 }
 
 button:hover {

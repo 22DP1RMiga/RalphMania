@@ -4,9 +4,10 @@
 <template>
     <nav class="improvision">
         <div class="moved_text">
-            <h1>Welcome, user!</h1>
+            <h1 style="font-weight: bold;">Welcome, user!</h1>
             <p>A place to see more of RoltonsLV the latvian YouTuber of Geometry Dash and more!</p>
-            <a href="https://www.youtube.com/@RoltonsLV">Click here to visit the channel</a>
+            <a href="https://www.youtube.com/@RoltonsLV" style="text-decoration: underline;" class="yt_link">Click here to visit the channel</a>
+
 
             <p></p> <!-- FOR SPACES -->
         </div>
@@ -26,5 +27,9 @@
     align-items: center; /* Centers content vertically */
     text-align: center; /* Centers text */
     flex-direction: column; /* Stacks elements inside */
+}
+
+.yt_link:hover {
+    color: #741616;
 }
 </style>
