@@ -50,6 +50,8 @@
     flex-direction: row;
     flex-wrap: wrap;    /* for responsive button wrapping purposes */
     justify-content: center;
+    align-items: center;
+    gap: 10px;
     border-radius: 20px;
     margin-top: calc(2em - 10px);
 }
@@ -61,6 +63,9 @@
     width: auto;
     border-radius: 10px;
     outline: 2px solid black;
+    align-items: center;
+    align-self: center;
+    justify-self: center;
 }
 
 .spacing {
@@ -75,9 +80,12 @@ button {
     color: black;
     padding: 5px 20px;
     cursor: pointer;
-    margin: 2px;
+    margin: 4px;
     font-size: 20px;
     border-radius: 10px;
+    outline: 2px solid black;
+    display: flex;
+    flex-direction: ;
 }
 
 button:hover {
