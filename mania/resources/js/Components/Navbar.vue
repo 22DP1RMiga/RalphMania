@@ -23,12 +23,22 @@ const isDropdownOpen = ref(false);
         <img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
         <img src="../../../public/img/name_logo.png" class="namelogo">
 
-        <!-- HAMBURGER MENU ICON (Visible on small screens) -->
+        <!-- HAMBURGER MENU ICON -->
         <div class="hamburger-menu" @click="isDropdownOpen = !isDropdownOpen">
-            <i class="fa-solid fa-bars"></i> <!-- Hamburger icon -->
+            <i class="fa-solid fa-bars"></i>
         </div>
 
-        <!-- BUTTONS IN THE MIDDLE -->
+        <!-- DROPDOWN MENU (Visible when the hamburger is clicked) -->
+        <span v-if="isDropdownOpen" class="dropdown">
+            <ul>
+                <li><a href="/"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="/about"><i class="fa-regular fa-user"></i> About</a></li>
+                <li><a href="/contacts"><i class="fa-solid fa-phone"></i> Contacts</a></li>
+                <li><a href="/shop" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-shop"></i> Shop</a></li>
+            </ul>
+        </span>
+
+        <!-- BUTTONS IN THE MIDDLE (Visible on larger screens) -->
         <div class="button-container">
             <a href="/"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
             <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
@@ -36,24 +46,11 @@ const isDropdownOpen = ref(false);
             <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
         </div>
 
-<<<<<<< HEAD
-        <!-- DROPDOWN MENU (Visible when the hamburger icon is clicked) -->
-        <div v-if="isDropdownOpen" class="dropdown">
-            <a href="/"><button><i class="fa-solid fa-house"></i> Home</button></a>
-            <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
-            <a href="/contacts"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
-            <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
-        </div>
-
         <!-- RIGHT SIDE ICON (YouTube + User Icon if logged in) -->
         <div class="right-side-icons">
-            <img v-if="currentUser" src="../../../public/img/YT_logo.png" class="YT_logo">
+            <img src="../../../public/img/YT_logo.png" class="YT_logo">
             <i v-if="currentUser" class="fa-solid fa-circle-user"></i>
         </div>
-=======
-        <!-- RIGHT SIDE ICON -->
-        <img src="../../../public/img/YT_logo.png" class="YT_logo">
->>>>>>> 4ecad29369beab36f04dcda9ffed6ecb91f9eb34
     </nav>
 </template>
 
@@ -146,6 +143,26 @@ button:hover {
     align-items: center;
     padding: 10px 0;
     width: 100%;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+.dropdown ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    display: block;
+    padding: 10px;
+}
+
+.dropdown li:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Show the hamburger menu on small screens */

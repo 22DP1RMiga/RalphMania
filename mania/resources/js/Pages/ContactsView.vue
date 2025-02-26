@@ -61,15 +61,19 @@ onMounted(() => {
     <main>
         <br><br><br>
         <div v-if="!isLoggedIn" class="form-container">
-            <h2>Create an Account / Log In</h2>
-            <input type="text" v-model="username" placeholder="Username" required>
-            <input type="email" v-model="email" placeholder="Email" required>
-            <input type="password" v-model="password" placeholder="Password" required>
-            <input type="password" v-model="confirmPassword" placeholder="Confirm Password" required>
+            <div class="login-box">
+                <img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
+                <h2 style="font-weight: bold;">Create an Account / Log In</h2>
+                <input type="text" v-model="username" placeholder="Username" required>
+                <input type="email" v-model="email" placeholder="Email" required>
+                <input type="password" v-model="password" placeholder="Password" required>
+                <input type="password" v-model="confirmPassword" placeholder="Confirm Password" required>
+            </div>
             <button @click="saveUser">Register</button>
             <button @click="loginUser(username, password)">Log In</button>
             <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         </div>
+
         <div v-else class="welcome-container">
             <h2>Welcome, {{ currentUser.username }}!</h2>
             <button @click="logoutUser">Log Out</button>
@@ -79,6 +83,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
+.login-box {
+    background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
+    border: #000000;
+    border-radius: 10px;
+    border-style: groove;
+    height: 450px;
+    width: 500px;
+    justify-items: center;
+}
+
+.login-box input {
+    border-radius: 10px;
+    outline: 1px solid black;
+}
+
 .form-container {
     display: flex;
     flex-direction: column;
@@ -87,6 +107,12 @@ onMounted(() => {
     padding: 20px;
 }
 
+.RoltonsLV_Icon {
+    max-width: 150px; /* Set the size for the images */
+    padding-right: 10px;
+    padding-left: 5px;
+    height: auto;
+}
 .welcome-container {
     text-align: center;
     margin-top: 20px;

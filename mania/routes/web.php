@@ -6,7 +6,7 @@ use Inertia\Inertia;
 // For Home page
 Route::get('/', function () {
     return Inertia::render('HomeView', [
-        'background' => 'mania/public/img/Coder_RoltonsLV.png',
+        'background-image' => '../public/img/Coder_RoltonsLV.png',
         'title' => 'HOME | RalphMania'
     ]);
 })->name('home');
@@ -14,7 +14,7 @@ Route::get('/', function () {
 // For About page
 Route::get('/about', function () {
     return Inertia::render('AboutView', [
-        'background' => 'Hostage_Adventure.png',
+        'background' => '../public/img/Hostage_Adventure.png',
         'overlay' => true,
         'title' => 'ABOUT | RalphMania'
     ]);
@@ -23,7 +23,7 @@ Route::get('/about', function () {
 // For Contacts page
 Route::get('/contacts', function () {
     return Inertia::render('ContactsView', [
-        'background' => 'Hostage_Adventure.png',
+        'background' => '../public/img/Hostage_Adventure.png',
         'overlay' => true,
         'title' => 'CONTACTS | RalphMania'
     ]);
