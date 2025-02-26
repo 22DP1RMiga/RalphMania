@@ -36,6 +36,7 @@ const isDropdownOpen = ref(false);
             <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
         </div>
 
+<<<<<<< HEAD
         <!-- DROPDOWN MENU (Visible when the hamburger icon is clicked) -->
         <div v-if="isDropdownOpen" class="dropdown">
             <a href="/"><button><i class="fa-solid fa-house"></i> Home</button></a>
@@ -49,6 +50,10 @@ const isDropdownOpen = ref(false);
             <img v-if="currentUser" src="../../../public/img/YT_logo.png" class="YT_logo">
             <i v-if="currentUser" class="fa-solid fa-circle-user"></i>
         </div>
+=======
+        <!-- RIGHT SIDE ICON -->
+        <img src="../../../public/img/YT_logo.png" class="YT_logo">
+>>>>>>> 4ecad29369beab36f04dcda9ffed6ecb91f9eb34
     </nav>
 </template>
 
