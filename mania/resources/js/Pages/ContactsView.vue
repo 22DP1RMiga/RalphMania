@@ -59,6 +59,7 @@ onMounted(() => {
 <template>
     <Navbar :currentUser="currentUser" />
     <main>
+        <br><br><br>
         <div v-if="!isLoggedIn" class="form-container">
             <h2>Create an Account / Log In</h2>
             <input type="text" v-model="username" placeholder="Username" required>

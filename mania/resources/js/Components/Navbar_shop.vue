@@ -48,6 +48,7 @@ body {
     button {
         font-family: cursive;
         font-weight: bold;
+        outline: 1px solid black;
     }
 
     .namelogo {

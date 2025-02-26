@@ -1,8 +1,22 @@
+<!--SCRIPT-->
 <script>
 import { ref } from 'vue';
-const isDropdownOpen = ref(false); // Track whether the dropdown is open
+export default {
+    props: ['currentUser']
+}
+
+// Props to receive logged-in user data from parent component
+import { defineProps } from 'vue';
+const props = defineProps({
+    currentUser: Object
+});
+// console.log("Navbar received currentUser:", props.currentUser);
+
+// State for dropdown menu visibility (for mobile navigation)
+const isDropdownOpen = ref(false);
 </script>
 
+<!--WEB BUILD (TEMPLATE)-->
 <template>
     <nav class="upper_menu">
         <!-- LEFT SIDE ICON -->
@@ -22,20 +36,27 @@ const isDropdownOpen = ref(false); // Track whether the dropdown is open
             <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
         </div>
 
-        <!-- RIGHT SIDE ICON -->
-        <img src="../../../public/img/YT_logo.png" class="YT_logo">
+        <!-- DROPDOWN MENU (Visible when the hamburger icon is clicked) -->
+        <div v-if="isDropdownOpen" class="dropdown">
+            <a href="/"><button><i class="fa-solid fa-house"></i> Home</button></a>
+            <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
+            <a href="/contacts"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
+            <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
+        </div>
+
+        <!-- RIGHT SIDE ICON (YouTube + User Icon if logged in) -->
+        <div class="right-side-icons">
+            <img v-if="currentUser" src="../../../public/img/YT_logo.png" class="YT_logo">
+            <i v-if="currentUser" class="fa-solid fa-circle-user"></i>
+        </div>
     </nav>
 </template>
 
+<!--STYLE-->
 <style scoped>
 body {
     background-image: url('../../../public/img/Coder_RoltonsLV.png');
     margin: 0;
-}
-
-.apraksts {
-    font-size: 15px;
-    text-align: center;
 }
 
 .upper_menu {
@@ -47,20 +68,15 @@ body {
     align-items: center;
     border-bottom: 2px solid #000000;
     position: fixed;
-    z-index: 10; /* Higher z-index to render on top */
+    z-index: 1000; /* Higher z-index to render on top */
     top: 0;
     left: 0;
     width: 100%;
+}
 
-    button {
-        font-family: cursive;
-        font-weight: bold;
-    }
-
-    .namelogo {
-        height: 35px;
-        width: max;
-    }
+.namelogo {
+    height: 35px;
+    width: max;
 }
 
 .RoltonsLV_Icon, .YT_logo {
@@ -152,4 +168,17 @@ button:hover {
     body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
 }
 
+/* Right-side icons container */
+.right-side-icons {
+    display: flex;
+    align-items: center;
+}
+
+/* User icon styles */
+.user-icon {
+    font-size: 30px;
+    color: white;
+    margin-left: 10px;
+    cursor: pointer;
+}
 </style>
