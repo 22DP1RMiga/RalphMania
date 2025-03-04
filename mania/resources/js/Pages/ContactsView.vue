@@ -80,7 +80,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Navbar :currentUser="currentUser" />
+    <Navbar :currentUser="currentUser" @logout="logoutUser" />
     <main v-if="isLoggedIn">
         <div class="welcome-container">
             <h2>Welcome, {{ currentUser.username }}!</h2>

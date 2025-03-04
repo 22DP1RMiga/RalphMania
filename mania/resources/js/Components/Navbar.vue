@@ -12,8 +12,11 @@ const props = defineProps({
 });
 // console.log("Navbar received currentUser:", props.currentUser);
 
-// State for dropdown menu visibility (for mobile navigation)
+// State for NAVBAR dropdown visibility (for mobile navigation)
 const isDropdownOpen = ref(false);
+
+// State to manage USER dropdown visibility
+const userDropdownOpen = ref(false);
 </script>
 
 <!--WEB BUILD (TEMPLATE)-->
@@ -46,10 +49,26 @@ const isDropdownOpen = ref(false);
             <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
         </div>
 
-        <!-- RIGHT SIDE ICON (YouTube + User Icon if logged in) -->
+        <!-- RIGHT SIDE ICONS (YouTube + User Icon if logged in) -->
         <div class="right-side-icons">
             <img src="../../../public/img/YT_logo.png" class="YT_logo">
-            <i v-if="currentUser" class="fa-solid fa-circle-user"></i>
+
+            <!-- USER ICON WITH DROPDOWN -->
+            <div
+                v-if="currentUser"
+                class="user-icon-container"
+                @mouseenter="userDropdownOpen = true"
+                @mouseleave="userDropdownOpen = false"
+            >
+                <i class="fa-solid fa-circle-user"></i>
+
+                <!-- DROPDOWN CONTENT -->
+                <div v-if="userDropdownOpen" class="user-dropdown">
+                    <p><strong>{{ currentUser.username }}</strong></p>
+                    <p>{{ currentUser.email }}</p>
+                    <button @click="$emit('logout')">Log Out</button>
+                </div>
+            </div>
         </div>
     </nav>
 </template>
@@ -97,6 +116,49 @@ body {
 .right-side-icons i {
     font-size: 35px;
     //cursor: pointer;
+}
+
+.right-side-icons i:hover {
+    color: rgb(53, 53, 53);
+}
+
+.user-icon-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 60px; /* Adjust based on icon size */
+    right: 0;
+    background: white;
+    color: black;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    min-width: 150px;
+    text-align: center;
+    z-index: 1000;
+}
+
+.user-dropdown p {
+    margin: 5px 0;
+}
+
+.user-dropdown button {
+    background: firebrick;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-top: 5px;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.user-dropdown button:hover {
+    background: darkred;
 }
 
 .button-container {
