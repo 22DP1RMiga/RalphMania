@@ -30,10 +30,10 @@ Mājaslapa, kas parādīs jaunumus un aktualitātes par YouTuberi "RoltonsLV" je
 ---
 ## "RalphMania" mājaslapas izskats (pirms Laravel ieviešanas)
 1. attēls - "Home" sadaļa
-![Bilde2](../RalphMania/mania/public/img/HomePreview.PNG)
+![Bilde2](/mania/public/img/HomePreview.PNG)
 
 2. attēls - "About" sadaļa
-![Bilde2](mania\public\img\AboutPreview.PNG)
+![Bilde2](mania/public/img/AboutPreview.PNG)
 
 3. attēls - "Contacts" sadaļa
-![Bilde2](mania\public\img\ContactsPreview.PNG)
+![Bilde2](mania/public/img/ContactsPreview.PNG)
