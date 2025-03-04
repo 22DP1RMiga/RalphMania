@@ -5,6 +5,14 @@ import {createInertiaApp, router} from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 // import { createRouter, createWebHistory } from 'vue-router'
 import { createApp, h } from 'vue';
+import updateBackground from './background.js';
+document.addEventListener("DOMContentLoaded", updateBackground(window.location.pathname));
+
+if (window.Inertia) {
+    document.addEventListener("inertia:navigate", (event) => {
+        updateBackground(event.detail.page.url);
+    });
+}
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
