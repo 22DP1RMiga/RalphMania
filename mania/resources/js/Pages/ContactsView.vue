@@ -83,10 +83,11 @@ onMounted(() => {
     <Navbar :currentUser="currentUser" @logout="logoutUser" />
     <main v-if="isLoggedIn">
         <div class="welcome-container">
-            <h2>Welcome, {{ currentUser.username }}!</h2>
+            <h2 style="font-weight: bold;">Welcome, {{ currentUser.username }}!</h2>
+            <br>
             <p>Contact the head of the company, RoltonsLV:</p>
-            <p>Email: example@roltonslv.com</p>
-            <p>Phone: +123456789</p>
+            <p>Email: head@roltonslv.com</p>
+            <p>Phone: +371 29203658</p>
             <button @click="logoutUser">Log Out</button>
         </div>
     </main>
@@ -106,11 +107,6 @@ onMounted(() => {
             <button @click="loginUser(username, password)">Log In</button>
             <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         </div>
-
-<!--        <div v-else class="welcome-container">-->
-<!--            <h2>Welcome, {{ currentUser.username }}!</h2>-->
-<!--            <button @click="logoutUser">Log Out</button>-->
-<!--        </div>-->
     </main>
     <Footer />
 </template>
@@ -149,6 +145,16 @@ onMounted(() => {
 .welcome-container {
     text-align: center;
     margin-top: 20px;
+    margin-top: calc(5em);
+
+    h2 {
+        color: white;
+        font-size: 24px;
+    }
+
+    p {
+        color: white;
+    }
 }
 
 input {

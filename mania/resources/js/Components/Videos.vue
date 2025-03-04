@@ -5,37 +5,37 @@
 <template>
     <!-- FOR THE LATEST VIDEO -->
     <div class="flex-container">
-        <a href="https://www.youtube.com/watch?v=JOa6WAF8PVM">
+        <a href="https://www.youtube.com/watch?v=GIRJISwkB_w">
             <button>
-                <div>
+                <div class="content">
                     <div class="spacing">
-                        "COME UP" by Team Epil // (NCS Gauntlet Contest)
-                    </div>
-                    <img src="../../../public/img/COME UP preview.png" alt="latest" width="150px" height="100px">
+                        a funny color spam solution - THE PART
+                    </div><br>
+                    <img src="../../../public/img/Tran La Lout.png" alt="latest" width="150px" height="100px">
                 </div>
             </button>
         </a>
 
         <!-- FOR THE 2ND LATEST VIDEO -->
-        <a href="https://www.youtube.com/watch?v=k_hNSKwB9nA">
+        <a href="https://www.youtube.com/watch?v=RCu-FQoDTUo">
             <button>
-                <div>
+                <div class="content">
                     <div class="spacing">
-                        [NCS DAILY] "Placid Ivy Grove" by @chutruongwaifu
-                    </div>
-                    <img src="../../../public/img/Hostage_Adventure.png" alt="2nd latest">
+                        When Magpipe joins Australind.. and cooks gud (GP by Me and @Kcool.101)
+                    </div><br>
+                    <img src="../../../public/img/Magpipe Australind.png" alt="2nd latest">
                 </div>
             </button>
         </a>
 
         <!-- FOR THE 3RD LATEST VIDEO -->
-        <a href="https://www.youtube.com/watch?v=Yo-p0cY23sM">
+        <a href="https://www.youtube.com/watch?v=JOa6WAF8PVM">
             <button>
-                <div>
+                <div class="content">
                     <div class="spacing">
-                        "hostage adventure" by truongwf // SPEEDRUN SECOND BEST 🥈 (0:12:762)
-                    </div>
-                    <img src="../../../public/img/PIG.png" alt="3rd latest" width="150px" height="100px">
+                        "COME UP" by Team Epil // (NCS Gauntlet Contest)
+                    </div><br>
+                    <img src="../../../public/img/COME UP.png" alt="3rd latest" width="150px" height="100px">
                 </div>
             </button>
         </a>
@@ -47,85 +47,78 @@
 <style scoped>
 .flex-container {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;    /* for responsive button wrapping purposes */
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    border-radius: 20px;
-    margin-top: calc(2em - 10px);
-}
-
-.flex-container img {
-    max-width: 90%;   /* Make the image scale inside the button */
-    max-height: 150px; /* Set a max height for the image */
-    height: auto;
-    width: auto;
-    border-radius: 10px;
-    outline: 2px solid black;
-    align-items: center;
-    align-self: center;
-    justify-self: center;
-}
-
-.spacing {
-    padding: 10px;
-    font-size: 15px;
-    font-family: cursive;
-    font-weight: bold;
+    gap: 15px;
+    margin-top: 20px;
 }
 
 button {
+    width: 500px; /* Fixed width */
+    height: 350px; /* Fixed height */
     background: linear-gradient(to bottom, rgb(234, 231, 231), rgb(137, 137, 137));
     color: black;
-    padding: 5px 20px;
     cursor: pointer;
-    margin: 4px;
-    font-size: 20px;
+    font-size: 18px;
     border-radius: 10px;
     outline: 2px solid black;
     display: flex;
-    flex-direction: ;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between; /* Pushes content apart */
+    padding: 15px;
+    text-align: center;
 }
 
 button:hover {
-    transform: scale(1.1);
-    transition: transform 0.1s ease;
-    animation: hoverUp 0.5s forwards;
-    box-shadow: 10px 10px 15px rgba(0, 0 , 0, 0.6);
+    transform: scale(1.05);
+    transition: 0.2s;
 }
 
-@keyframes hoverUp {
-    0% {
-        transform: translateY(0);
-    } 100% {
-          transform: translateY(-10px) scale(1.1)  ;
-      }
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
+.spacing {
+    width: 100%;
+    font-size: 16px;
+    font-family: cursive;
+    font-weight: bold;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limits to 2 lines */
+    -webkit-box-orient: vertical;
+}
+
+img {
+    width: 90%; /* Set image width */
+    height: 100%; /* Set image height */
+    object-fit: cover; /* Ensures images are cropped properly */
+    border-radius: 10px;
+    outline: 2px solid black;
+}
+
+/* RESPONSIVE DESIGN */
 @media (max-width: 800px) {
-    body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
-    .column {
-        flex: 1 1 calc(50% - 5px);
-        max-width: 100%;
-    }
     .flex-container {
-        flex: 1 1 calc(50% - 5px);
-        max-width: 100%;
+        flex-direction: column;
     }
-
+    button {
+        width: 300px;
+        height: 150px;
+    }
 }
 
 @media (max-width: 600px) {
-    body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
-    .column {
-        flex: 1 1 calc(100% - 5px);
-        max-width: 100%;
-    }
-    .flex-container {
-        flex: 1 1 calc(100% - 5px);
-        max-width: 100%;
+    button {
+        width: 260px;
+        height: 130px;
     }
 }
-
 </style>
