@@ -13,3 +13,9 @@ import Footer from '../Components/Footer.vue';
         <Footer/>
     </main>
 </template>
+
+<style>
+    body {
+        background-image: url('{{ asset('img/Coder_RoltonsLV.png') }}');
+    }
+</style>

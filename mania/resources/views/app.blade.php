@@ -17,14 +17,40 @@
     @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
     @inertiaHead
 </head>
-<body class="font-sans antialiased">
-@inertia
+
+<body class="font-sans antialiased" id="dynamic-background">
+    @inertia
+
+    <div id="background-dark-overlay"></div>
+    <script src="{{ asset('js/background.js') }}"></script>
+{{--    @vite('resources/js/background.js')--}}
 </body>
 
 <style>
+    {{--body {--}}
+    {{--    /*background: black;*/--}}
+    {{--    background-image: url('{{ asset('img/Coder_RoltonsLV.png') }}');--}}
+    {{--}--}}
+
+    /* Default background */
     body {
-        background-image: url('../../public/img/Coder_RoltonsLV.png');
-        /*background: black;*/
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        transition: background 0.5s ease-in-out;
+    }
+
+    /* Dark overlay (will be toggled) */
+    #background-dark-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7); /* 70% dark overlay */
+        z-index: -1; /* Behind content */
+        pointer-events: none;
+        display: none; /* Hidden by default */
     }
 </style>
 
