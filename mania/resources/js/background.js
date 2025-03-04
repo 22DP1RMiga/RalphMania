@@ -1,7 +1,7 @@
 export default function updateBackground(route) {
     const body = document.body;
     const overlay = document.getElementById("background-dark-overlay");
-
+    //
     // Reset styles
     body.style.backgroundImage = "";
     body.style.backgroundColor = "";
