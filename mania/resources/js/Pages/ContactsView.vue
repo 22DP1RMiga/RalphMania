@@ -11,8 +11,22 @@ const confirmPassword = ref('');
 const isLoggedIn = ref(false);
 const currentUser = ref(null);
 const errorMessage = ref('');
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple email regex
 
 const saveUser = async () => {
+    // if none of the spots are filled
+    if (!username.value || !email.value || !password.value || !confirmPassword.value) {
+        errorMessage.value = "All fields are required!";
+        return;
+    }
+
+    // checks to see if the email is entered correctly by format
+    if (!emailRegex.test(email.value)) {
+        errorMessage.value = "Invalid email format!";
+        return;
+    }
+
+    // if passwords don't match
     if (password.value !== confirmPassword.value) {
         errorMessage.value = "Passwords do not match!";
         return;
@@ -30,12 +44,21 @@ const saveUser = async () => {
 };
 
 const loginUser = (user, pass) => {
+    // if nothing has been entered
+    if (!user || !pass) {
+        errorMessage.value = "Please enter both username and password!";
+        return;
+    }
+
     let users = JSON.parse(localStorage.getItem('users') || '[]');
     let foundUser = users.find(u => u.username === user && u.password === pass);
+
+    // login validation process
     if (foundUser) {
         isLoggedIn.value = true;
         currentUser.value = foundUser;
         localStorage.setItem('currentUser', JSON.stringify(foundUser));
+        errorMessage.value = ""; // Clear error message
     } else {
         errorMessage.value = "Invalid username or password!";
     }
@@ -58,7 +81,17 @@ onMounted(() => {
 
 <template>
     <Navbar :currentUser="currentUser" />
-    <main>
+    <main v-if="isLoggedIn">
+        <div class="welcome-container">
+            <h2>Welcome, {{ currentUser.username }}!</h2>
+            <p>Contact the head of the company, RoltonsLV:</p>
+            <p>Email: example@roltonslv.com</p>
+            <p>Phone: +123456789</p>
+            <button @click="logoutUser">Log Out</button>
+        </div>
+    </main>
+
+    <main v-else>
         <br><br><br>
         <div v-if="!isLoggedIn" class="form-container">
             <div class="login-box">
@@ -74,10 +107,10 @@ onMounted(() => {
             <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         </div>
 
-        <div v-else class="welcome-container">
-            <h2>Welcome, {{ currentUser.username }}!</h2>
-            <button @click="logoutUser">Log Out</button>
-        </div>
+<!--        <div v-else class="welcome-container">-->
+<!--            <h2>Welcome, {{ currentUser.username }}!</h2>-->
+<!--            <button @click="logoutUser">Log Out</button>-->
+<!--        </div>-->
     </main>
     <Footer />
 </template>

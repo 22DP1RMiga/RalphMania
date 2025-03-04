@@ -88,6 +88,16 @@ body {
     height: auto;
 }
 
+/* Right-side icons container */
+.right-side-icons {
+    display: flex;
+    align-items: center;
+}
+
+.right-side-icons i {
+    font-size: 35px;
+    //cursor: pointer;
+}
 
 .button-container {
     display: flex;
@@ -188,19 +198,5 @@ button:hover {
 
 @media screen and (max-width: 600px) {
     body { background-image: url('../../../public/img/Coder_RoltonsLV.png'); }
-}
-
-/* Right-side icons container */
-.right-side-icons {
-    display: flex;
-    align-items: center;
-}
-
-/* User icon styles */
-.user-icon {
-    font-size: 30px;
-    color: white;
-    margin-left: 10px;
-    cursor: pointer;
 }
 </style>

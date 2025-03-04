@@ -4,10 +4,6 @@
 <template>
     <!-- UPPER STYLED PICTURE -->
     <nav class="upperwave">
-<<<<<<< HEAD
-<!--        <img src="C:/xampp/htdocs/mania/mania/public/img/AboutPage12.png" class="aboutpage">-->
-=======
->>>>>>> 4ecad29369beab36f04dcda9ffed6ecb91f9eb34
         <img src="../../../public/img/AboutPage12.png" class="aboutpage">
     </nav>
 </template>
@@ -23,8 +19,9 @@ html, body {
     position: fixed;
     top: 0;
     left: 0;
-    width: max;
+    width: 100vw;
     height: auto;
+    object-fit: cover;
     z-index: 5;
 }
 .aboutpage {
