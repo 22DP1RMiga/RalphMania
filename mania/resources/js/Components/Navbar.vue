@@ -1,12 +1,12 @@
 <!--SCRIPT-->
-<script>
-import { ref } from 'vue';
-export default {
-    props: ['currentUser']
-}
+<script setup>
+import { ref, defineProps } from 'vue';
+// export default {
+//     props: ['currentUser']
+// }
 
 // Props to receive logged-in user data from parent component
-import { defineProps } from 'vue';
+// import { defineProps } from 'vue';
 const props = defineProps({
     currentUser: Object
 });
@@ -34,10 +34,12 @@ const userDropdownOpen = ref(false);
         <!-- DROPDOWN MENU (Visible when the hamburger is clicked) -->
         <span v-if="isDropdownOpen" class="dropdown">
             <ul>
-                <li><a href="/"><i class="fa-solid fa-house"></i> Home</a></li>
-                <li><a href="/about"><i class="fa-regular fa-user"></i> About</a></li>
-                <li><a href="/contacts"><i class="fa-solid fa-phone"></i> Contacts</a></li>
-                <li><a href="/shop" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-shop"></i> Shop</a></li>
+                <li>
+                    <a href="/"><i class="fa-solid fa-house"></i> Home</a>
+                    <a href="/about"><i class="fa-regular fa-user"></i> About</a>
+                    <a href="/contacts"><i class="fa-solid fa-phone"></i> Contacts</a>
+                    <a href="/shop" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-shop"></i> Shop</a>
+                </li>
             </ul>
         </span>
 
@@ -206,16 +208,20 @@ button:hover {
 /* Dropdown menu for small screens */
 .dropdown {
     position: absolute;
-    top: 50px;
+    top: 40px;
     left: 0;
-    right: 0;
-    background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 0;
-    width: 100%;
+    background: white;
+    color: black;
+    padding: 10px;
     box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+    min-width: 150px;
+    z-index: 1000;
+    //right: 0;
+    //background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
+    //display: flex;
+    //flex-direction: column;
+    //align-items: center;
+    //width: 100%;
 }
 
 .dropdown ul {
@@ -224,17 +230,22 @@ button:hover {
     margin: 0;
 }
 
-.dropdown li a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-    font-weight: bold;
-    display: block;
+.dropdown ul li {
     padding: 10px;
 }
 
+.dropdown li a {
+    color: black;
+    text-decoration: none;
+    font-size: 16px;
+    //font-weight: bold;
+    //display: block;
+    //padding: 10px;
+}
+
 .dropdown li:hover {
-    background: rgba(255, 255, 255, 0.2);
+    //background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 /* Show the hamburger menu on small screens */
