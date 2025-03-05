@@ -1,22 +1,59 @@
-<!--SCRIPT-->
 <script setup>
-import { ref, defineProps } from 'vue';
-// export default {
-//     props: ['currentUser']
-// }
+import { ref, defineProps, onMounted, onUnmounted } from 'vue';
 
-// Props to receive logged-in user data from parent component
-// import { defineProps } from 'vue';
 const props = defineProps({
     currentUser: Object
 });
-// console.log("Navbar received currentUser:", props.currentUser);
 
-// State for NAVBAR dropdown visibility (for mobile navigation)
+// States for dropdowns
+const userDropdownOpen = ref(false);
 const isDropdownOpen = ref(false);
 
-// State to manage USER dropdown visibility
-const userDropdownOpen = ref(false);
+// Toggle User Dropdown
+const toggleUserDropdown = () => {
+    userDropdownOpen.value = !userDropdownOpen.value;
+};
+
+// Toggle Hamburger Menu Dropdown
+const toggleHamburgerMenu = () => {
+    isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// Close dropdowns when clicking outside
+const handleClickOutside = (event) => {
+    const userDropdown = document.querySelector('.user-dropdown');
+    const userIcon = document.querySelector('.fa-circle-user');
+    const dropdownMenu = document.querySelector('.dropdown');
+    const hamburgerIcon = document.querySelector('.hamburger-menu');
+
+    if (
+        userDropdownOpen.value &&
+        userDropdown &&
+        !userDropdown.contains(event.target) &&
+        !userIcon.contains(event.target)
+    ) {
+        userDropdownOpen.value = false;
+    }
+
+    if (
+        isDropdownOpen.value &&
+        dropdownMenu &&
+        !dropdownMenu.contains(event.target) &&
+        !hamburgerIcon.contains(event.target)
+    ) {
+        isDropdownOpen.value = false;
+    }
+};
+
+// Add event listener when component is mounted
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+// Remove event listener when component is unmounted
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <!--WEB BUILD (TEMPLATE)-->
@@ -56,16 +93,12 @@ const userDropdownOpen = ref(false);
             <img src="../../../public/img/YT_logo.png" class="YT_logo">
 
             <!-- USER ICON WITH DROPDOWN -->
-            <div
-                v-if="currentUser"
-                class="user-icon-container"
-                @mouseenter="userDropdownOpen = true"
-                @mouseleave="userDropdownOpen = false"
-            >
-                <i class="fa-solid fa-circle-user"></i>
+            <div v-if="currentUser" class="user-icon-container">
+                <!-- USER ICON (CLICK TO TOGGLE DROPDOWN) -->
+                <i class="fa-solid fa-circle-user" @click="toggleUserDropdown"></i>
 
-                <!-- DROPDOWN CONTENT -->
-                <div v-if="userDropdownOpen" class="user-dropdown">
+                <!-- DROPDOWN MENU -->
+                <div v-if="userDropdownOpen" ref="dropdownRef" class="user-dropdown">
                     <p><strong>{{ currentUser.username }}</strong></p>
                     <p>{{ currentUser.email }}</p>
                     <button @click="$emit('logout')">Log Out</button>
