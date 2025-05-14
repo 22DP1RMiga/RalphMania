@@ -36,3 +36,19 @@ Route::get('/shop', function () {
         'title' => 'SHOP | RalphMania'
     ]);
 })->name('shop');
+
+// For Login page
+Route::get('/login', function () {
+    return Inertia::render('LoginView', [
+        'background' => 'white',
+        'title' => 'LOGIN | RalphMania'
+    ]);
+})->name('login');
+
+// For Register page
+Route::get('/register', function () {
+    return Inertia::render('RegisterView', [
+        'background' => 'white',
+        'title' => 'REGISTER | RalphMania'
+    ]);
+})->name('register');

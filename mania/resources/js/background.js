@@ -15,6 +15,8 @@ export default function updateBackground(route) {
 
         case "/about":
         case "/contacts":
+        case "/login":
+        case "/register":
             body.style.backgroundImage = "url('/img/Hostage_Adventure.png')";
             overlay.style.display = "block"; // Show dark overlay
             break;

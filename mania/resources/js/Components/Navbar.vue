@@ -60,7 +60,7 @@ onUnmounted(() => {
 <template>
     <nav class="upper_menu">
         <!-- LEFT SIDE ICON -->
-        <img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
+        <a href="/"><img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon"></a>
         <img src="../../../public/img/name_logo.png" class="namelogo">
 
         <!-- HAMBURGER MENU ICON -->
@@ -72,7 +72,6 @@ onUnmounted(() => {
         <span v-if="isDropdownOpen" class="dropdown">
             <ul>
                 <li>
-                    <a href="/"><i class="fa-solid fa-house"></i> Home</a>
                     <a href="/about"><i class="fa-regular fa-user"></i> About</a>
                     <a href="/contacts"><i class="fa-solid fa-phone"></i> Contacts</a>
                     <a href="/shop" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-shop"></i> Shop</a>
@@ -82,7 +81,7 @@ onUnmounted(() => {
 
         <!-- BUTTONS IN THE MIDDLE (Visible on larger screens) -->
         <div class="button-container">
-            <a href="/"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>
+<!--            <a href="/"><button class="centered_button"><i class="fa-solid fa-house"></i> Home</button></a>-->
             <a href="/about"><button><i class="fa-regular fa-user"></i> About</button></a>
             <a href="/contacts"><button><i class="fa-solid fa-phone"></i> Contacts</button></a>
             <a href="/shop" target="_blank" rel="noopener noreferrer"><button><i class="fa-solid fa-shop"></i> Shop</button></a>
@@ -92,16 +91,22 @@ onUnmounted(() => {
         <div class="right-side-icons">
             <img src="../../../public/img/YT_logo.png" class="YT_logo">
 
-            <!-- USER ICON WITH DROPDOWN -->
-            <div v-if="currentUser" class="user-icon-container">
-                <!-- USER ICON (CLICK TO TOGGLE DROPDOWN) -->
-                <i class="fa-solid fa-circle-user" @click="toggleUserDropdown"></i>
-
-                <!-- DROPDOWN MENU -->
-                <div v-if="userDropdownOpen" ref="dropdownRef" class="user-dropdown">
-                    <p><strong>{{ currentUser.username }}</strong></p>
-                    <p>{{ currentUser.email }}</p>
-                    <button @click="$emit('logout')">Log Out</button>
+            <!-- USER ICON OR SIGN IN -->
+            <div>
+                <div v-if="currentUser" class="user-icon-container">
+                    <!-- Logged-in user: show icon and dropdown -->
+                    <i class="fa-solid fa-circle-user" @click="toggleUserDropdown" :title="currentUser.username"></i>
+                    <div v-if="userDropdownOpen" ref="dropdownRef" class="user-dropdown">
+                        <p><strong>{{ currentUser.username }}</strong></p>
+                        <p>{{ currentUser.email }}</p>
+                        <button @click="$emit('logout')">Log Out</button>
+                    </div>
+                </div>
+                <div v-else>
+                    <!-- Not logged in: show Sign in button -->
+                    <a href="/login">
+                        <button class="signin-button">Sign in</button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -204,7 +209,23 @@ body {
     padding-right: 200px;
 }
 
-button {
+.signin-button {
+    background: linear-gradient(to bottom, #e74c3c, #c0392b);
+    color: white;
+    padding: 5px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.signin-button:hover {
+    background: #a93226;
+}
+
+
+.button-container button {
     background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
     color: black;
     padding: 5px 20px;
@@ -215,7 +236,7 @@ button {
     outline: 1px solid black;
 }
 
-button:hover {
+.button-container button:hover {
     transform: scale(1.1);
     transition: transform 0.1s ease;
     animation: hoverUp 0.5s forwards;

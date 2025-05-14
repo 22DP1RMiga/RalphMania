@@ -7,7 +7,7 @@ import Footer from '../Components/Footer.vue'
 
 <template>
     <main>
-        <Navbar/>
+        <Navbar :currentUser="currentUser" @logout="logoutUser" />
         <About_UpperWave/>
         <About_Improvision/>
         <Footer/>

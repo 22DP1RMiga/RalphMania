@@ -10,8 +10,8 @@
                 <div class="content">
                     <div class="spacing">
                         a funny color spam solution - THE PART
-                    </div><br>
-                    <img src="../../../public/img/Tran La Lout.png" alt="latest" width="150px" height="100px">
+                    </div>
+                    <img src="../../../public/img/Tran La Lout.png" alt="latest">
                 </div>
             </button>
         </a>
@@ -22,7 +22,7 @@
                 <div class="content">
                     <div class="spacing">
                         When Magpipe joins Australind.. and cooks gud (GP by Me and @Kcool.101)
-                    </div><br>
+                    </div>
                     <img src="../../../public/img/Magpipe Australind.png" alt="2nd latest">
                 </div>
             </button>
@@ -34,8 +34,8 @@
                 <div class="content">
                     <div class="spacing">
                         "COME UP" by Team Epil // (NCS Gauntlet Contest)
-                    </div><br>
-                    <img src="../../../public/img/COME UP.png" alt="3rd latest" width="150px" height="100px">
+                    </div>
+                    <img src="../../../public/img/COME UP.png" alt="3rd latest">
                 </div>
             </button>
         </a>
@@ -69,6 +69,7 @@ button {
     justify-content: space-between; /* Pushes content apart */
     padding: 15px;
     text-align: center;
+    overflow: hidden;   /* Prevents content overflow */
 }
 
 button:hover {
@@ -77,19 +78,21 @@ button:hover {
 }
 
 .content {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    justify-content: space-between;
+    width: 100%;
 }
 
 .spacing {
-    width: 100%;
     font-size: 16px;
     font-family: cursive;
     font-weight: bold;
-    word-wrap: break-word;
-    white-space: normal;
+    margin-bottom: 10px;
+    max-height: 3.5em; /* Roughly 2 lines */
+    /*word-wrap: break-word;
+    /white-space: normal;*/
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2; /* Limits to 2 lines */
@@ -97,11 +100,12 @@ button:hover {
 }
 
 img {
-    width: 90%; /* Set image width */
-    height: 100%; /* Set image height */
+    width: 100%; /* Set image width */
+    max-height: 100%;
     object-fit: cover; /* Ensures images are cropped properly */
     border-radius: 10px;
     outline: 2px solid black;
+    margin-bottom: 10px;
 }
 
 /* RESPONSIVE DESIGN */
