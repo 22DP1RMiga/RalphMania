@@ -16,25 +16,25 @@
 </template>
 
 <style scoped>
-.improvision {
-    background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
-    margin-top: calc(5em);
-    outline: 2px solid darkred;
-    left: 0;
-    font-family: cursive;
-    padding: 20px;
-    display: flex;
-    justify-content: center; /* Centers content horizontally */
-    align-items: center; /* Centers content vertically */
-    text-align: center; /* Centers text */
-    flex-direction: column; /* Stacks elements inside */
-}
+    .improvision {
+        background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
+        margin-top: calc(5em);
+        outline: 2px solid darkred;
+        left: 0;
+        font-family: cursive;
+        padding: 20px;
+        display: flex;
+        justify-content: center; /* Centers content horizontally */
+        align-items: center; /* Centers content vertically */
+        text-align: center; /* Centers text */
+        flex-direction: column; /* Stacks elements inside */
+    }
 
-.moved_text h1 {
-    font-size: 24px;
-}
+    .moved_text h1 {
+        font-size: 24px;
+    }
 
-.yt_link:hover {
-    color: #741616;
-}
+    .yt_link:hover {
+        color: #741616;
+    }
 </style>

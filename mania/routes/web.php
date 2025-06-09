@@ -2,8 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
 
-// For Home page
+// Home
 Route::get('/', function () {
     return Inertia::render('HomeView', [
         'background-image' => '../public/img/Coder_RoltonsLV.png',
@@ -11,7 +13,7 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-// For About page
+// About
 Route::get('/about', function () {
     return Inertia::render('AboutView', [
         'background' => '../public/img/Hostage_Adventure.png',
@@ -20,7 +22,7 @@ Route::get('/about', function () {
     ]);
 })->name('about');
 
-// For Contacts page
+// Contacts
 Route::get('/contacts', function () {
     return Inertia::render('ContactsView', [
         'background' => '../public/img/Hostage_Adventure.png',
@@ -29,7 +31,7 @@ Route::get('/contacts', function () {
     ]);
 })->name('contacts');
 
-// For Shop page
+// Shop
 Route::get('/shop', function () {
     return Inertia::render('ShopView', [
         'background' => 'white',
@@ -37,7 +39,7 @@ Route::get('/shop', function () {
     ]);
 })->name('shop');
 
-// For Login page
+// Login
 Route::get('/login', function () {
     return Inertia::render('LoginView', [
         'background' => 'white',
@@ -45,10 +47,24 @@ Route::get('/login', function () {
     ]);
 })->name('login');
 
-// For Register page
+// Register
 Route::get('/register', function () {
     return Inertia::render('RegisterView', [
         'background' => 'white',
         'title' => 'REGISTER | RalphMania'
     ]);
 })->name('register');
+
+Route::get('/api/is-logged-in', function () {
+    return response()->json([
+        'isLoggedIn' => auth()->check(),
+        'user' => auth()->user(), // Include the authenticated user
+    ]);
+});
+
+// POST: Register
+//Route::post('/register', [RegisterController::class, 'register'])->name('registration');
+
+// POST: Login
+//Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
+

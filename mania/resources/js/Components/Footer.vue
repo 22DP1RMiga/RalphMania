@@ -25,8 +25,8 @@
     justify-content: center; /* Center content horizontally */
     align-items: center; /* Center content vertically */
     border-top: 2px solid #000000;
-    position: absolute;
-    z-index: 10; /* Higher z-index to render on top */
+    position: relative;
+    z-index: 10000000; /* Higher z-index to render on top */
     bottom: 0;
     left: 0;
     width: 100%;

@@ -1,59 +1,33 @@
 <script setup>
-import { ref, defineProps, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
+import { useUser } from '../stores/user.js';
+import axios from 'axios';
+import { useRouter } from 'vue-router';  // For navigation after logout
 
-const props = defineProps({
-    currentUser: Object
-});
+const { isLoggedIn, user } = useUser(); // Use your custom composable to check login status
+const isMenuActive = ref(false);
+const router = useRouter();  // For redirecting after logout
 
-// States for dropdowns
-const userDropdownOpen = ref(false);
-const isDropdownOpen = ref(false);
 
-// Toggle User Dropdown
-const toggleUserDropdown = () => {
-    userDropdownOpen.value = !userDropdownOpen.value;
-};
+// Logout function
+const logout = async () => {
+    try {
+        // Send a POST request to the Laravel logout route
+        await axios.post('/logout');
 
-// Toggle Hamburger Menu Dropdown
-const toggleHamburgerMenu = () => {
-    isDropdownOpen.value = !isDropdownOpen.value;
-};
+        // After successful logout, update the login state
+        if (isLoggedIn?.value !== undefined) isLoggedIn.value = false;
 
-// Close dropdowns when clicking outside
-const handleClickOutside = (event) => {
-    const userDropdown = document.querySelector('.user-dropdown');
-    const userIcon = document.querySelector('.fa-circle-user');
-    const dropdownMenu = document.querySelector('.dropdown');
-    const hamburgerIcon = document.querySelector('.hamburger-menu');
-
-    if (
-        userDropdownOpen.value &&
-        userDropdown &&
-        !userDropdown.contains(event.target) &&
-        !userIcon.contains(event.target)
-    ) {
-        userDropdownOpen.value = false;
-    }
-
-    if (
-        isDropdownOpen.value &&
-        dropdownMenu &&
-        !dropdownMenu.contains(event.target) &&
-        !hamburgerIcon.contains(event.target)
-    ) {
-        isDropdownOpen.value = false;
+    } catch (error) {
+        console.error('Error logging out:', error);
     }
 };
 
-// Add event listener when component is mounted
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-});
+const goToUserPage = () => {
+    window.location.href = "/user";
+};
 
-// Remove event listener when component is unmounted
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
-});
+
 </script>
 
 <!--WEB BUILD (TEMPLATE)-->
@@ -61,7 +35,7 @@ onUnmounted(() => {
     <nav class="upper_menu">
         <!-- LEFT SIDE ICON -->
         <a href="/"><img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon"></a>
-        <img src="../../../public/img/name_logo.png" class="namelogo">
+        <a href="/"><img src="../../../public/img/name_logo.png" class="namelogo"></a>
 
         <!-- HAMBURGER MENU ICON -->
         <div class="hamburger-menu" @click="isDropdownOpen = !isDropdownOpen">
@@ -93,19 +67,29 @@ onUnmounted(() => {
 
             <!-- USER ICON OR SIGN IN -->
             <div>
-                <div v-if="currentUser" class="user-icon-container">
+                <div v-if="isLoggedIn" class="user-icon-container">
                     <!-- Logged-in user: show icon and dropdown -->
-                    <i class="fa-solid fa-circle-user" @click="toggleUserDropdown" :title="currentUser.username"></i>
-                    <div v-if="userDropdownOpen" ref="dropdownRef" class="user-dropdown">
-                        <p><strong>{{ currentUser.username }}</strong></p>
-                        <p>{{ currentUser.email }}</p>
-                        <button @click="$emit('logout')">Log Out</button>
+                    <i
+                        class="fa-solid fa-circle-user"
+                        @click="toggleUserDropdown"
+                        :title="userStore.currentUser.username"
+                    ></i>
+                    <div v-if="userDropdownOpen" class="user-dropdown">
+                        <p><strong>{{ userStore.currentUser.username }}</strong></p>
+                        <p>{{ userStore.currentUser.email }}</p>
+                        <button @click="logout">Log Out</button>
+<!--                        <button @click="$emit('logout')">Log Out</button>-->
                     </div>
                 </div>
                 <div v-else>
-                    <!-- Not logged in: show Sign in button -->
+                    <!-- Not logged in: show "Sign in" button -->
                     <a href="/login">
                         <button class="signin-button">Sign in</button>
+                    </a>
+
+                    <!-- Not logged in: show "Sign Up" button -->
+                    <a href="/register">
+                        <button class="signup-button">Sign up</button>
                     </a>
                 </div>
             </div>
@@ -137,7 +121,7 @@ body {
 
 .namelogo {
     height: 35px;
-    width: max;
+    width: 100%;
 }
 
 .RoltonsLV_Icon, .YT_logo {
@@ -155,7 +139,7 @@ body {
 
 .right-side-icons i {
     font-size: 35px;
-    //cursor: pointer;
+    /*cursor: pointer;*/
 }
 
 .right-side-icons i:hover {
@@ -218,10 +202,28 @@ body {
     font-size: 16px;
     cursor: pointer;
     margin-left: 10px;
+    outline: 1px solid black;
+}
+
+.signup-button {
+    background: black;
+    color: white;
+    padding: 5px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+    outline: 1px solid black;
 }
 
 .signin-button:hover {
     background: #a93226;
+}
+
+.signup-button:hover {
+    background: linear-gradient(to bottom, #ffffff, #979797);
+    color: black;
 }
 
 
@@ -270,12 +272,12 @@ body {
     box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
     min-width: 150px;
     z-index: 1000;
-    //right: 0;
-    //background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
-    //display: flex;
-    //flex-direction: column;
-    //align-items: center;
-    //width: 100%;
+    /*right: 0;
+    background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;*/
 }
 
 .dropdown ul {
@@ -292,13 +294,13 @@ body {
     color: black;
     text-decoration: none;
     font-size: 16px;
-    //font-weight: bold;
-    //display: block;
-    //padding: 10px;
+    /*font-weight: bold;
+    display: block;
+    padding: 10px;*/
 }
 
 .dropdown li:hover {
-    //background: rgba(255, 255, 255, 0.2);
+    /*background: rgba(255, 255, 255, 0.2);*/
     background: rgba(0, 0, 0, 0.1);
 }
 

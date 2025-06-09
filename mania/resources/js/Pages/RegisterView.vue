@@ -1,63 +1,107 @@
 <script setup>
-    import { ref } from 'vue'
-    import { useRouter } from 'vue-router'
-    import axios from 'axios'
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import {route} from "ziggy-js";
+import Navbar from "../Components/Navbar.vue";
 
-    import Navbar from '../Components/Navbar.vue'
-    import Footer from '../Components/Footer.vue'
-    import Register from '../Components/Register.vue'
+const form = useForm({
+    username: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+});
 
-    const router = useRouter()
-
-    const username = ref('')
-    const email = ref('')
-    const password = ref('')
-    const confirmPassword = ref('')
-    const errorMessage = ref('')
-
-    const registerUser = async () => {
-        errorMessage.value = ''
-
-        if (!username.value || !email.value || !password.value || !confirmPassword.value) {
-            errorMessage.value = 'All fields are required!'
-            return
-        }
-
-        if (password.value !== confirmPassword.value) {
-            errorMessage.value = 'Passwords do not match!'
-            return
-        }
-
-        try {
-            await axios.post('http://localhost:8000/api/register', {
-                username: username.value,
-                email: email.value,
-                password: password.value
-            })
-            router.push('/login')
-        } catch (error) {
-            errorMessage.value = error.response?.data?.message || 'Registration failed!'
-        }
-    }
+const submit = () => {
+    form.post(route('register'), {
+        onError: (errors) => console.log(errors),
+        onFinish: () => form.reset('password', 'password_confirmation'),
+    });
+};
 </script>
 
 <template>
-    <Navbar />
-    <Register
-        :username="username"
-        :email="email"
-        :password="password"
-        :confirmPassword="confirmPassword"
-        :errorMessage="errorMessage"
-        @update:username="val => username = val"
-        @update:email="val => email = val"
-        @update:password="val => password = val"
-        @update:confirmPassword="val => confirmPassword = val"
-        @register="registerUser"
-    />
-    <Footer />
+    <main class="page-wrapper">
+        <Navbar/>
+        <div class="form-box">
+            <img src="../../../public/img/RoltonsLV_Icon.png" class="RoltonsLV_Icon">
+            <h2>Register</h2>
+            <div v-if="errors">
+                <ul>
+                    <li v-for="(msg, field) in errors" :key="field" style="color: red">{{ msg[0] }}</li>
+                </ul>
+            </div>
+            <input v-model="form.username" placeholder=" Username" />
+            <input v-model="form.email" placeholder=" Email" />
+            <input v-model="form.password" type="password" placeholder=" Password" />
+            <input v-model="form.password_confirmation" type="password" placeholder=" Confirm Password" />
+            <button class="signin-button" @click="submit">Sign Up</button>
+            <p>
+                Have an account?
+                <a href="/login" class="text-blue-500 hover:underline">Sign In</a>
+            </p>
+        </div>
+        <Footer />
+    </main>
 </template>
 
 <style scoped>
-</style>
+    h2 {
+        font-size: 40px;
+    }
 
+    .page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .form-box {
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: linear-gradient(to bottom, rgb(229, 112, 112), rgb(143, 69, 69));
+        outline: 2px solid darkred;
+        font-family: cursive;
+        padding: 20px;
+        text-align: center;
+        align-items: center;
+    }
+
+    .moved_text h1 {
+        font-size: 24px;
+    }
+
+    .RoltonsLV_Icon {
+        max-width: 200px; /* Set the size for the images */
+        padding-right: 10px;
+        padding-left: 5px;
+        height: auto;
+    }
+
+    .signin-button {
+        background: linear-gradient(to bottom, #af352b, #8e2921);
+        color: white;
+        padding: 5px 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 10px;
+        outline: 1px solid black;
+    }
+
+    .signin-button:hover {
+        background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        color: white;
+        padding: 5px 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 10px;
+        outline: 1px solid black;
+    }
+</style>

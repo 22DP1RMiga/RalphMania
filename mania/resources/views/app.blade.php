@@ -20,7 +20,7 @@
     @inertia
 
     <div id="background-dark-overlay"></div>
-    <script src="{{ asset('js/background.js') }}"></script>
+{{--    <script src="{{ asset('../../../js/background.js') }}"></script>--}}
 {{--    @vite('resources/js/background.js')--}}
 </body>
 
@@ -45,6 +45,7 @@
         pointer-events: none;
         display: none; /* Hidden by default */
     }
+
 </style>
 
 </html>
