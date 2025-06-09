@@ -2,7 +2,6 @@
 import {route} from "ziggy-js";
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import Navbar from "../Components/Navbar.vue";
-import login from "../Components/Login.vue";
 
 const form = useForm({
     email: '',
@@ -28,7 +27,7 @@ const submit = () => {
 
             <input v-model="form.email" placeholder=" Email (or Username)" />
             <input v-model="form.password" type="password" placeholder=" Password" />
-            <button class="signin-button" @click="login">Sign In</button>
+            <button class="signin-button" @click=submit>Sign In</button>
 
             <p>
                 Don't have an account?

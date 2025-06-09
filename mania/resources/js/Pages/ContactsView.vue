@@ -1,12 +1,10 @@
 <script setup>
 import Navbar from '../Components/Navbar.vue'
 import Footer from '../Components/Footer.vue'
+import ContactBox from '../Components/ContactBox.vue'
 import { ref, onMounted } from 'vue'
 
 const user = ref(null)
-const title = ref('')
-const message = ref('')
-const success = ref(false)
 
 onMounted(() => {
     const storedUser = localStorage.getItem('currentUser')
@@ -15,26 +13,8 @@ onMounted(() => {
     }
 })
 
-const sendMessage = async () => {
-    if (!title.value || !message.value) return
-
-    try {
-        // Example API call — replace with actual endpoint
-        await fetch('http://localhost:8000/api/contact', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: user.value.email,
-                title: title.value,
-                message: message.value,
-            })
-        })
-        success.value = true
-        title.value = ''
-        message.value = ''
-    } catch (err) {
-        console.error(err)
-    }
+const handleSent = () => {
+    console.log('Message sent!')
 }
 </script>
 
@@ -44,15 +24,11 @@ const sendMessage = async () => {
     <div class="contact-wrapper">
         <h1>Contact RoltonsLV</h1>
 
-        <div v-if="user" class="contact-box">
-            <input v-model="title" type="text" placeholder="Message Title" />
-            <input type="email" :value="user.email" disabled />
-            <textarea v-model="message" placeholder="Your message here..."></textarea>
-            <button @click="sendMessage">Send</button>
-            <p v-if="success">Message sent successfully!</p>
+        <div v-if="user">
+            <ContactBox :userEmail="user.email" @message-sent="handleSent" />
         </div>
 
-        <p v-else>Please log in to contact RoltonsLV.</p>
+        <p v-else class="note-for-login">Please log in to contact RoltonsLV.</p>
     </div>
 
     <Footer />
@@ -63,25 +39,8 @@ const sendMessage = async () => {
     padding: 30px;
     text-align: center;
 }
-.contact-box {
-    max-width: 500px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-}
-.contact-box input,
-.contact-box textarea {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
-.contact-box button {
-    background-color: firebrick;
+
+.note-for-login {
     color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 6px;
-    cursor: pointer;
 }
 </style>

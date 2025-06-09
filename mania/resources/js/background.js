@@ -22,7 +22,9 @@ export default function updateBackground(route) {
             break;
 
         case "/shop":
-            body.style.backgroundColor = "rgb(255, 255, 255)";
+            // body.style.backgroundColor = "rgb(255, 255, 255)";
+            body.style.backgroundImage = "url('/img/Shop1.jpg')";
+            overlay.style.display = "block"; // Show dark overlay
             break;
 
         default:

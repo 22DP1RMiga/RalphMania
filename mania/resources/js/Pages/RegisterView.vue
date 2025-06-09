@@ -49,12 +49,13 @@ const submit = () => {
     }
 
     .page-wrapper {
-        min-height: 100vh;
+        min-height: 80vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         position: relative;
+        margin-top: 80px;
     }
 
     .form-box {

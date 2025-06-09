@@ -15,6 +15,7 @@ import Footer from '../Components/Footer.vue'
 </template>
 
 <style>
+
 @media screen and (min-width: 1024px) {
     .about {
         min-height: 100vh;

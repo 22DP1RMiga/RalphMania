@@ -1,11 +1,13 @@
 <script setup>
-import Navbar_shop from '../Components/Navbar_shop.vue'
+import Navbar from '../Components/Navbar.vue'
 import Footer from '../Components/Footer.vue'
+import ShopCatalog from '../Components/ShopCatalog.vue'
 </script>
 
 <template>
     <main>
-        <Navbar_shop/>
+        <Navbar/>
+        <ShopCatalog/>
         <Footer/>
     </main>
 </template>
