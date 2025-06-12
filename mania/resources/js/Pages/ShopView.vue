@@ -15,7 +15,7 @@ import {Head} from "@inertiajs/vue3";
 </template>
 
 <style>
-    body {
+    /*body {
         background-image: url('../../../public/img/Shop1.jpg');
-    }
+    }*/
 </style>

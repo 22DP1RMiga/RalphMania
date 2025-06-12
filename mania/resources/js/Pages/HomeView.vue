@@ -18,7 +18,7 @@ import {Head} from "@inertiajs/vue3";
 </template>
 
 <style>
-    body {
+    /*body {
         background-image: url('../../../public/img/Coder_RoltonsLV.png');
-    }
+    }*/
 </style>

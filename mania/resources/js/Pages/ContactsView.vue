@@ -2,17 +2,21 @@
 import Navbar from '../Components/Navbar.vue'
 import Footer from '../Components/Footer.vue'
 import ContactBox from '../Components/ContactBox.vue'
-import { ref, onMounted } from 'vue'
-import {Head} from "@inertiajs/vue3";
+import { ref } from 'vue';
+import { Link, usePage } from "@inertiajs/vue3";
 
-const user = ref(null)
+const page = usePage();
+const user = page.props.auth.user;
+const isDropdownOpen = ref(false);
 
-onMounted(() => {
-    const storedUser = localStorage.getItem('currentUser')
-    if (storedUser) {
-        user.value = JSON.parse(storedUser)
-    }
-})
+defineProps({
+    canLogin: {
+        type: Boolean,
+    },
+    canRegister: {
+        type: Boolean,
+    },
+});
 
 const handleSent = () => {
     console.log('Message sent!')
@@ -37,11 +41,11 @@ const handleSent = () => {
 </template>
 
 <style scoped>
-body {
+/*body {
     background-image:
         url('../../../public/img/Hostage_Adventure.png'),
         linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7));
-}
+}*/
 
 .contact-wrapper {
     padding: 30px;

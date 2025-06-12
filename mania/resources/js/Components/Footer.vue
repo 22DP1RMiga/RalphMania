@@ -15,6 +15,16 @@
 </template>
 
 <style scoped>
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 .footer {
     background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
     padding: 5px;
@@ -25,7 +35,12 @@
     align-items: center;
     border-top: 2px solid #000000;
     width: 100%;
-    margin-bottom: 0;
+    margin-top: auto; /* Push footer to the bottom */
+    position: relative; /* Ensure footer is positioned correctly */
+    z-index: 1000; /* Ensure footer is above other content */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3); /* Optional: add shadow for depth */
+    font-family: 'cursive';
+    color: white; /* Default text color */
 }
 
 .text-container {

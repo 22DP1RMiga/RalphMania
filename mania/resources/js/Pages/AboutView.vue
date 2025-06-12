@@ -20,9 +20,9 @@ import {Head} from "@inertiajs/vue3";
 
 <style>
 
-body {
+/*body {
     background-image: url('../../../public/img/Hostage_Adventure.png');
-}
+}*/
 
 @media screen and (min-width: 1024px) {
     .about {

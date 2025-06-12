@@ -26,6 +26,7 @@ const showingNavigationDropdown = ref(false);
                                     <ApplicationLogo
                                         class="block h-9 w-auto fill-current text-red-800"
                                     />
+<!--                                    <img src="public/img/RoltonsLV_Icon.png">-->
                                 </Link>
                             </div>
 

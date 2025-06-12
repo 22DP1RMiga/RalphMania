@@ -16,6 +16,15 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
+        <div id="background-dark-overlay" style="
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 0;
+            pointer-events: none;">
+        </div>
+
         <div class="min-h-screen flex flex-col">
             <main class="flex-grow">
                 @inertia
