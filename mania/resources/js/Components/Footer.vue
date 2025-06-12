@@ -1,6 +1,5 @@
 <template>
     <footer class="footer">
-        <!-- text -->
         <div class="text-container">
             <p class="moved-text">© 2025 by RalphMania</p>
         </div>
@@ -26,7 +25,7 @@
     align-items: center;
     border-top: 2px solid #000000;
     width: 100%;
-    margin-top: auto; /* This is key for sticky footer */
+    margin-bottom: 0;
 }
 
 .text-container {

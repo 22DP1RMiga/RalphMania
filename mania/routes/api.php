@@ -10,7 +10,6 @@ Route::get('/register', [RegisterController::class, 'create']);
 Route::post('/register', [RegisterController::class, 'store'])->name('register');
 Route::get('/login', [LoginController::class, 'create']);
 Route::post('/login', [LoginController::class, 'store']);
-Route::post('/logout', [LogoutController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::get('/user', function (Request $request) {
     return $request->user();

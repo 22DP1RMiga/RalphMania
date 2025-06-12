@@ -13,7 +13,7 @@ class User extends Authenticatable {
 
 //    protected $table = 'users';
     protected $fillable = [
-        'username', 'email', 'password', 'api_token'
+        'name', 'email', 'password', 'api_token'
     ];
 
     protected $hidden = [
