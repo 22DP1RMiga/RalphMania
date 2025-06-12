@@ -3,6 +3,7 @@ import Navbar from '../Components/Navbar.vue'
 import Footer from '../Components/Footer.vue'
 import ContactBox from '../Components/ContactBox.vue'
 import { ref, onMounted } from 'vue'
+import {Head} from "@inertiajs/vue3";
 
 const user = ref(null)
 
@@ -19,6 +20,7 @@ const handleSent = () => {
 </script>
 
 <template>
+    <Head title="CONTACTS" />
     <Navbar />
 
     <div class="contact-wrapper">
@@ -35,6 +37,12 @@ const handleSent = () => {
 </template>
 
 <style scoped>
+body {
+    background-image:
+        url('../../../public/img/Hostage_Adventure.png'),
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7));
+}
+
 .contact-wrapper {
     padding: 30px;
     text-align: center;

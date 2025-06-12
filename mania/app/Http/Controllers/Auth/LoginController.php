@@ -5,65 +5,68 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use App\Models\User;
-
-
-use App\Http\Requests\Auth\LoginRequest;
-use App\Models\Admins;
-use Illuminate\Http\RedirectResponse;
-
-
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Inertia\Response;
+use Laravel\Sanctum\HasApiTokens;
 
 class LoginController extends Controller
 {
+    /**
+     * Handle user login request
+     */
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        // Validate input
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+        ]);
 
-        // If the input is a username, modify credentials to search by username
-        if (filter_var($credentials['email'], FILTER_VALIDATE_EMAIL)) {  // Fixed: Added closing parenthesis
-            $user = User::where('email', $credentials['email'])->first();
-        } else {
-            $user = User::where('username', $credentials['email'])->first();
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+        // Attempt authentication
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid credentials'
+            ], 401);
         }
 
-        return response()->json(['message' => 'Login successful', 'user' => $user]);
-    }
-//        $user = User::where('email', $credentials['email'])
-//            ->orWhere('username', $credentials['username'])
-//            ->first();
-//
-//        if (!$user || !Hash::check($credentials['password'], $user->password)) {
-//            return response()->json(['error' => 'Invalid credentials'], 401);
-//        }
-//
-//        return response()->json(['message' => 'Login successful', 'user' => $user]);
+        $user = User::where('email', $request->email)->first();
 
-    public function create(): Response
-    {
-        return Inertia::render('/LoginView', [
-            'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
+        // Create secure API token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'user' => $user,
+            'authorization' => [
+                'token' => $token,
+                'type' => 'bearer',
+                'expires_in' => config('sanctum.expiration') // Token expiry time
+            ]
         ]);
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Handle user logout request
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function logout(Request $request)
     {
-        $request->authenticate();
+        // Revoke all tokens (for Sanctum)
+        $request->user()->tokens()->delete();
 
-        $request->session()->regenerate();
+        // Or for current token only:
+        // $request->user()->currentAccessToken()->delete();
 
-        return redirect()->intended(route('home', absolute: false));
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Successfully logged out'
+        ]);
     }
 }

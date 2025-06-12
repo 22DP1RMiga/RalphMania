@@ -1,70 +1,50 @@
 <?php
 
+use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\LoginController;
 
-// Home
+// START PAGE
 Route::get('/', function () {
-    return Inertia::render('HomeView', [
-        'background-image' => '../public/img/Coder_RoltonsLV.png',
-        'title' => 'HOME | RalphMania'
-    ]);
-})->name('home');
-
-// About
-Route::get('/about', function () {
-    return Inertia::render('AboutView', [
-        'background' => '../public/img/Hostage_Adventure.png',
-        'overlay' => true,
-        'title' => 'ABOUT | RalphMania'
-    ]);
-})->name('about');
-
-// Contacts
-Route::get('/contacts', function () {
-    return Inertia::render('ContactsView', [
-        'background' => '../public/img/Hostage_Adventure.png',
-        'overlay' => true,
-        'title' => 'CONTACTS | RalphMania'
-    ]);
-})->name('contacts');
-
-// Shop
-Route::get('/shop', function () {
-    return Inertia::render('ShopView', [
-        'background' => 'white',
-        'title' => 'SHOP | RalphMania'
-    ]);
-})->name('shop');
-
-// Login
-Route::get('/login', function () {
-    return Inertia::render('LoginView', [
-        'background' => 'white',
-        'title' => 'LOGIN | RalphMania'
-    ]);
-})->name('login');
-
-// Register
-Route::get('/register', function () {
-    return Inertia::render('RegisterView', [
-        'background' => 'white',
-        'title' => 'REGISTER | RalphMania'
-    ]);
-})->name('register');
-
-Route::get('/api/is-logged-in', function () {
-    return response()->json([
-        'isLoggedIn' => auth()->check(),
-        'user' => auth()->user(), // Include the authenticated user
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'laravelVersion' => Application::VERSION,
+        'phpVersion' => PHP_VERSION,
     ]);
 });
 
-// POST: Register
-//Route::post('/register', [RegisterController::class, 'register'])->name('registration');
+// DASHBOARD
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-// POST: Login
-//Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
+// AUTHENTICATION
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [Controller::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [Controller::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [Controller::class, 'destroy'])->name('profile.destroy');
+});
 
+// HOME PAGE
+Route::get('/home', function () {
+    return Inertia::render('HomeView');
+});
+
+// ABOUT PAGE
+Route::get('/about', function () {
+    return Inertia::render('AboutView');
+});
+
+// CONTACTS PAGE
+Route::get('/contacts', function () {
+    return Inertia::render('ContactsView');
+})->middleware(['auth']);
+
+// SHOP PAGE
+Route::get('/shop', function () {
+    return Inertia::render('ShopView');
+});
+
+require __DIR__.'/auth.php';

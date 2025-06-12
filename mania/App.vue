@@ -1,29 +1,34 @@
 <script setup>
-    import Navbar from './resources/js/Components/Navbar.vue';
-    import Footer from './resources/js/Components/Footer.vue'
-    import { ref, onMounted } from 'vue'
-    // import { useUserStore } from './stores/user.js'
+import { onMounted, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import updateBackground from 'resources/js/background.js';
 
-    // const userStore = useUserStore();
-    const currentUser = ref(null)
+const page = usePage();
 
-    onMounted(() => {
-        const user = JSON.parse(localStorage.getItem('currentUser'))
-        if (user) {
-            currentUser.value = user
-        }
-    })
+onMounted(() => {
+    updateBackground(window.location.pathname);
+});
 
-    const logout = () => {
-        localStorage.removeItem('currentUser')
-        currentUser.value = null
-    }
+watch(() => page.url.value, (newRoute) => {
+    updateBackground(newRoute);
+});
 </script>
 
 <template>
-<!--    <Navbar :currentUser="userStore.user" @logout="userStore.clearUser" />-->
-    <Navbar :currentUser="currentUser" @logout="logout" />
-    <router-view />
-    <Footer />
+    <div>
+        <div id="background-dark-overlay"></div>
+        <slot />
+    </div>
 </template>
 
+<style>
+#background-dark-overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: -1;
+    display: none;
+}
+</style>

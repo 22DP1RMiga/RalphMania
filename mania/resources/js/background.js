@@ -9,7 +9,7 @@ export default function updateBackground(route) {
 
     // Apply backgrounds based on route
     switch (route) {
-        case "/":
+        case "/home":
             body.style.backgroundImage = "url('/img/Coder_RoltonsLV.png')";
             break;
 

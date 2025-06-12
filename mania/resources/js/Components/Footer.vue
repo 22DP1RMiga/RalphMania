@@ -1,5 +1,5 @@
 <template>
-    <nav class="footer">
+    <footer class="footer">
         <!-- text -->
         <div class="text-container">
             <p class="moved-text">© 2025 by RalphMania</p>
@@ -12,7 +12,7 @@
             <a href="https://github.com/22DP1RMiga"><button class="centered_button"><i class="fa-brands fa-github"></i></button></a>
             <a href="https://discord.gg/4Hzsp42ugg"><button class="centered_button"><i class="fa-brands fa-discord"></i></button></a>
         </div>
-    </nav>
+    </footer>
 </template>
 
 <style scoped>
@@ -21,15 +21,12 @@
     padding: 5px;
     outline: 1px solid black;
     display: flex;
-    flex-direction: column; /* Stack the items vertically */
-    justify-content: center; /* Center content horizontally */
-    align-items: center; /* Center content vertically */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     border-top: 2px solid #000000;
-    position: relative;
-    z-index: 10000000; /* Higher z-index to render on top */
-    bottom: 0;
-    left: 0;
     width: 100%;
+    margin-top: auto; /* This is key for sticky footer */
 }
 
 .text-container {
