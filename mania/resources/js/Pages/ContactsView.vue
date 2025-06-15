@@ -4,6 +4,7 @@ import Footer from '../Components/Footer.vue'
 import ContactBox from '../Components/ContactBox.vue'
 import { ref } from 'vue';
 import { Link, usePage } from "@inertiajs/vue3";
+import {Head} from "@inertiajs/vue3";
 
 const page = usePage();
 const user = page.props.auth.user;
@@ -24,7 +25,7 @@ const handleSent = () => {
 </script>
 
 <template>
-    <Head title="CONTACTS" />
+    <Head title="RalphMania || CONTACTS" />
     <Navbar />
 
     <div class="contact-wrapper">

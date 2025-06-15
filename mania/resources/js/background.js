@@ -11,6 +11,7 @@ export default function updateBackground(route) {
     switch (route) {
         case "/home":
             body.style.backgroundImage = "url('/img/Coder_RoltonsLV.png')";
+            overlay.style.display = "block"; // Show dark overlay
             break;
 
         case "/about":
@@ -18,7 +19,6 @@ export default function updateBackground(route) {
         case "/login":
         case "/register":
             body.style.backgroundImage = "url('/img/Hostage_Adventure.png')";
-            overlay.style.display = "block"; // Show dark overlay
             break;
 
         case "/shop":

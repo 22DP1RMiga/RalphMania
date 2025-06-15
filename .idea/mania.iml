@@ -121,6 +121,7 @@
       <excludeFolder url="file://$MODULE_DIR$/mania/vendor/voku/portable-ascii" />
       <excludeFolder url="file://$MODULE_DIR$/mania/vendor/webmozart/assert" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/composer" />
+      <excludeFolder url="file://$MODULE_DIR$/mania/vendor/laravel/breeze" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
