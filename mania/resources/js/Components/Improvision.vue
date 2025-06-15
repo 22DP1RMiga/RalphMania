@@ -34,7 +34,6 @@ const user = computed(() => usePage().props.auth.user)
         align-items: center; /* Centers content vertically */
         text-align: center; /* Centers text */
         flex-direction: column; /* Stacks elements inside */
-        z-index: 100;
     }
 
 
