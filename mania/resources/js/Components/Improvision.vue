@@ -1,10 +1,16 @@
-<script>
+<script setup>
+import { computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+
+const user = computed(() => usePage().props.auth.user)
 </script>
 
 <template>
     <nav class="improvision">
         <div class="moved_text">
-            <h1 style="font-weight: bold;">Welcome, {{ $page.props.auth.user.name }}!</h1>
+            <h1 style="font-weight: bold;">
+                Welcome<span v-if="user">, {{ user.name }}</span>!
+            </h1>
             <br>
             <p>A place to see more of RoltonsLV the latvian YouTuber of Geometry Dash and more!</p>
             <a href="https://www.youtube.com/@RoltonsLV" style="text-decoration: underline;" class="yt_link">Click here to visit the channel</a>

@@ -25,7 +25,7 @@ body {
     min-height: 100vh;
 }
 
-.footer {
+/*.footer {
     background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
     padding: 5px;
     outline: 1px solid black;
@@ -35,11 +35,31 @@ body {
     align-items: center;
     border-top: 2px solid #000000;
     width: 100%;
-    margin-top: auto; /* Push footer to the bottom */
-    position: relative; /* Ensure footer is positioned correctly */
-    z-index: 1000; /* Ensure footer is above other content */
+    margin-top: auto;
+    position: relative;
+    z-index: 1000;
     font-family: 'cursive';
-    color: white; /* Default text color */
+    color: white;
+}*/
+
+.footer {
+    background: linear-gradient(to bottom, firebrick, rgb(116, 22, 22));
+    padding: 10px;
+    outline: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-top: 2px solid #000000;
+    width: 100%;
+    margin-top: auto;
+    position: fixed;
+    z-index: 1000;
+    font-family: 'cursive';
+    color: white;
+    bottom: 0; /* Fixes the footer to the bottom of the page */
+    left: 0; /* Ensures the footer spans the full width */
+    box-sizing: border-box; /* Ensures padding is included in the width */
 }
 
 .text-container {

@@ -40,8 +40,8 @@ async function rate(videoId, stars) {
             <!-- Videos -->
             <iframe
                 class="video-iframe"
-                width="640"
-                height="320"
+                width="480"
+                height="240"
                 :src="`https://www.youtube.com/embed/${video.youtubeId}`"
                 frameborder="0"
                 allowfullscreen
