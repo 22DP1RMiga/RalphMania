@@ -1,10 +1,66 @@
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+import axios from 'axios'
 
+const user = usePage().props.auth.user
+
+const videos = [
+  { id: 1, youtubeId: 'GIRJISwkB_w', title: 'a funny color spam solution - THE PART' },
+  { id: 2, youtubeId: 'RCu-FQoDTUo', title: 'When Magpipe joins Australind.. and cooks gud (GP by Me and @Kcool.101)' },
+  { id: 3, youtubeId: 'JOa6WAF8PVM', title: '"COME UP" by Team Epil // (NCS Gauntlet Contest)' },
+  // Duplicated for demo
+  { id: 4, youtubeId: 'k_hNSKwB9nA', title: '[NCS DAILY] "Placid Ivy Grove" by @chutruongwaifu' },
+  { id: 5, youtubeId: 'Yo-p0cY23sM', title: '"hostage adventure" by truongwf // SPEEDRUN SECOND BEST 🥈 (0:12:762)' },
+  { id: 6, youtubeId: 'a0NmZw_XFGE', title: '[PREVIEW] "COME UP" by Team Epil // (NCS Gauntlet Contest)' },
+]
+
+const displayedVideos = user ? videos : videos.slice(0, 3)
+
+const userReviews = ref({})
+
+onMounted(async () => {
+  if (user) {
+    // Optionally, fetch user reviews from API
+    const res = await axios.get('/api/reviews');
+    userReviews.value = res.data;
+  }
+})
+
+async function rate(videoId, stars) {
+  if (!user) return
+  userReviews.value[videoId] = stars
+  await axios.post('/api/reviews', { video_id: videoId, stars })
+}
 </script>
 
 <template>
-    <!-- FOR THE LATEST VIDEO -->
     <div class="flex-container">
+        <div v-for="video in displayedVideos" :key="video.id" class="video-card">
+            <!-- <video :src="video.src" controls width="320"></video> -->
+            <iframe
+                width="320"
+                height="180"
+                :src="`https://www.youtube.com/embed/${video.youtubeId}`"
+                frameborder="0"
+                allowfullscreen
+            ></iframe>
+            <div>{{ video.title }}</div>
+            <div v-if="user">
+                <span v-for="star in 5" :key="star" @click="rate(video.id, star)">
+                <i
+                    class="fa-star"
+                    :class="star <= (userReviews[video.id] || 0) ? 'fas' : 'far'"
+                    style="color: gold; cursor: pointer;"
+                ></i>
+                </span>
+            </div>
+        </div>
+  </div>
+
+
+    <!-- FOR THE LATEST VIDEO -->
+    <!-- <div class="flex-container">
         <a href="https://www.youtube.com/watch?v=GIRJISwkB_w">
             <button>
                 <div class="content">
@@ -14,10 +70,10 @@
                     <img src="../../../public/img/Tran La Lout.png" alt="latest">
                 </div>
             </button>
-        </a>
+        </a> -->
 
         <!-- FOR THE 2ND LATEST VIDEO -->
-        <a href="https://www.youtube.com/watch?v=RCu-FQoDTUo">
+        <!-- <a href="https://www.youtube.com/watch?v=RCu-FQoDTUo">
             <button>
                 <div class="content">
                     <div class="spacing">
@@ -26,10 +82,10 @@
                     <img src="../../../public/img/Magpipe Australind.png" alt="2nd latest">
                 </div>
             </button>
-        </a>
+        </a> -->
 
         <!-- FOR THE 3RD LATEST VIDEO -->
-        <a href="https://www.youtube.com/watch?v=JOa6WAF8PVM">
+        <!-- <a href="https://www.youtube.com/watch?v=JOa6WAF8PVM">
             <button>
                 <div class="content">
                     <div class="spacing">
@@ -39,9 +95,8 @@
                 </div>
             </button>
         </a>
-
-        <!-- END OF THE FLEX CONTAINER -->
-    </div>
+    </div> -->
+    <!-- END OF THE FLEX CONTAINER -->
 </template>
 
 <style scoped>
@@ -50,8 +105,15 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     margin-top: 20px;
+    color: white;
+}
+
+.video-card {
+  flex: 1 1 30%;
+  max-width: 32%;
+  box-sizing: border-box;
 }
 
 button {
@@ -95,7 +157,7 @@ button:hover {
     /white-space: normal;*/
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Limits to 2 lines */
+    /*-webkit-line-clamp: 2;  Limits to 2 lines */
     -webkit-box-orient: vertical;
 }
 
