@@ -38,7 +38,6 @@ body {
     margin-top: auto; /* Push footer to the bottom */
     position: relative; /* Ensure footer is positioned correctly */
     z-index: 1000; /* Ensure footer is above other content */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3); /* Optional: add shadow for depth */
     font-family: 'cursive';
     color: white; /* Default text color */
 }

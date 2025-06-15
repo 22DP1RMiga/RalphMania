@@ -37,16 +37,21 @@ async function rate(videoId, stars) {
 <template>
     <div class="flex-container">
         <div v-for="video in displayedVideos" :key="video.id" class="video-card">
-            <!-- <video :src="video.src" controls width="320"></video> -->
+            <!-- Videos -->
             <iframe
-                width="320"
-                height="180"
+                class="video-iframe"
+                width="640"
+                height="320"
                 :src="`https://www.youtube.com/embed/${video.youtubeId}`"
                 frameborder="0"
                 allowfullscreen
             ></iframe>
-            <div>{{ video.title }}</div>
-            <div v-if="user">
+
+            <!-- Video titles -->
+            <div class="video-title">{{ video.title }}</div>
+
+            <!-- Star rates -->
+            <div v-if="user" class="stars">
                 <span v-for="star in 5" :key="star" @click="rate(video.id, star)">
                 <i
                     class="fa-star"
@@ -111,9 +116,42 @@ async function rate(videoId, stars) {
 }
 
 .video-card {
-  flex: 1 1 30%;
-  max-width: 32%;
-  box-sizing: border-box;
+    flex: 1 1 30%;
+    max-width: 32%;
+    box-sizing: border-box;
+    z-index: 100;
+}
+
+.video-iframe {
+    /*width: 100%;
+    height: 180px;*/
+    border: none;
+    border-radius: 10px;
+    outline: 2px solid black;
+    justify-self: center;
+}
+
+.video-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.video-title:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.fa-star {
+    font-size: 20px;
+    margin-right: 5px;
+}
+
+.stars {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
 }
 
 button {
