@@ -1,3 +1,5 @@
+-- OLD VIDEOS.VUE
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'

@@ -1,5 +1,6 @@
 <?php
 
+// Web stuff
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -46,5 +47,11 @@ Route::get('/contacts', function () {
 Route::get('/shop', function () {
     return Inertia::render('ShopView');
 });
+
+// TEST API ROUTE
+Route::get('/api/test-web', function () {
+    return response()->json(['message' => 'WEB ROUTE is working']);
+});
+
 
 require __DIR__.'/auth.php';

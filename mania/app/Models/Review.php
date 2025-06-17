@@ -6,23 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Review extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'video_id',
-        'stars',
-    ];
+    protected $fillable = ['user_id', 'video_id', 'stars'];
 
-    // protected $casts = [
-    //     'stars' => 'integer',
-    // ];
-
+    // Foreign key "user_id" relationships
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    
-    // public function video()
-    // {
-    //     return $this->belongsTo(Video::class);
-    // }
+
+    // Foreign key "video_id" relationships
+    public function video()
+    {
+        return $this->belongsTo(Video::class);
+    }
 }
