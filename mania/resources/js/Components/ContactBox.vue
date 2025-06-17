@@ -41,7 +41,7 @@ const sendMessage = async () => {
         <input type="email" :value="userEmail" disabled />
         <textarea v-model="message" placeholder="Your message here..."></textarea>
         <button @click="sendMessage">Send</button>
-        <p v-if="success">Message sent successfully!</p>
+        <p v-if="success" class="if-success-text">Message sent successfully!</p>
     </div>
 </template>
 
@@ -51,7 +51,9 @@ const sendMessage = async () => {
     margin: auto;
     display: flex;
     flex-direction: column;
+    padding: 70px 0;
 }
+
 .contact-box input,
 .contact-box textarea {
     margin: 10px 0;
@@ -59,12 +61,24 @@ const sendMessage = async () => {
     border-radius: 8px;
     border: 1px solid #ccc;
 }
+
 .contact-box button {
     background-color: firebrick;
+    outline: solid 2px darkred;
     color: white;
     border: none;
     padding: 10px;
     border-radius: 6px;
     cursor: pointer;
+}
+
+.contact-box button:hover {
+    background-color: rgb(207, 41, 41);
+}
+
+.if-success-text {
+    color: rgb(81, 193, 81);
+    font-weight: bold;
+    margin-top: 10px;
 }
 </style>

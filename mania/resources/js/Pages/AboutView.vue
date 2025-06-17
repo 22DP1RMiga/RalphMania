@@ -12,6 +12,7 @@ import {Head} from "@inertiajs/vue3";
     <main>
 <!--        <Navbar :currentUser="currentUser" @logout="logoutUser" />-->
         <Navbar/>
+        <br>
         <About_UpperWave/>
         <About_Improvision/>
         <Footer/>

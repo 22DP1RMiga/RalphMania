@@ -10,6 +10,7 @@
         </div>
 
         <div class="main-part">
+            <br>
             <p>Founded in 2024 by RoltonsLV. He is a Latvian YouTuber with more than 200 subscribers</p>
             <p>who decided to create a platform to help fans discover something more about his content creation.</p>
             <br>
