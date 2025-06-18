@@ -37,9 +37,9 @@ const user = usePage().props.auth.user
 
 // Composition API version of the logic
 const videos = ref([]);
-// const user = ref(null); // Will hold user info if logged in
 const userReviews = ref({}); // For future review system
 
+// Fetch videos from the backend
 function fetchVideos() {
     fetch('/videos')
         .then((response) => {
@@ -56,50 +56,66 @@ function fetchVideos() {
         });
 }
 
-// function fetchUser() {
-//     fetch('/api/user', { credentials: 'same-origin' })
-//         .then((response) => {
-//             if (response.status === 200) {
-//                 return response.json();
-//             }
-//             return null;
-//         })
-//         .then((data) => {
-//             user.value = data;
-//         })
-//         .catch(() => {
-//             user.value = null;
-//         });
-// }
+// Fetch user data from the backend
+function fetchUser() {
+    fetch('/user')
+        .then((response) => response.status === 200 ? response.json() : null)
+        .then((data) => {
+            this.user = data;
+        })
+        .catch(() => {
+            this.user = null;
+        });
+}
 
 // function setReview(videoId, stars) {
 //     userReviews.value[videoId] = stars;
 //     // Future: send to backend
 // }
-//
+
+function setReview(videoId, stars) {
+    if (!user) return; // Ensure user is logged in
+    userReviews.value[videoId] = stars;
+    // Future: send to backend
+    axios.post('/reviews', { video_id: videoId, stars })
+        .then(response => {
+            console.log("Review submitted:", response.data);
+        })
+        .catch(error => {
+            console.error("Error submitting review:", error);
+        });
+}
 const displayedVideos = user ? videos : videos.slice(0, 3)
 
 onMounted(() => {
     fetchVideos();
-    // fetchUser();
+    fetchUser();
 });
 </script>
 
 <template>
     <div class="flex-container">
+        <!-- For-loop for displaying videos -->
         <div
             v-for="(video, idx) in displayedVideos"
             :key="video.id"
             class="video-card"
         >
+        
+        <!-- Styled videos -->
             <iframe
-                width="320"
-                height="180"
+                class="video-iframe"
+                width="480"
+                height="240"
                 :src="`https://www.youtube.com/embed/${video.youtube_id}`"
                 frameborder="0"
                 allowfullscreen
             ></iframe>
+            
+            <!-- Video titles -->
             <div class="video-title">{{ video.title }}</div>
+            
+            <!-- 5 star reviews -->
             <div v-if="user" class="stars">
                 <span
                     v-for="star in 5"

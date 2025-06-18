@@ -52,7 +52,9 @@ body {
     align-items: center;
     border-top: 2px solid #000000;
     width: 100%;
-    margin-top: auto;
+    /*margin-top: auto;*/
+    margin: 0;
+    /*position: relative;*/
     position: fixed;
     z-index: 1000;
     font-family: 'cursive';
