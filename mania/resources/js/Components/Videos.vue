@@ -1,5 +1,3 @@
--- OLD VIDEOS.VUE
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
@@ -7,64 +5,117 @@ import axios from 'axios'
 
 const user = usePage().props.auth.user
 
-const videos = [
-  { id: 1, youtubeId: 'GIRJISwkB_w', title: 'a funny color spam solution - THE PART' },
-  { id: 2, youtubeId: 'RCu-FQoDTUo', title: 'When Magpipe joins Australind.. and cooks gud (GP by Me and @Kcool.101)' },
-  { id: 3, youtubeId: 'JOa6WAF8PVM', title: '"COME UP" by Team Epil // (NCS Gauntlet Contest)' },
-  // Duplicated for demo
-  { id: 4, youtubeId: 'k_hNSKwB9nA', title: '[NCS DAILY] "Placid Ivy Grove" by @chutruongwaifu' },
-  { id: 5, youtubeId: 'Yo-p0cY23sM', title: '"hostage adventure" by truongwf // SPEEDRUN SECOND BEST 🥈 (0:12:762)' },
-  { id: 6, youtubeId: 'a0NmZw_XFGE', title: '[PREVIEW] "COME UP" by Team Epil // (NCS Gauntlet Contest)' },
-]
+// const videos = [
+//   { id: 1, youtubeId: 'GIRJISwkB_w', title: 'a funny color spam solution - THE PART' },
+//   { id: 2, youtubeId: 'RCu-FQoDTUo', title: 'When Magpipe joins Australind.. and cooks gud (GP by Me and @Kcool.101)' },
+//   { id: 3, youtubeId: 'JOa6WAF8PVM', title: '"COME UP" by Team Epil // (NCS Gauntlet Contest)' },
+//   // Duplicated for demo
+//   { id: 4, youtubeId: 'k_hNSKwB9nA', title: '[NCS DAILY] "Placid Ivy Grove" by @chutruongwaifu' },
+//   { id: 5, youtubeId: 'Yo-p0cY23sM', title: '"hostage adventure" by truongwf // SPEEDRUN SECOND BEST 🥈 (0:12:762)' },
+//   { id: 6, youtubeId: 'a0NmZw_XFGE', title: '[PREVIEW] "COME UP" by Team Epil // (NCS Gauntlet Contest)' },
+// ]
 
+// const videos = []
+
+// const displayedVideos = user ? videos : videos.slice(0, 3)
+
+// const userReviews = ref({})
+
+// onMounted(async () => {
+//   if (user) {
+//     // Optionally, fetch user reviews from API
+//     const res = await axios.get('/api/reviews');
+//     userReviews.value = res.data;
+//   }
+// })
+
+// async function rate(videoId, stars) {
+//   if (!user) return
+//   userReviews.value[videoId] = stars
+//   await axios.post('/api/reviews', { video_id: videoId, stars })
+// }
+
+// Composition API version of the logic
+const videos = ref([]);
+// const user = ref(null); // Will hold user info if logged in
+const userReviews = ref({}); // For future review system
+
+function fetchVideos() {
+    fetch('/videos')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            videos.value = data;
+        })
+        .catch((error) => {
+            console.error("Error fetching videos:", error);
+        });
+}
+
+// function fetchUser() {
+//     fetch('/api/user', { credentials: 'same-origin' })
+//         .then((response) => {
+//             if (response.status === 200) {
+//                 return response.json();
+//             }
+//             return null;
+//         })
+//         .then((data) => {
+//             user.value = data;
+//         })
+//         .catch(() => {
+//             user.value = null;
+//         });
+// }
+
+// function setReview(videoId, stars) {
+//     userReviews.value[videoId] = stars;
+//     // Future: send to backend
+// }
+//
 const displayedVideos = user ? videos : videos.slice(0, 3)
 
-const userReviews = ref({})
-
-onMounted(async () => {
-  if (user) {
-    // Optionally, fetch user reviews from API
-    const res = await axios.get('/api/reviews');
-    userReviews.value = res.data;
-  }
-})
-
-async function rate(videoId, stars) {
-  if (!user) return
-  userReviews.value[videoId] = stars
-  await axios.post('/api/reviews', { video_id: videoId, stars })
-}
+onMounted(() => {
+    fetchVideos();
+    // fetchUser();
+});
 </script>
 
 <template>
     <div class="flex-container">
-        <div v-for="video in displayedVideos" :key="video.id" class="video-card">
-            <!-- Videos -->
+        <div
+            v-for="(video, idx) in displayedVideos"
+            :key="video.id"
+            class="video-card"
+        >
             <iframe
-                class="video-iframe"
-                width="480"
-                height="240"
-                :src="`https://www.youtube.com/embed/${video.youtubeId}`"
+                width="320"
+                height="180"
+                :src="`https://www.youtube.com/embed/${video.youtube_id}`"
                 frameborder="0"
                 allowfullscreen
             ></iframe>
-
-            <!-- Video titles -->
             <div class="video-title">{{ video.title }}</div>
-
-            <!-- Star rates -->
             <div v-if="user" class="stars">
-                <span v-for="star in 5" :key="star" @click="rate(video.id, star)">
-                <i
-                    class="fa-star"
-                    :class="star <= (userReviews[video.id] || 0) ? 'fas' : 'far'"
-                    style="color: gold; cursor: pointer;"
-                ></i>
+                <span
+                    v-for="star in 5"
+                    :key="star"
+                    @click="setReview(video.id, star)"
+                    style="cursor:pointer;"
+                >
+                    <i
+                        class="fa-star"
+                        :class="star <= (userReviews[video.id] || 0) ? 'fas' : 'far'"
+                        style="color: gold;"
+                    ></i>
                 </span>
             </div>
         </div>
-  </div>
-
+    </div>
 
     <!-- FOR THE LATEST VIDEO -->
     <!-- <div class="flex-container">

@@ -14,10 +14,10 @@ Route::get('/login', [LoginController::class, 'create']);
 Route::post('/login', [LoginController::class, 'store']);
 
 // API Routes: Videos
-Route::get('/videos', [VideoController::class, 'index']);
-Route::get('/videos', function () {
-    return \App\Models\Video::all();
-});
+//Route::get('/videos', [VideoController::class, 'index']);
+//Route::get('/videos', function () {
+//    return \App\Models\Video::all();
+//});
 
 // API Routes: Reviews
 Route::middleware('auth:sanctum')->post('/reviews', [ReviewController::class, 'store']);

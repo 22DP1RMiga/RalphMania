@@ -5,6 +5,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\VideoController;
+
+// API Routes: Videos
+Route::get('/videos', [VideoController::class, 'index']);
+
+// API Routes: Reviews
+Route::middleware('auth:sanctum')->post('/reviews', [ReviewController::class, 'store']);
 
 // START PAGE
 Route::get('/', function () {
