@@ -9,6 +9,8 @@ const messages = {
             contact: 'Kontakti',
             shop: 'Veikals',
             content: 'Saturs',
+            dashboard: 'Panelis',
+            profile: 'Profils',
         },
         auth: {
             login: 'Pieteikties',
@@ -350,6 +352,8 @@ const messages = {
             contact: 'Contact',
             shop: 'Shop',
             content: 'Content',
+            dashboard: 'Dashboard',
+            profile: 'Profile',
         },
         auth: {
             login: 'Login',

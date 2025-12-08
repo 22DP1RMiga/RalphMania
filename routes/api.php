@@ -17,7 +17,7 @@ Route::prefix('v1')->group(function () {
     // Products
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/featured', [ProductController::class, 'featured']);
-    Route::get('/products/{slug}', [ProductController::class, 'apiShow']); // ✅ Changed to apiShow
+    Route::get('/products/{slug}', [ProductController::class, 'apiShow']);
 
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);

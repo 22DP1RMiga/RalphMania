@@ -4,6 +4,9 @@ import { Head } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import LoadingSpinner from '@/Components/LoadingSpinner.vue';
 import axios from 'axios';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // Loading states
 const isLoadingProducts = ref(true);
@@ -46,7 +49,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Home" />
+<!--    <Head title="Home" />-->
+    <Head :title="t('nav.home')" />
 
     <MainLayout>
         <!-- Hero Section with Wave -->
