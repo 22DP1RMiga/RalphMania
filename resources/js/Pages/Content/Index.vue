@@ -1,337 +1,322 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
-import LoadingSpinner from '@/Components/LoadingSpinner.vue';
-import axios from 'axios';
+import { useI18n } from 'vue-i18n';
 
-const isLoading = ref(true);
-const content = ref([]);
-const activeFilter = ref('all');
+const { t, locale } = useI18n();
 
-const fetchContent = async (type = null) => {
-    isLoading.value = true;
-    try {
-        const url = type
-            ? `/api/v1/content?type=${type}`
-            : '/api/v1/content';
-        const response = await axios.get(url);
-        content.value = response.data.data || response.data;
-    } catch (error) {
-        console.error('Error fetching content:', error);
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-const filterContent = (type) => {
-    activeFilter.value = type;
-    fetchContent(type === 'all' ? null : type);
-};
-
-onMounted(() => {
-    fetchContent();
+const props = defineProps({
+    content: Object,
+    filters: Object,
 });
+
+const activeType = ref(props.filters.type || 'all');
+
+const setType = (type) => {
+    activeType.value = type;
+    router.get('/content', { type: type === 'all' ? null : type }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+// Get localized title
+const getTitle = (item) => {
+    return locale.value === 'lv' ? item.title_lv : (item.title_en || item.title_lv);
+};
+
+// Get localized description
+const getDescription = (item) => {
+    return locale.value === 'lv' ? item.description_lv : (item.description_en || item.description_lv);
+};
+
+// Get YouTube thumbnail
+const getThumbnail = (item) => {
+    if (item.thumbnail) {
+        return item.thumbnail;
+    }
+
+    // Extract YouTube video ID and get thumbnail
+    if (item.video_url && item.video_platform === 'YouTube') {
+        const match = item.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+        if (match) {
+            return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+        }
+    }
+
+    return '/img/default-content.jpg';
+};
+
+// Format view count
+const formatViews = (count) => {
+    if (count >= 1000000) {
+        return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+        return (count / 1000).toFixed(1) + 'K';
+    }
+    return count;
+};
 </script>
 
 <template>
-    <Head :title="$t('nav.content')" />
+    <Head :title="t('content.title')" />
 
     <MainLayout>
-        <!-- Content Hero -->
-        <section class="content-hero">
-            <div class="hero-container">
-                <h1 class="hero-title">{{ $t('content.hero.title') }}</h1>
-                <p class="hero-subtitle">{{ $t('content.hero.subtitle') }}</p>
+        <div class="content-page">
+            <!-- Header -->
+            <div class="content-header">
+                <h1 class="content-title">{{ t('content.title') }}</h1>
+                <p class="content-subtitle">{{ t('content.subtitle') }}</p>
             </div>
-            <!-- Wave -->
-            <div class="hero-wave">
-                <svg viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        fill="#ffffff"
-                        d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"
-                    ></path>
-                </svg>
+
+            <!-- Filter Tabs -->
+            <div class="content-filters">
+                <button
+                    @click="setType('all')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'all' }"
+                >
+                    <i class="fas fa-th"></i>
+                    <span>{{ t('content.all') }}</span>
+                </button>
+                <button
+                    @click="setType('video')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'video' }"
+                >
+                    <i class="fas fa-play-circle"></i>
+                    <span>{{ t('content.videos') }}</span>
+                </button>
+                <button
+                    @click="setType('blog')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'blog' }"
+                >
+                    <i class="fas fa-newspaper"></i>
+                    <span>{{ t('content.blogs') }}</span>
+                </button>
             </div>
-        </section>
 
-        <!-- Filter Tabs -->
-        <section class="filter-section">
-            <div class="section-container">
-                <div class="filter-tabs">
-                    <button
-                        @click="filterContent('all')"
-                        :class="['filter-tab', { active: activeFilter === 'all' }]"
-                    >
-                        {{ $t('content.filter.all') }}
-                    </button>
-                    <button
-                        @click="filterContent('video')"
-                        :class="['filter-tab', { active: activeFilter === 'video' }]"
-                    >
-                        {{ $t('content.filter.videos') }}
-                    </button>
-                    <button
-                        @click="filterContent('blog')"
-                        :class="['filter-tab', { active: activeFilter === 'blog' }]"
-                    >
-                        {{ $t('content.filter.blogs') }}
-                    </button>
-                </div>
-            </div>
-        </section>
+            <!-- Content Grid -->
+            <div v-if="content.data.length > 0" class="content-grid">
+                <Link
+                    v-for="item in content.data"
+                    :key="item.id"
+                    :href="`/content/${item.slug}`"
+                    class="content-card"
+                >
+                    <!-- Thumbnail -->
+                    <div class="content-thumbnail">
+                        <img :src="getThumbnail(item)" :alt="getTitle(item)">
 
-        <!-- Content Grid -->
-        <section class="content-section">
-            <div class="section-container">
-                <!-- Loading Spinner -->
-                <div v-if="isLoading" class="loading-container">
-                    <LoadingSpinner size="lg" :text="$t('common.loading')" />
-                </div>
-
-                <!-- Content Grid -->
-                <div v-else class="content-grid">
-                    <a
-                        v-for="item in content"
-                        :key="item.id"
-                        :href="`/content/${item.slug}`"
-                        class="content-card"
-                    >
-                        <div class="content-thumbnail">
-                            <img :src="item.thumbnail" :alt="item.title_lv">
-                            <span class="content-type-badge">{{ item.type }}</span>
-                            <div class="content-overlay">
-                                <i class="fas fa-play-circle play-icon"></i>
-                            </div>
+                        <!-- Video Badge -->
+                        <div v-if="item.type === 'video'" class="video-badge">
+                            <i class="fas fa-play"></i>
                         </div>
-                        <div class="content-info">
-                            <h3 class="content-title">{{ item.title_lv }}</h3>
-                            <p class="content-description">{{ item.description_lv }}</p>
-                            <div class="content-meta">
-                                <span class="content-views">
-                                    <i class="fas fa-eye"></i>
-                                    {{ item.view_count || 0 }}
-                                </span>
-                                <span class="content-date">
-                                    {{ new Date(item.published_at).toLocaleDateString('lv') }}
-                                </span>
-                            </div>
-                        </div>
-                    </a>
 
-                    <!-- Empty State -->
-                    <div v-if="content.length === 0" class="empty-state">
-                        <i class="fas fa-video empty-icon"></i>
-                        <p class="empty-text">{{ $t('content.no_content') }}</p>
+                        <!-- Category Badge -->
+                        <div v-if="item.category" class="category-badge">
+                            {{ item.category }}
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Content Info -->
+                    <div class="content-info">
+                        <h3 class="content-name">{{ getTitle(item) }}</h3>
+                        <p class="content-description">{{ getDescription(item) }}</p>
+
+                        <!-- Meta -->
+                        <div class="content-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-eye"></i>
+                                {{ formatViews(item.view_count) }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-heart"></i>
+                                {{ item.like_count }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                {{ new Date(item.published_at).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US') }}
+                            </span>
+                        </div>
+                    </div>
+                </Link>
             </div>
-        </section>
+
+            <!-- Empty State -->
+            <div v-else class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>{{ t('content.no_content') }}</h3>
+                <p>{{ t('content.no_content_description') }}</p>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="content.last_page > 1" class="pagination">
+                <Link
+                    v-for="link in content.links"
+                    :key="link.label"
+                    :href="link.url"
+                    class="pagination-link"
+                    :class="{
+                        'pagination-link-active': link.active,
+                        'pagination-link-disabled': !link.url
+                    }"
+                    v-html="link.label"
+                ></Link>
+            </div>
+        </div>
     </MainLayout>
 </template>
 
 <style scoped>
-/* Hero Section */
-.content-hero {
-    position: relative;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
-    color: white;
-    padding: 6rem 2rem 8rem;
-    overflow: hidden;
-}
-
-.content-hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.1;
-}
-
-.hero-container {
-    position: relative;
-    max-width: 1200px;
+.content-page {
+    max-width: 1400px;
     margin: 0 auto;
+    padding: 3rem 2rem;
+}
+
+.content-header {
     text-align: center;
-    z-index: 1;
+    margin-bottom: 3rem;
 }
 
-.hero-title {
-    font-size: 3.5rem;
+.content-title {
+    font-size: 2.5rem;
     font-weight: 800;
-    margin-bottom: 1rem;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
 }
 
-.hero-subtitle {
-    font-size: 1.5rem;
-    opacity: 0.95;
+.content-subtitle {
+    font-size: 1.125rem;
+    color: #6b7280;
+    margin: 0;
 }
 
-.hero-wave {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    line-height: 0;
-}
-
-.hero-wave svg {
-    position: relative;
-    display: block;
-    width: calc(100% + 4px);
-    height: 120px;
-    margin-left: -2px;
-}
-
-/* Filter Section */
-.filter-section {
-    padding: 2rem 2rem 0;
-    background-color: white;
-}
-
-.section-container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.filter-tabs {
+.content-filters {
     display: flex;
+    justify-content: center;
     gap: 1rem;
-    border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 0;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
 }
 
 .filter-tab {
-    padding: 1rem 2rem;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    font-size: 1rem;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
     color: #6b7280;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: -2px;
+    transition: all 0.2s;
 }
 
 .filter-tab:hover {
+    border-color: #dc2626;
     color: #dc2626;
+    transform: translateY(-2px);
 }
 
-.filter-tab.active {
-    color: #dc2626;
-    border-bottom-color: #dc2626;
+.filter-tab-active {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #dc2626;
+    color: white;
 }
 
-/* Content Section */
-.content-section {
-    padding: 4rem 2rem;
-}
-
-.loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
+.filter-tab i {
+    font-size: 1.125rem;
 }
 
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 2rem;
-}
-
-@media (max-width: 1024px) {
-    .content-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .content-card {
     background: white;
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: inherit;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 
 .content-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.2);
 }
 
 .content-thumbnail {
     position: relative;
-    height: 200px;
+    width: 100%;
+    padding-top: 56.25%;
     overflow: hidden;
-    background-color: #f9fafb;
+    background: #f3f4f6;
 }
 
 .content-thumbnail img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s;
 }
 
 .content-card:hover .content-thumbnail img {
     transform: scale(1.05);
 }
 
-.content-type-badge {
+.video-badge {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background-color: #dc2626;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.content-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
+    top: 1rem;
+    left: 1rem;
+    width: 3rem;
+    height: 3rem;
+    background: rgba(220, 38, 38, 0.9);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.content-card:hover .content-overlay {
-    opacity: 1;
-}
-
-.play-icon {
-    font-size: 3rem;
     color: white;
+    font-size: 1.25rem;
+}
+
+.category-badge {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.375rem 0.75rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .content-info {
     padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.content-title {
+.content-name {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
-    margin-bottom: 0.5rem;
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -341,57 +326,111 @@ onMounted(() => {
 .content-description {
     font-size: 0.875rem;
     color: #6b7280;
-    margin-bottom: 1rem;
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    flex: 1;
 }
 
 .content-meta {
     display: flex;
-    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.meta-item {
+    display: flex;
     align-items: center;
-    font-size: 0.75rem;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
     color: #9ca3af;
 }
 
-.content-views {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
+.meta-item i {
+    color: #dc2626;
+    font-size: 0.875rem;
 }
 
-/* Empty State */
 .empty-state {
-    grid-column: 1 / -1;
     text-align: center;
     padding: 4rem 2rem;
 }
 
-.empty-icon {
+.empty-state i {
     font-size: 4rem;
     color: #d1d5db;
     margin-bottom: 1rem;
 }
 
-.empty-text {
-    font-size: 1.125rem;
-    color: #9ca3af;
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 0.5rem 0;
 }
 
-@media (max-width: 640px) {
-    .hero-title {
+.empty-state p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 3rem;
+}
+
+.pagination-link {
+    padding: 0.625rem 1rem;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    color: #6b7280;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.pagination-link:hover:not(.pagination-link-disabled) {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.pagination-link-active {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #dc2626;
+    color: white;
+}
+
+.pagination-link-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .content-page {
+        padding: 2rem 1rem;
+    }
+
+    .content-title {
         font-size: 2rem;
     }
 
-    .filter-tabs {
-        gap: 0.5rem;
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .filter-tab span {
+        display: none;
     }
 
     .filter-tab {
         padding: 0.75rem 1rem;
-        font-size: 0.875rem;
     }
 }
 </style>
