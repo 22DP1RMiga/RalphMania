@@ -237,17 +237,74 @@ const messages = {
                 videos: 'Video',
                 blogs: 'Raksti',
             },
-            video: 'Video',
-            blog: 'Raksts',
             views: 'Skatījumi',
             latest: 'Jaunākais',
-            no_content: 'Šobrīd nav pieejama satura',
             title: 'Saturs',
-            subtitle: 'Video un raksti par Geometry Dash',
+            subtitle: 'Video un raksti no visa izveidotā RoltonsLV satura',
+
+            // Filtri
             all: 'Viss',
             videos: 'Video',
             blogs: 'Raksti',
-            no_content_description: 'Pašlaik nav publicēta neviena video vai raksta.',
+            video: 'Video',
+            blog: 'Raksts',
+
+            // Meklēšanai
+            search_placeholder: 'Meklēt pēc nosaukuma vai apraksta...',
+
+            // Uzlaboti filtri
+            platform: 'Platforma',
+            category: 'Kategorija',
+            sort_by: 'Kārtot pēc',
+            newest: 'Jaunākie',
+            oldest: 'Vecākie',
+            most_liked: 'Visvairāk patīk',
+            most_viewed: 'Visvairāk skatījumu',
+
+            // Rezultāti
+            results: 'rezultāti',
+            showing: 'Rāda',
+            of: 'no',
+
+            // Darbības
+            view: 'Skatīt',
+            watch_on: 'Skatīties uz',
+            load_more: 'Ielādēt vairāk',
+
+            // Tukšs stāvoklis
+            no_content: 'Nav satura',
+            no_content_description: 'Nav atrasts neviens saturs pēc izvēlētajiem filtriem.',
+
+            // Parādīšanas lapa (Content/Show.vue)
+            back_to_list: 'Atpakaļ uz sarakstu',
+            share: 'Dalīties',
+            login_required: 'Lūdzu piesakieties, lai veiktu šo darbību',
+            link_copied: 'Saite nokopēta!',
+
+            // Reitings
+            rate_this: 'Novērtēt',
+            write_review: 'Rakstīt atsauksmi',
+            review_placeholder: 'Dalieties ar savu viedokli...',
+            select_rating: 'Lūdzu izvēlieties vērtējumu',
+            submit_review: 'Nosūtīt atsauksmi',
+            submitting: 'Nosūta...',
+            cancel: 'Atcelt',
+
+            // Komentāri
+            comments: 'Komentāri',
+            comment_placeholder: 'Pievienot komentāru...',
+            post_comment: 'Publicēt',
+            posting: 'Publicē...',
+            login_to_comment: 'Piesakieties, lai komentētu',
+            loading_comments: 'Ielādē komentārus...',
+            no_comments: 'Pagaidām nav komentāru',
+
+            // Vēl papildus
+            description: 'Apraksts',
+            comment_submitted: 'Jūsu komentārs tika iesniegts un gaida apstiprinājumu',
+            review_submitted: 'Jūsu atsauksme tika iesniegta un gaida apstiprinājumu',
+            liked_success: 'Pievienots pie iecienītākajiem!',
+            unliked_success: 'Noņemts no iecienītākajiem',
         },
         common: {
             loading: 'Lādē...',
@@ -584,19 +641,76 @@ const messages = {
             filter: {
                 all: 'All Content',
                 videos: 'Videos',
-                blogs: 'Articles',
+                blogs: 'Blogs',
             },
-            video: 'Video',
-            blog: 'Article',
             views: 'Views',
             latest: 'Latest',
-            no_content: 'No content available at this time',
             title: 'Content',
-            subtitle: 'Videos and articles about Geometry Dash',
+            subtitle: 'Videos and blogs from all made RoltonsLV content',
+
+            // Filtri
             all: 'All',
-            videos: 'Video',
-            blogs: 'Articles',
-            no_content_description: 'There are currently no videos or articles published.',
+            videos: 'Videos',
+            blogs: 'Blogs',
+            video: 'Video',
+            blog: 'Blog',
+
+            // Meklēšanai
+            search_placeholder: 'Search by name or description...',
+
+            // Uzlaboti filtri
+            platform: 'Platform',
+            category: 'Category',
+            sort_by: 'Sort by',
+            newest: 'Newest',
+            oldest: 'Oldest',
+            most_liked: 'Most liked',
+            most_viewed: 'Most viewed',
+
+            // Rezultāti
+            results: 'results',
+            showing: 'Showing',
+            of: 'of',
+
+            // Darbības
+            view: 'View',
+            watch_on: 'Watch on',
+            load_more: 'Load more',
+
+            // Tukšs stāvoklis
+            no_content: 'No content',
+            no_content_description: 'No content was found according to the selected filters.',
+
+            // Parādīšanas lapa (Content/Show.vue)
+            back_to_list: 'Back to list',
+            share: 'Share',
+            login_required: 'Please login to perform this action',
+            link_copied: 'Link copied!',
+
+            // Reitings
+            rate_this: 'Rate This',
+            write_review: 'Write Review',
+            review_placeholder: 'Share your thoughts...',
+            select_rating: 'Please select a rating',
+            submit_review: 'Submit Review',
+            submitting: 'Submitting...',
+            cancel: 'Cancel',
+
+            // Komentāri
+            comments: 'Comments',
+            comment_placeholder: 'Add a comment...',
+            post_comment: 'Post',
+            posting: 'Posting...',
+            login_to_comment: 'Login to comment',
+            loading_comments: 'Loading comments...',
+            no_comments: 'No comments yet',
+
+            // Vēl papildus
+            description: 'Description',
+            comment_submitted: 'Your comment has been submitted and is awaiting approval',
+            review_submitted: 'Your review has been submitted and is awaiting approval',
+            liked_success: 'Added to favorites!',
+            unliked_success: 'Removed from favorites',
         },
         common: {
             loading: 'Loading...',

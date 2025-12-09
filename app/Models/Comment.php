@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Comment extends Model
 {
@@ -12,44 +13,62 @@ class Comment extends Model
     protected $fillable = [
         'user_id',
         'content_id',
-        'comment_text',
         'parent_id',
+        'comment_text',
         'is_approved',
     ];
 
     protected $casts = [
         'is_approved' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    // Relationships
-    public function user()
+    /**
+     * Get the user who wrote the comment
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function content()
+    /**
+     * Get the content this comment belongs to
+     */
+    public function content(): BelongsTo
     {
         return $this->belongsTo(Content::class);
     }
 
-    public function parent()
+    /**
+     * Get the parent comment (for replies)
+     */
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Comment::class, 'parent_id');
     }
 
+    /**
+     * Get the replies to this comment
+     */
     public function replies()
     {
         return $this->hasMany(Comment::class, 'parent_id');
     }
 
-    // Scopes
+    /**
+     * Scope: Only approved comments
+     */
     public function scopeApproved($query)
     {
         return $query->where('is_approved', true);
     }
 
-    public function scopeTopLevel($query)
+    /**
+     * Scope: Only pending comments
+     */
+    public function scopePending($query)
     {
-        return $query->whereNull('parent_id');
+        return $query->where('is_approved', false);
     }
 }

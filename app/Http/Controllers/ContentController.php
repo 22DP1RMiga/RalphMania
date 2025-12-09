@@ -240,4 +240,58 @@ class ContentController extends Controller
         return redirect()->route('admin.content.index')
             ->with('success', 'Content deleted successfully.');
     }
+
+    /**
+     * Toggle like for content (API)
+     */
+    public function toggleLike(Request $request, int $id): JsonResponse
+    {
+        $content = Content::findOrFail($id);
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // Check if like already exists
+        $like = \DB::table('likes')
+            ->where('user_id', $user->id)
+            ->where('likeable_type', 'App\\Models\\Content')
+            ->where('likeable_id', $content->id)
+            ->first();
+
+        if ($like) {
+            // Unlike
+            \DB::table('likes')
+                ->where('user_id', $user->id)
+                ->where('likeable_type', 'App\\Models\\Content')
+                ->where('likeable_id', $content->id)
+                ->delete();
+
+            $content->decrement('like_count');
+
+            return response()->json([
+                'success' => true,
+                'liked' => false,
+                'like_count' => $content->like_count,
+            ]);
+        } else {
+            // Like
+            \DB::table('likes')->insert([
+                'user_id' => $user->id,
+                'likeable_type' => 'App\\Models\\Content',
+                'likeable_id' => $content->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $content->increment('like_count');
+
+            return response()->json([
+                'success' => true,
+                'liked' => true,
+                'like_count' => $content->like_count,
+            ]);
+        }
+    }
 }
