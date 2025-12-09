@@ -37,8 +37,8 @@ const { t } = useI18n();
                         <p class="story-paragraph">{{ $t('about.story.paragraph_2') }}</p>
                         <p class="story-paragraph">{{ $t('about.story.paragraph_3') }}</p>
                     </div>
-                    <div class="story-image">
-                        <img src="/images/about-story.jpg" alt="RalphMania Story">
+                    <div class="about-image">
+                        <img src="/img/about-okay-logo.png" alt="RalphMania Okay Logo">
                     </div>
                 </div>
             </div>
@@ -210,16 +210,11 @@ const { t } = useI18n();
     margin-bottom: 1.5rem;
 }
 
-.story-image {
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.story-image img {
+.about-image img {
     width: 100%;
     height: auto;
     display: block;
+    filter: drop-shadow(30px 10px 4px rgba(90, 90, 90, 0.5));
 }
 
 @media (max-width: 768px) {
