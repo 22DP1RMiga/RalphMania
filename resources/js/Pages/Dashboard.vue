@@ -380,6 +380,12 @@ const stats = ref({
     width: auto;
 }
 
+@media (max-width: 768px) {
+    .dashboard-brand-name {
+        display: none;
+    }
+}
+
 .dashboard-welcome {
     flex: 1;
 }

@@ -143,6 +143,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::put('/comments/{id}', [CommentController::class, 'update'])->name('comments.update');
     Route::delete('/comments/{id}', [CommentController::class, 'destroy'])->name('comments.destroy');
+
+    // Like content (WEB route for session auth)
+    Route::post('/content/{id}/like', [ContentController::class, 'toggleLike'])->name('content.like');
 });
 
 // ========== ADMIN ROUTES ==========

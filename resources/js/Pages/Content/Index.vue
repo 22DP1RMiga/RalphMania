@@ -1,397 +1,943 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
-import LoadingSpinner from '@/Components/LoadingSpinner.vue';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 
-const isLoading = ref(true);
-const content = ref([]);
-const activeFilter = ref('all');
+const { t, locale } = useI18n();
 
-const fetchContent = async (type = null) => {
-    isLoading.value = true;
-    try {
-        const url = type
-            ? `/api/v1/content?type=${type}`
-            : '/api/v1/content';
-        const response = await axios.get(url);
-        content.value = response.data.data || response.data;
-    } catch (error) {
-        console.error('Error fetching content:', error);
-    } finally {
-        isLoading.value = false;
+const props = defineProps({
+    content: Object,
+    filters: Object,
+});
+
+// State
+const activeType = ref(props.filters.type || null);
+const activePlatform = ref(null);
+const activeCategory = ref(null);
+const sortBy = ref('newest');
+const searchQuery = ref('');
+const searchResults = ref([]);
+const isSearching = ref(false);
+const displayedItems = ref(3);
+const allContent = ref(props.content.data || []);
+
+// Available platforms & categories (dynamic from data)
+const platforms = computed(() => {
+    const unique = [...new Set(allContent.value.map(item => item.video_platform).filter(Boolean))];
+    return unique;
+});
+
+const categories = computed(() => {
+    const unique = [...new Set(allContent.value.map(item => item.category).filter(Boolean))];
+    return unique;
+});
+
+// Filtered & Sorted Content
+const filteredContent = computed(() => {
+    let filtered = [...allContent.value];
+
+    // Filter by type
+    if (activeType.value) {
+        filtered = filtered.filter(item => item.type === activeType.value);
+    }
+
+    // Filter by platform
+    if (activePlatform.value) {
+        filtered = filtered.filter(item => item.video_platform === activePlatform.value);
+    }
+
+    // Filter by category
+    if (activeCategory.value) {
+        filtered = filtered.filter(item => item.category === activeCategory.value);
+    }
+
+    // Sort
+    switch (sortBy.value) {
+        case 'newest':
+            filtered.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+            break;
+        case 'oldest':
+            filtered.sort((a, b) => new Date(a.published_at) - new Date(b.published_at));
+            break;
+        case 'most_liked':
+            filtered.sort((a, b) => b.like_count - a.like_count);
+            break;
+        case 'most_viewed':
+            filtered.sort((a, b) => b.view_count - a.view_count);
+            break;
+    }
+
+    return filtered;
+});
+
+// Displayed content (lazy load)
+const displayedContent = computed(() => {
+    return filteredContent.value.slice(0, displayedItems.value);
+});
+
+const hasMore = computed(() => {
+    return displayedItems.value < filteredContent.value.length;
+});
+
+// Methods
+const setType = (type) => {
+    activeType.value = type;
+    displayedItems.value = 3;
+};
+
+const setPlatform = (platform) => {
+    activePlatform.value = activePlatform.value === platform ? null : platform;
+    displayedItems.value = 3;
+};
+
+const setCategory = (category) => {
+    activeCategory.value = activeCategory.value === category ? null : category;
+    displayedItems.value = 3;
+};
+
+const loadMore = () => {
+    displayedItems.value += 6;
+};
+
+const getTitle = (item) => {
+    return locale.value === 'lv' ? item.title_lv : (item.title_en || item.title_lv);
+};
+
+const getDescription = (item) => {
+    return locale.value === 'lv' ? item.description_lv : (item.description_en || item.description_lv);
+};
+
+const getThumbnail = (item) => {
+    if (item.thumbnail && !item.thumbnail.includes('img.thumbnails')) {
+        return item.thumbnail;
+    }
+
+    // YouTube thumbnail fallback
+    if (item.video_url && item.video_platform === 'YouTube') {
+        const match = item.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+        if (match) {
+            return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+        }
+    }
+
+    return '/img/default-content.jpg';
+};
+
+const formatViews = (count) => {
+    if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
+    return count;
+};
+
+const openSource = (item) => {
+    if (item.video_url) {
+        window.open(item.video_url, '_blank');
     }
 };
 
-const filterContent = (type) => {
-    activeFilter.value = type;
-    fetchContent(type === 'all' ? null : type);
+// Search with debounce
+let searchTimeout;
+const handleSearch = () => {
+    if (!searchQuery.value.trim()) {
+        searchResults.value = [];
+        return;
+    }
+
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        isSearching.value = true;
+
+        const query = searchQuery.value.toLowerCase();
+        const results = allContent.value.filter(item => {
+            const titleLv = item.title_lv.toLowerCase();
+            const titleEn = (item.title_en || '').toLowerCase();
+            const descLv = (item.description_lv || '').toLowerCase();
+            const descEn = (item.description_en || '').toLowerCase();
+
+            return titleLv.includes(query) ||
+                titleEn.includes(query) ||
+                descLv.includes(query) ||
+                descEn.includes(query);
+        });
+
+        searchResults.value = results.slice(0, 5);
+        isSearching.value = false;
+    }, 300);
 };
 
-onMounted(() => {
-    fetchContent();
+const selectSearchResult = (item) => {
+    router.visit(`/content/${item.slug}`);
+};
+
+const clearSearch = () => {
+    searchQuery.value = '';
+    searchResults.value = [];
+};
+
+// Watch for search changes
+watch(searchQuery, handleSearch);
+
+// Reset displayed items when filters change
+watch([activeType, activePlatform, activeCategory, sortBy], () => {
+    displayedItems.value = 3;
 });
 </script>
 
 <template>
-    <Head :title="$t('nav.content')" />
+    <Head :title="t('content.title')" />
 
     <MainLayout>
-        <!-- Content Hero -->
-        <section class="content-hero">
-            <div class="hero-container">
-                <h1 class="hero-title">{{ $t('content.hero.title') }}</h1>
-                <p class="hero-subtitle">{{ $t('content.hero.subtitle') }}</p>
+        <div class="content-page">
+            <!-- Header -->
+            <div class="content-header">
+                <h1 class="content-title">{{ t('content.title') }}</h1>
+                <p class="content-subtitle">{{ t('content.subtitle') }}</p>
             </div>
-            <!-- Wave -->
-            <div class="hero-wave">
-                <svg viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        fill="#ffffff"
-                        d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"
-                    ></path>
-                </svg>
-            </div>
-        </section>
 
-        <!-- Filter Tabs -->
-        <section class="filter-section">
-            <div class="section-container">
-                <div class="filter-tabs">
-                    <button
-                        @click="filterContent('all')"
-                        :class="['filter-tab', { active: activeFilter === 'all' }]"
-                    >
-                        {{ $t('content.filter.all') }}
-                    </button>
-                    <button
-                        @click="filterContent('video')"
-                        :class="['filter-tab', { active: activeFilter === 'video' }]"
-                    >
-                        {{ $t('content.filter.videos') }}
-                    </button>
-                    <button
-                        @click="filterContent('blog')"
-                        :class="['filter-tab', { active: activeFilter === 'blog' }]"
-                    >
-                        {{ $t('content.filter.blogs') }}
+            <!-- Search Bar -->
+            <div class="search-section">
+                <div class="search-bar">
+                    <i class="fas fa-search search-icon"></i>
+                    <input
+                        v-model="searchQuery"
+                        type="text"
+                        :placeholder="t('content.search_placeholder')"
+                        class="search-input"
+                    />
+                    <button v-if="searchQuery" @click="clearSearch" class="search-clear">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
-            </div>
-        </section>
 
-        <!-- Content Grid -->
-        <section class="content-section">
-            <div class="section-container">
-                <!-- Loading Spinner -->
-                <div v-if="isLoading" class="loading-container">
-                    <LoadingSpinner size="lg" :text="$t('common.loading')" />
+                <!-- Search Dropdown -->
+                <Transition name="dropdown">
+                    <div v-if="searchResults.length > 0" class="search-dropdown">
+                        <button
+                            v-for="result in searchResults"
+                            :key="result.id"
+                            @click="selectSearchResult(result)"
+                            class="search-result"
+                        >
+                            <img :src="getThumbnail(result)" :alt="getTitle(result)" class="result-thumb">
+                            <div class="result-info">
+                                <div class="result-title">{{ getTitle(result) }}</div>
+                                <div class="result-meta">
+                                    <span class="result-type">
+                                        <i :class="result.type === 'video' ? 'fas fa-play-circle' : 'fas fa-newspaper'"></i>
+                                        {{ result.type === 'video' ? t('content.video') : t('content.blog') }}
+                                    </span>
+                                    <span v-if="result.category" class="result-category">{{ result.category }}</span>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </Transition>
+            </div>
+
+            <!-- Main Filter Tabs -->
+            <div class="content-filters">
+                <button
+                    @click="setType(null)"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === null }"
+                >
+                    <i class="fas fa-th"></i>
+                    <span>{{ t('content.all') }}</span>
+                </button>
+                <button
+                    @click="setType('video')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'video' }"
+                >
+                    <i class="fas fa-play-circle"></i>
+                    <span>{{ t('content.videos') }}</span>
+                </button>
+                <button
+                    @click="setType('blog')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'blog' }"
+                >
+                    <i class="fas fa-newspaper"></i>
+                    <span>{{ t('content.blogs') }}</span>
+                </button>
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="advanced-filters">
+                <!-- Platform Filter -->
+                <div v-if="platforms.length > 0 && (activeType === 'video' || !activeType)" class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-video"></i>
+                        {{ t('content.platform') }}
+                    </label>
+                    <div class="filter-chips">
+                        <button
+                            v-for="platform in platforms"
+                            :key="platform"
+                            @click="setPlatform(platform)"
+                            class="filter-chip"
+                            :class="{ 'filter-chip-active': activePlatform === platform }"
+                        >
+                            {{ platform }}
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Content Grid -->
-                <div v-else class="content-grid">
-                    <a
-                        v-for="item in content"
-                        :key="item.id"
-                        :href="`/content/${item.slug}`"
-                        class="content-card"
-                    >
-                        <div class="content-thumbnail">
-                            <img :src="item.thumbnail" :alt="item.title_lv">
-                            <span class="content-type-badge">{{ item.type }}</span>
-                            <div class="content-overlay">
-                                <i class="fas fa-play-circle play-icon"></i>
-                            </div>
-                        </div>
-                        <div class="content-info">
-                            <h3 class="content-title">{{ item.title_lv }}</h3>
-                            <p class="content-description">{{ item.description_lv }}</p>
-                            <div class="content-meta">
-                                <span class="content-views">
-                                    <i class="fas fa-eye"></i>
-                                    {{ item.view_count || 0 }}
-                                </span>
-                                <span class="content-date">
-                                    {{ new Date(item.published_at).toLocaleDateString('lv') }}
-                                </span>
-                            </div>
-                        </div>
-                    </a>
+                <!-- Category Filter -->
+                <div v-if="categories.length > 0" class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-tag"></i>
+                        {{ t('content.category') }}
+                    </label>
+                    <div class="filter-chips">
+                        <button
+                            v-for="category in categories"
+                            :key="category"
+                            @click="setCategory(category)"
+                            class="filter-chip"
+                            :class="{ 'filter-chip-active': activeCategory === category }"
+                        >
+                            {{ category }}
+                        </button>
+                    </div>
+                </div>
 
-                    <!-- Empty State -->
-                    <div v-if="content.length === 0" class="empty-state">
-                        <i class="fas fa-video empty-icon"></i>
-                        <p class="empty-text">{{ $t('content.no_content') }}</p>
+                <!-- Sort Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-sort"></i>
+                        {{ t('content.sort_by') }}
+                    </label>
+                    <select v-model="sortBy" class="filter-select">
+                        <option value="newest">{{ t('content.newest') }}</option>
+                        <option value="oldest">{{ t('content.oldest') }}</option>
+                        <option value="most_liked">{{ t('content.most_liked') }}</option>
+                        <option value="most_viewed">{{ t('content.most_viewed') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Results Count -->
+            <div class="results-info">
+                <span>{{ filteredContent.length }} {{ t('content.results') }}</span>
+            </div>
+
+            <!-- Content Grid -->
+            <div v-if="displayedContent.length > 0" class="content-grid">
+                <div
+                    v-for="item in displayedContent"
+                    :key="item.id"
+                    class="content-card"
+                >
+                    <!-- Thumbnail -->
+                    <Link :href="`/content/${item.slug}`" class="content-thumbnail">
+                        <img :src="getThumbnail(item)" :alt="getTitle(item)">
+
+                        <!-- Video Badge -->
+                        <div v-if="item.type === 'video'" class="video-badge">
+                            <i class="fas fa-play"></i>
+                        </div>
+
+                        <!-- Category Badge -->
+                        <div v-if="item.category" class="category-badge">
+                            {{ item.category }}
+                        </div>
+                    </Link>
+
+                    <!-- Content Info -->
+                    <div class="content-info">
+                        <Link :href="`/content/${item.slug}`" class="content-name">
+                            {{ getTitle(item) }}
+                        </Link>
+                        <p class="content-description">{{ getDescription(item) }}</p>
+
+                        <!-- Meta -->
+                        <div class="content-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-eye"></i>
+                                {{ formatViews(item.view_count) }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-heart"></i>
+                                {{ item.like_count }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                {{ new Date(item.published_at).toLocaleDateString(locale === 'lv' ? 'lv-LV' : 'en-US') }}
+                            </span>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="content-actions">
+                            <Link
+                                :href="`/content/${item.slug}`"
+                                class="btn-action btn-primary"
+                            >
+                                <i class="fas fa-eye"></i>
+                                {{ t('content.view') }}
+                            </Link>
+                            <button
+                                v-if="item.video_url"
+                                @click="openSource(item)"
+                                class="btn-action btn-secondary"
+                            >
+                                <i class="fab" :class="`fa-${item.video_platform?.toLowerCase()}`"></i>
+                                {{ t('content.watch_on') }} {{ item.video_platform }}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
+
+            <!-- Empty State -->
+            <div v-else class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>{{ t('content.no_content') }}</h3>
+                <p>{{ t('content.no_content_description') }}</p>
+            </div>
+
+            <!-- Load More Button -->
+            <div v-if="hasMore" class="load-more-section">
+                <button @click="loadMore" class="btn-load-more">
+                    <i class="fas fa-plus-circle"></i>
+                    {{ t('content.load_more') }}
+                </button>
+                <p class="load-more-info">
+                    {{ t('content.showing') }} {{ displayedItems }} {{ t('content.of') }} {{ filteredContent.length }}
+                </p>
+            </div>
+        </div>
     </MainLayout>
 </template>
 
 <style scoped>
-/* Hero Section */
-.content-hero {
-    position: relative;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
-    color: white;
-    padding: 6rem 2rem 8rem;
-    overflow: hidden;
+.content-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
 }
 
-.content-hero::before {
-    content: '';
+/* Header */
+.content-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.content-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
+}
+
+.content-subtitle {
+    font-size: 1.125rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Search */
+.search-section {
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    position: relative;
+}
+
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
     position: absolute;
-    top: 0;
+    left: 1.25rem;
+    color: #9ca3af;
+    font-size: 1.125rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 1rem 3.5rem 1rem 3.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 9999px;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.search-clear {
+    position: absolute;
+    right: 1.25rem;
+    width: 2rem;
+    height: 2rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.search-clear:hover {
+    background: #dc2626;
+    color: white;
+}
+
+/* Search Dropdown */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
     left: 0;
     right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.1;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
 }
 
-.hero-container {
-    position: relative;
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: center;
-    z-index: 1;
-}
-
-.hero-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
-}
-
-.hero-subtitle {
-    font-size: 1.5rem;
-    opacity: 0.95;
-}
-
-.hero-wave {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
+.search-result {
     width: 100%;
-    overflow: hidden;
-    line-height: 0;
-}
-
-.hero-wave svg {
-    position: relative;
-    display: block;
-    width: calc(100% + 4px);
-    height: 120px;
-    margin-left: -2px;
-}
-
-/* Filter Section */
-.filter-section {
-    padding: 2rem 2rem 0;
-    background-color: white;
-}
-
-.section-container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.filter-tabs {
     display: flex;
+    align-items: center;
     gap: 1rem;
-    border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 0;
+    padding: 0.875rem 1.25rem;
+    background: white;
+    border: none;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.search-result:hover {
+    background: #fef2f2;
+}
+
+.result-thumb {
+    width: 80px;
+    height: 45px;
+    border-radius: 0.5rem;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.result-title {
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-meta {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+.result-type i {
+    color: #dc2626;
+}
+
+/* Filters */
+.content-filters {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
 .filter-tab {
-    padding: 1rem 2rem;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    font-size: 1rem;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
     color: #6b7280;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: -2px;
+    transition: all 0.2s;
 }
 
 .filter-tab:hover {
+    border-color: #dc2626;
     color: #dc2626;
+    transform: translateY(-2px);
 }
 
-.filter-tab.active {
-    color: #dc2626;
-    border-bottom-color: #dc2626;
+.filter-tab-active {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #dc2626;
+    color: white;
 }
 
-/* Content Section */
-.content-section {
-    padding: 4rem 2rem;
+/* Advanced Filters */
+.advanced-filters {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.loading-container {
+.filter-group {
+    margin-bottom: 1.5rem;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-label {
     display: flex;
-    justify-content: center;
     align-items: center;
-    min-height: 400px;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
 }
 
+.filter-label i {
+    color: #dc2626;
+}
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-chip {
+    padding: 0.5rem 1rem;
+    background: #f3f4f6;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.filter-chip-active {
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.filter-select {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.625rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #dc2626;
+}
+
+/* Results Info */
+.results-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Content Grid */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 2rem;
-}
-
-@media (max-width: 1024px) {
-    .content-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
+    margin-bottom: 3rem;
 }
 
 .content-card {
     background: white;
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: inherit;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 
 .content-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.2);
 }
 
 .content-thumbnail {
     position: relative;
-    height: 200px;
+    width: 100%;
+    padding-top: 56.25%;
     overflow: hidden;
-    background-color: #f9fafb;
+    background: #f3f4f6;
 }
 
 .content-thumbnail img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s;
 }
 
 .content-card:hover .content-thumbnail img {
     transform: scale(1.05);
 }
 
-.content-type-badge {
+.video-badge {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background-color: #dc2626;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.content-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
+    top: 1rem;
+    left: 1rem;
+    width: 3rem;
+    height: 3rem;
+    background: rgba(220, 38, 38, 0.9);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.content-card:hover .content-overlay {
-    opacity: 1;
-}
-
-.play-icon {
-    font-size: 3rem;
     color: white;
+    font-size: 1.25rem;
+}
+
+.category-badge {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.375rem 0.75rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .content-info {
     padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.content-title {
+.content-name {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
-    margin-bottom: 0.5rem;
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    transition: color 0.2s;
+}
+
+.content-name:hover {
+    color: #dc2626;
 }
 
 .content-description {
     font-size: 0.875rem;
     color: #6b7280;
-    margin-bottom: 1rem;
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    flex: 1;
 }
 
 .content-meta {
     display: flex;
-    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.meta-item {
+    display: flex;
     align-items: center;
-    font-size: 0.75rem;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
     color: #9ca3af;
 }
 
-.content-views {
+.meta-item i {
+    color: #dc2626;
+}
+
+.content-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+}
+
+.btn-action {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+/* Load More */
+.load-more-section {
+    text-align: center;
+}
+
+.btn-load-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 2rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-load-more:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(220, 38, 38, 0.3);
+}
+
+.load-more-info {
+    margin-top: 1rem;
+    color: #6b7280;
+    font-size: 0.875rem;
 }
 
 /* Empty State */
 .empty-state {
-    grid-column: 1 / -1;
     text-align: center;
     padding: 4rem 2rem;
 }
 
-.empty-icon {
+.empty-state i {
     font-size: 4rem;
     color: #d1d5db;
     margin-bottom: 1rem;
 }
 
-.empty-text {
-    font-size: 1.125rem;
-    color: #9ca3af;
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 0.5rem 0;
 }
 
-@media (max-width: 640px) {
-    .hero-title {
+.empty-state p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Animations */
+.dropdown-enter-active,
+.dropdown-leave-active {
+    transition: all 0.2s;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .content-page {
+        padding: 2rem 1rem;
+    }
+
+    .content-title {
         font-size: 2rem;
     }
 
-    .filter-tabs {
-        gap: 0.5rem;
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
-    .filter-tab {
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
+    .filter-tab span {
+        display: none;
+    }
+
+    .advanced-filters {
+        padding: 1rem;
+    }
+
+    .filter-select {
+        max-width: 100%;
+    }
+
+    .content-actions {
+        flex-direction: column;
     }
 }
 </style>

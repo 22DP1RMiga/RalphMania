@@ -17,17 +17,20 @@ Route::prefix('v1')->group(function () {
     // Products
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/featured', [ProductController::class, 'featured']);
-    Route::get('/products/{slug}', [ProductController::class, 'apiShow']); // ✅ Changed to apiShow
+    Route::get('/products/{slug}', [ProductController::class, 'apiShow']);
 
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
 
     // Content
-    Route::get('/content', [ContentController::class, 'index']);
+    Route::get('/content', [ContentController::class, 'apiIndex']); // ✅ Changed to apiIndex
     Route::get('/content/featured', [ContentController::class, 'featured']);
     Route::get('/content/{slug}', [ContentController::class, 'show']);
     Route::get('/content/type/{type}', [ContentController::class, 'byType']);
+
+    // Like content (requires auth but in public section for accessibility)
+    Route::post('/content/{id}/like', [ContentController::class, 'toggleLike'])->middleware('auth:sanctum');
 
     // Reviews (public read)
     Route::get('/reviews/{type}/{id}', [ReviewController::class, 'byReviewable']);
