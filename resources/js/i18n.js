@@ -220,6 +220,7 @@ const messages = {
             no_products: 'Šobrīd nav pieejamu produktu',
             no_products_in_category: 'Šajā kategorijā nav produktu',
             back_to_shop: 'Atpakaļ uz veikalu',
+            sale: 'Atlaide',
             filter: {
                 newest: 'Jaunākie',
                 price_low: 'Cena: Zems → Augsts',
@@ -406,6 +407,13 @@ const messages = {
             delete_photo: 'Dzēst bildi',
             photo_hint: 'JPG, PNG vai GIF. Maksimālais izmērs: 2MB.',
             profile_updated: 'Profils atjaunināts.',
+        },
+        home: {
+            no_featured_content: 'Pagaidām nav izcelto saturu',
+            no_featured_products: 'Pagaidām nav izcelto produktu',
+            about_title: 'Par RalphMania',
+            about_description: 'RalphMania ir vieta, kur atradīsiet labākos Geometry Dash video, rakstus un unikālus produktus. Pievienojieties mūsu komūnai!',
+            about_button: 'Uzzināt vairāk',
         },
     },
     en: {
@@ -626,6 +634,7 @@ const messages = {
             no_products: 'No products available at this time',
             no_products_in_category: 'No products in this category',
             back_to_shop: 'Back to Shop',
+            sale: 'Sale',
             filter: {
                 newest: 'Newest',
                 price_low: 'Price: Low → High',
@@ -813,6 +822,13 @@ const messages = {
             delete_photo: 'Delete Photo',
             photo_hint: 'JPG, PNG or GIF. Maximum size: 2MB.',
             profile_updated: 'Profile updated.',
+        },
+        home: {
+            no_featured_content: 'No featured content yet',
+            no_featured_products: 'No featured products yet',
+            about_title: 'About RalphMania',
+            about_description: 'RalphMania is the place to find the best Geometry Dash videos, articles, and unique products. Join our community!',
+            about_button: 'Learn More',
         },
     }
 };

@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,9 +24,10 @@ use Inertia\Inertia;
 // ========== PUBLIC ROUTES ==========
 
 // Home Page
-Route::get('/', function () {
-    return Inertia::render('Home');
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+//Route::get('/', function () {
+//    return Inertia::render('Home');
+//})->name('home');
 
 // About Page
 Route::get('/about', function () {
