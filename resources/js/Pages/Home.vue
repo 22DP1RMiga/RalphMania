@@ -1,55 +1,70 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
-import LoadingSpinner from '@/Components/LoadingSpinner.vue';
-import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
-// Loading states
-const isLoadingProducts = ref(true);
-const isLoadingContent = ref(true);
-
-// Data
-const featuredProducts = ref([]);
-const featuredContent = ref([]);
-
-// Fetch featured products
-const fetchFeaturedProducts = async () => {
-    isLoadingProducts.value = true;
-    try {
-        const response = await axios.get('/api/v1/products/featured');
-        featuredProducts.value = response.data;
-    } catch (error) {
-        console.error('Error fetching products:', error);
-    } finally {
-        isLoadingProducts.value = false;
+const props = defineProps({
+    featuredProducts: {
+        type: Array,
+        default: () => []
+    },
+    featuredContent: {
+        type: Array,
+        default: () => []
     }
-};
-
-// Fetch featured content
-const fetchFeaturedContent = async () => {
-    isLoadingContent.value = true;
-    try {
-        const response = await axios.get('/api/v1/content/featured');
-        featuredContent.value = response.data;
-    } catch (error) {
-        console.error('Error fetching content:', error);
-    } finally {
-        isLoadingContent.value = false;
-    }
-};
-
-onMounted(() => {
-    fetchFeaturedProducts();
-    fetchFeaturedContent();
 });
+
+// Helper functions
+const getProductName = (product) => {
+    return locale.value === 'lv' ? product.name_lv : (product.name_en || product.name_lv);
+};
+
+const getProductDescription = (product) => {
+    return locale.value === 'lv' ? product.description_lv : (product.description_en || product.description_lv);
+};
+
+const getContentTitle = (content) => {
+    return locale.value === 'lv' ? content.title_lv : (content.title_en || content.title_lv);
+};
+
+const getContentDescription = (content) => {
+    return locale.value === 'lv' ? content.description_lv : (content.description_en || content.description_lv);
+};
+
+const getContentThumbnail = (content) => {
+    // Fix thumbnail path
+    if (content.thumbnail && !content.thumbnail.includes('img.thumbnails')) {
+        return content.thumbnail;
+    }
+
+    // YouTube fallback
+    if (content.type === 'video' && content.video_platform === 'YouTube') {
+        // Try to extract video ID from common YouTube URL patterns
+        return '/img/default-content.jpg';
+    }
+
+    return '/img/default-content.jpg';
+};
+
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('lv-LV', {
+        style: 'currency',
+        currency: 'EUR'
+    }).format(price);
+};
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString(
+        locale.value === 'lv' ? 'lv-LV' : 'en-US',
+        { year: 'numeric', month: 'long', day: 'numeric' }
+    );
+};
 </script>
 
 <template>
-<!--    <Head title="Home" />-->
     <Head :title="t('nav.home')" />
 
     <MainLayout>
@@ -57,15 +72,15 @@ onMounted(() => {
         <section class="hero-section">
             <div class="hero-container">
                 <div class="hero-content">
-                    <h1 class="hero-title">{{ $t('hero.title') }}</h1>
-                    <p class="hero-subtitle">{{ $t('hero.subtitle') }}</p>
+                    <h1 class="hero-title">{{ t('hero.title') }}</h1>
+                    <p class="hero-subtitle">{{ t('hero.subtitle') }}</p>
                     <div class="hero-cta">
-                        <a href="/content" class="cta-button cta-button-primary">
-                            {{ $t('hero.cta_content') }}
-                        </a>
-                        <a href="/shop" class="cta-button cta-button-secondary">
-                            {{ $t('hero.cta_shop') }}
-                        </a>
+                        <Link href="/content" class="cta-button cta-button-primary">
+                            {{ t('hero.cta_content') }}
+                        </Link>
+                        <Link href="/shop" class="cta-button cta-button-secondary">
+                            {{ t('hero.cta_shop') }}
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -84,43 +99,63 @@ onMounted(() => {
         <section class="featured-content-section">
             <div class="section-container">
                 <div class="section-header">
-                    <h2 class="section-title">{{ $t('sections.featured_content') }}</h2>
-                    <a href="/content" class="section-link">{{ $t('common.view_more') }}</a>
+                    <h2 class="section-title">{{ t('sections.featured_content') }}</h2>
+                    <Link href="/content" class="section-link">{{ t('common.view_more') }}</Link>
                 </div>
 
-                <!-- Loading Spinner for Content -->
-                <div v-if="isLoadingContent" class="loading-container">
-                    <LoadingSpinner size="lg" :text="$t('common.loading')" />
+                <!-- Empty State -->
+                <div v-if="featuredContent.length === 0" class="empty-state">
+                    <i class="fas fa-video"></i>
+                    <p>{{ t('home.no_featured_content') }}</p>
                 </div>
 
                 <!-- Content Grid -->
                 <div v-else class="content-grid">
-                    <div
-                        v-for="content in featuredContent"
+                    <Link
+                        v-for="content in featuredContent.slice(0, 3)"
                         :key="content.id"
+                        :href="`/content/${content.slug}`"
                         class="content-card"
                     >
+                        <!-- Thumbnail -->
                         <div class="content-thumbnail">
-                            <img :src="content.thumbnail_url" :alt="content.title">
-                            <span class="content-type-badge">{{ content.type }}</span>
+                            <img :src="getContentThumbnail(content)" :alt="getContentTitle(content)">
+                            <div class="content-overlay">
+                                <i :class="content.type === 'video' ? 'fas fa-play-circle' : 'fas fa-newspaper'"></i>
+                            </div>
+                            <div class="content-badge" :class="`badge-${content.type}`">
+                                {{ content.type === 'video' ? t('content.video') : t('content.blog') }}
+                            </div>
                         </div>
+
+                        <!-- Content Info -->
                         <div class="content-info">
-                            <h3 class="content-title">{{ content.title }}</h3>
-                            <p class="content-description">{{ content.description }}</p>
+                            <h3 class="content-title">{{ getContentTitle(content) }}</h3>
+                            <p class="content-description">{{ getContentDescription(content) }}</p>
+
+                            <!-- Meta -->
                             <div class="content-meta">
-                                <span class="content-views">
+                                <span class="meta-item">
                                     <i class="fas fa-eye"></i>
                                     {{ content.view_count }}
                                 </span>
-                                <span class="content-date">{{ content.published_date }}</span>
+                                <span class="meta-item">
+                                    <i class="fas fa-heart"></i>
+                                    {{ content.like_count }}
+                                </span>
+                                <span v-if="content.category" class="meta-item">
+                                    <i class="fas fa-tag"></i>
+                                    {{ content.category }}
+                                </span>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="content-date">
+                                <i class="fas fa-calendar"></i>
+                                {{ formatDate(content.published_at) }}
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Empty State -->
-                    <div v-if="featuredContent.length === 0" class="empty-state">
-                        <p>{{ $t('content.latest') }}</p>
-                    </div>
+                    </Link>
                 </div>
             </div>
         </section>
@@ -129,71 +164,73 @@ onMounted(() => {
         <section class="featured-products-section">
             <div class="section-container">
                 <div class="section-header">
-                    <h2 class="section-title">{{ $t('sections.featured_products') }}</h2>
-                    <a href="/shop" class="section-link">{{ $t('common.view_more') }}</a>
+                    <h2 class="section-title">{{ t('sections.featured_products') }}</h2>
+                    <Link href="/shop" class="section-link">{{ t('common.view_more') }}</Link>
                 </div>
 
-                <!-- Loading Spinner for Products -->
-                <div v-if="isLoadingProducts" class="loading-container">
-                    <LoadingSpinner size="lg" :text="$t('common.loading')" />
+                <!-- Empty State -->
+                <div v-if="featuredProducts.length === 0" class="empty-state">
+                    <i class="fas fa-shopping-bag"></i>
+                    <p>{{ t('home.no_featured_products') }}</p>
                 </div>
 
                 <!-- Products Grid -->
                 <div v-else class="products-grid">
-                    <div
-                        v-for="product in featuredProducts"
+                    <Link
+                        v-for="product in featuredProducts.slice(0, 3)"
                         :key="product.id"
+                        :href="`/shop/product/${product.slug}`"
                         class="product-card"
                     >
+                        <!-- Product Image -->
                         <div class="product-image">
-                            <img :src="product.main_image_url" :alt="product.name_lv">
-                            <span v-if="product.discount_percentage" class="product-badge">
-                                -{{ product.discount_percentage }}%
-                            </span>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">{{ product.name_lv }}</h3>
-                            <div class="product-price">
-                                <span v-if="product.discount_percentage" class="price-original">
-                                    €{{ product.price }}
-                                </span>
-                                <span class="price-current">
-                                    €{{ product.final_price || product.price }}
-                                </span>
+                            <img :src="product.image || '/img/default-product.jpg'" :alt="getProductName(product)">
+                            <div v-if="product.sale_price" class="sale-badge">
+                                {{ t('shop.sale') }}
                             </div>
-                            <button class="add-to-cart-button">
-                                {{ $t('common.add_to_cart') }}
-                            </button>
+                            <div class="product-overlay">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Empty State -->
-                    <div v-if="featuredProducts.length === 0" class="empty-state">
-                        <p>{{ $t('sections.noProductsAvailable') }}</p>
-                    </div>
+                        <!-- Product Info -->
+                        <div class="product-info">
+                            <h3 class="product-title">{{ getProductName(product) }}</h3>
+                            <p class="product-description">{{ getProductDescription(product) }}</p>
+
+                            <!-- Rating -->
+                            <div v-if="product.rating" class="product-rating">
+                                <i v-for="star in 5" :key="star"
+                                   class="fas fa-star"
+                                   :class="{ 'star-filled': star <= product.rating }">
+                                </i>
+                                <span class="rating-text">{{ product.rating }}/5</span>
+                            </div>
+
+                            <!-- Price -->
+                            <div class="product-price">
+                                <span v-if="product.sale_price" class="price-original">{{ formatPrice(product.price) }}</span>
+                                <span class="price-current">{{ formatPrice(product.sale_price || product.price) }}</span>
+                            </div>
+                        </div>
+                    </Link>
                 </div>
             </div>
         </section>
 
-        <!-- Stats Section -->
-        <section class="stats-section">
+        <!-- About Section -->
+        <section class="about-section">
             <div class="section-container">
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value">1M+</div>
-                        <div class="stat-label">{{ $t('sections.stats.views') }}</div>
+                <div class="about-content">
+                    <div class="about-text">
+                        <h2 class="about-title">{{ t('home.about_title') }}</h2>
+                        <p class="about-description">{{ t('home.about_description') }}</p>
+                        <Link href="/about" class="btn-about">
+                            {{ t('home.about_button') }}
+                        </Link>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-value">50K+</div>
-                        <div class="stat-label">{{ $t('sections.stats.followers') }}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">200+</div>
-                        <div class="stat-label">{{ $t('sections.stats.videos') }}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">100+</div>
-                        <div class="stat-label">{{ $t('sections.stats.products') }}</div>
+                    <div class="about-image">
+                        <img src="/img/about-logo.png" alt="About RalphMania">
                     </div>
                 </div>
             </div>
@@ -202,148 +239,106 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ========== HERO SECTION WITH RED GRADIENT ========== */
+/* Hero Section */
 .hero-section {
     position: relative;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     color: white;
     padding: 6rem 2rem 8rem;
     overflow: hidden;
 }
 
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.1;
-}
-
 .hero-container {
-    position: relative;
     max-width: 1200px;
     margin: 0 auto;
-    z-index: 1;
 }
 
 .hero-content {
     text-align: center;
+    position: relative;
+    z-index: 2;
 }
 
 .hero-title {
     font-size: 3.5rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .hero-subtitle {
     font-size: 1.5rem;
-    margin-bottom: 2rem;
+    font-weight: 500;
+    margin-bottom: 2.5rem;
     opacity: 0.95;
-    font-weight: 300;
 }
 
 .hero-cta {
     display: flex;
     gap: 1rem;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .cta-button {
     padding: 1rem 2.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
+    border-radius: 0.75rem;
+    font-weight: 700;
     font-size: 1.125rem;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .cta-button-primary {
-    background-color: white;
+    background: white;
     color: #dc2626;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .cta-button-primary:hover {
-    background-color: #f3f4f6;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
 }
 
 .cta-button-secondary {
-    background-color: transparent;
+    background: transparent;
     color: white;
     border: 2px solid white;
 }
 
 .cta-button-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
+    background: white;
+    color: #dc2626;
+    transform: translateY(-3px);
 }
 
-/* Wave SVG - FIXED FULL WIDTH */
 .hero-wave {
     position: absolute;
-    bottom: -1px;
+    bottom: 0;
     left: 0;
     width: 100%;
-    overflow: hidden;
     line-height: 0;
 }
 
 .hero-wave svg {
-    position: relative;
     display: block;
-    width: calc(100% + 4px);
-    height: 120px;
-    margin-left: -2px;
+    width: 100%;
+    height: auto;
 }
 
-@media (max-width: 768px) {
-    .hero-section {
-        padding: 4rem 2rem 6rem;
-    }
-
-    .hero-title {
-        font-size: 2.5rem;
-    }
-
-    .hero-subtitle {
-        font-size: 1.125rem;
-    }
-
-    .hero-cta {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .cta-button {
-        width: 100%;
-        max-width: 300px;
-        text-align: center;
-    }
-
-    .hero-wave svg {
-        height: 60px;
-    }
-}
-
-/* ========== SECTIONS ========== */
+/* Section Common Styles */
 .featured-content-section,
 .featured-products-section {
     padding: 4rem 2rem;
+    background: #f9fafb;
 }
 
 .featured-products-section {
-    background-color: #f9fafb;
+    background: white;
 }
 
 .section-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -351,70 +346,71 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
 }
 
 .section-title {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
     color: #111827;
 }
 
 .section-link {
     color: #dc2626;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
+    font-weight: 700;
+    font-size: 1.125rem;
+    transition: all 0.2s;
 }
 
 .section-link:hover {
     color: #b91c1c;
-    text-decoration: underline;
+    transform: translateX(4px);
 }
 
-/* ========== LOADING CONTAINER ========== */
-.loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #9ca3af;
 }
 
-/* ========== CONTENT GRID ========== */
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Content Grid */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 2rem;
 }
 
-@media (max-width: 1024px) {
-    .content-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 .content-card {
-    background-color: white;
-    border-radius: 0.5rem;
+    background: white;
+    border-radius: 1rem;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
 }
 
 .content-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.15);
 }
 
 .content-thumbnail {
     position: relative;
-    height: 200px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
 }
 
@@ -422,24 +418,55 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s;
 }
 
 .content-card:hover .content-thumbnail img {
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
-.content-type-badge {
+.content-overlay {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background-color: #dc2626;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4rem;
+    height: 4rem;
+    background: rgba(220, 38, 38, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.content-card:hover .content-overlay {
+    opacity: 1;
+}
+
+.content-overlay i {
     color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-size: 2rem;
+}
+
+.content-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: white;
+}
+
+.badge-video {
+    background: #dc2626;
+}
+
+.badge-blog {
+    background: #3b82f6;
 }
 
 .content-info {
@@ -448,14 +475,17 @@ onMounted(() => {
 
 .content-title {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .content-description {
     color: #6b7280;
-    font-size: 0.875rem;
     margin-bottom: 1rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -465,93 +495,119 @@ onMounted(() => {
 
 .content-meta {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.75rem;
-    color: #9ca3af;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
 }
 
-.content-views {
+.meta-item {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.375rem;
+    color: #6b7280;
+    font-size: 0.875rem;
 }
 
-/* ========== PRODUCTS GRID ========== */
+.meta-item i {
+    color: #dc2626;
+}
+
+.content-date {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.content-date i {
+    color: #dc2626;
+}
+
+/* Products Grid */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 2rem;
 }
 
-@media (max-width: 1024px) {
-    .products-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .products-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 .product-card {
-    background-color: white;
-    border-radius: 0.5rem;
+    background: white;
+    border-radius: 1rem;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
 }
 
 .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.15);
 }
 
 .product-image {
     position: relative;
-    height: 250px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
-    background-color: #f9fafb;
+    background: #f3f4f6;
 }
 
 .product-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s;
 }
 
 .product-card:hover .product-image img {
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
-.product-badge {
+.sale-badge {
     position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    background-color: #dc2626;
+    top: 1rem;
+    right: 1rem;
+    background: #ef4444;
     color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
     font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.product-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4rem;
+    height: 4rem;
+    background: rgba(220, 38, 38, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.product-overlay i {
+    color: white;
+    font-size: 1.5rem;
 }
 
 .product-info {
     padding: 1.5rem;
 }
 
-.product-name {
-    font-size: 1rem;
-    font-weight: 600;
+.product-title {
+    font-size: 1.25rem;
+    font-weight: 700;
     color: #111827;
     margin-bottom: 0.75rem;
     display: -webkit-box;
@@ -560,92 +616,130 @@ onMounted(() => {
     overflow: hidden;
 }
 
-.product-price {
+.product-description {
+    color: #6b7280;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-rating {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
-.price-original {
-    text-decoration: line-through;
-    color: #9ca3af;
+.product-rating i {
+    color: #d1d5db;
     font-size: 0.875rem;
 }
 
-.price-current {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #dc2626;
+.product-rating .star-filled {
+    color: #fbbf24;
 }
 
-.add-to-cart-button {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #dc2626;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
+.rating-text {
+    color: #6b7280;
+    font-size: 0.875rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-.add-to-cart-button:hover {
-    background-color: #b91c1c;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+.product-price {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-/* ========== STATS SECTION ========== */
-.stats-section {
-    background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-    color: white;
-    padding: 4rem 2rem;
+.price-original {
+    color: #9ca3af;
+    text-decoration: line-through;
+    font-size: 1rem;
 }
 
-.stats-grid {
+.price-current {
+    color: #dc2626;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+/* About Section */
+.about-section {
+    padding: 6rem 2rem;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.about-content {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
-    text-align: center;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
 }
 
+.about-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 1.5rem;
+}
+
+.about-description {
+    font-size: 1.125rem;
+    color: #6b7280;
+    line-height: 1.75;
+    margin-bottom: 2rem;
+}
+
+.btn-about {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-about:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+}
+
+.about-image img {
+    width: 200px;
+    height: auto;
+    justify-self: right;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .hero-title {
+        font-size: 2rem;
     }
-}
 
-@media (max-width: 480px) {
-    .stats-grid {
+    .hero-subtitle {
+        font-size: 1.125rem;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+    }
+
+    .content-grid,
+    .products-grid {
         grid-template-columns: 1fr;
     }
-}
 
-.stat-item {
-    padding: 1rem;
-}
+    .about-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
 
-.stat-value {
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.stat-label {
-    font-size: 1rem;
-    color: #9ca3af;
-}
-
-/* ========== EMPTY STATE ========== */
-.empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 3rem;
-    color: #9ca3af;
+    .about-image {
+        order: -1;
+    }
 }
 </style>
