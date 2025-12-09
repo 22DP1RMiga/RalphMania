@@ -1,6 +1,8 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const currentYear = new Date().getFullYear();
 </script>
 
@@ -11,10 +13,9 @@ const currentYear = new Date().getFullYear();
             <div class="footer-top">
                 <!-- About Column -->
                 <div class="footer-column">
-                    <h3 class="footer-heading">Par RalphMania</h3>
+                    <h3 class="footer-heading">{{ t('footer.about_title') }}</h3>
                     <p class="footer-description">
-                        Tavs uzticamākais avots unikālam saturam un ekskluzīviem produktiem.
-                        Pievienojies mūsu kopienai!
+                        {{ t('footer.about_description') }}
                     </p>
                     <div class="footer-social">
                         <a href="https://www.youtube.com/@RoltonsLV" target="_blank" class="social-link social-youtube">
@@ -37,31 +38,31 @@ const currentYear = new Date().getFullYear();
 
                 <!-- Quick Links Column -->
                 <div class="footer-column">
-                    <h3 class="footer-heading">Ātrās saites</h3>
+                    <h3 class="footer-heading">{{ t('footer.quick_links') }}</h3>
                     <nav class="footer-links">
-                        <Link href="/" class="footer-link">Sākumlapa</Link>
-                        <Link href="/about" class="footer-link">Par Mums</Link>
-                        <Link href="/contact" class="footer-link">Kontakti</Link>
-                        <Link href="/shop" class="footer-link">Veikals</Link>
-                        <Link href="/content" class="footer-link">Saturs</Link>
+                        <Link href="/" class="footer-link">{{ t('nav.home') }}</Link>
+                        <Link href="/about" class="footer-link">{{ t('nav.about') }}</Link>
+                        <Link href="/contact" class="footer-link">{{ t('nav.contact') }}</Link>
+                        <Link href="/shop" class="footer-link">{{ t('nav.shop') }}</Link>
+                        <Link href="/content" class="footer-link">{{ t('nav.content') }}</Link>
                     </nav>
                 </div>
 
                 <!-- Categories Column -->
                 <div class="footer-column">
-                    <h3 class="footer-heading">Kategorijas</h3>
+                    <h3 class="footer-heading">{{ t('footer.categories') }}</h3>
                     <nav class="footer-links">
-                        <Link href="/content?type=video" class="footer-link">Video</Link>
-                        <Link href="/content?type=blog" class="footer-link">Blogs</Link>
-                        <Link href="/shop/category/apparel" class="footer-link">Apģērbi</Link>
-                        <Link href="/shop/category/souvenirs" class="footer-link">Suvenīri</Link>
-                        <Link href="/shop/category/gift-cards" class="footer-link">Dāvanu kartes</Link>
+                        <Link href="/content?type=video" class="footer-link">{{ t('footer.video') }}</Link>
+                        <Link href="/content?type=blog" class="footer-link">{{ t('footer.blog') }}</Link>
+                        <Link href="/shop/category/apparel" class="footer-link">{{ t('footer.apparel') }}</Link>
+                        <Link href="/shop/category/souvenirs" class="footer-link">{{ t('footer.souvenirs') }}</Link>
+                        <Link href="/shop/category/gift-cards" class="footer-link">{{ t('footer.gift_cards') }}</Link>
                     </nav>
                 </div>
 
                 <!-- Contact Column -->
                 <div class="footer-column">
-                    <h3 class="footer-heading">Kontaktinformācija</h3>
+                    <h3 class="footer-heading">{{ t('footer.contact_info') }}</h3>
                     <div class="footer-contact">
                         <div class="contact-item">
                             <i class="fas fa-envelope"></i>
@@ -73,7 +74,7 @@ const currentYear = new Date().getFullYear();
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>Rīga, Latvija</span>
+                            <span>{{ t('footer.location') }}</span>
                         </div>
                     </div>
                 </div>
@@ -82,12 +83,12 @@ const currentYear = new Date().getFullYear();
             <!-- Footer Bottom -->
             <div class="footer-bottom">
                 <div class="footer-copyright">
-                    <p>&copy; {{ currentYear }} RalphMania. Visas tiesības aizsargātas.</p>
+                    <p>{{ t('footer.copyright', { year: currentYear }) }}</p>
                 </div>
                 <div class="footer-legal">
-                    <Link href="/privacy" class="legal-link">Privātuma politika</Link>
+                    <Link href="/privacy" class="legal-link">{{ t('footer.privacy_policy') }}</Link>
                     <span class="legal-divider">|</span>
-                    <Link href="/terms" class="legal-link">Lietošanas noteikumi</Link>
+                    <Link href="/terms" class="legal-link">{{ t('footer.terms_of_use') }}</Link>
                 </div>
             </div>
         </div>
@@ -98,150 +99,133 @@ const currentYear = new Date().getFullYear();
 /* ========== MAIN FOOTER ========== */
 .main-footer {
     background-color: #1f2937;
-    color: #d1d5db;
+    color: #e5e7eb;
+    padding: 3rem 2rem 1.5rem;
 }
 
 .footer-container {
-    max-width: 1280px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 3rem 1rem 1.5rem;
 }
 
-/* ========== FOOTER TOP ========== */
+/* Footer Top */
 .footer-top {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid #374151;
-}
-
-@media (min-width: 640px) {
-    .footer-top {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .footer-top {
-        grid-template-columns: repeat(4, 1fr);
-    }
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    margin-bottom: 3rem;
 }
 
 .footer-column {
-    /* Column styling */
+    display: flex;
+    flex-direction: column;
 }
 
 .footer-heading {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: white;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .footer-description {
-    font-size: 0.875rem;
+    color: #9ca3af;
     line-height: 1.6;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 /* Social Links */
 .footer-social {
     display: flex;
     gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .social-link {
-    width: 2.5rem;
-    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.375rem;
-    font-size: 1.25rem;
-    transition: all 0.3s ease;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+    color: white;
+}
+
+.social-link:hover {
+    transform: translateY(-3px);
 }
 
 .social-youtube {
-    background-color: #FF0000;
-    color: white;
+    background: #FF0000;
 }
 
 .social-youtube:hover {
-    background-color: #CC0000;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4);
 }
 
 .social-tiktok {
-    background-color: #000000;
-    color: white;
+    background: #000000;
 }
 
 .social-tiktok:hover {
-    background-color: #69C9D0;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 0, 80, 0.4);
 }
 
 .social-instagram {
-    background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF);
-    color: white;
+    background: linear-gradient(135deg, #405DE6 0%, #E1306C 50%, #FCAF45 100%);
 }
 
 .social-instagram:hover {
-    opacity: 0.8;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(225, 48, 108, 0.4);
 }
 
 .social-x-twitter {
-    background-color: #181a1c;
-    color: white;
+    background: #181a1c;
 }
 
 .social-x-twitter:hover {
     background-color: #222629;
-    transform: translateY(-2px);
 }
 
 .social-facebook {
-    background-color: #4267B2;
-    color: white;
+    background: #1877F2;
 }
 
 .social-facebook:hover {
-    background-color: #365899;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
 }
 
 /* Footer Links */
 .footer-links {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .footer-link {
-    color: #d1d5db;
-    font-size: 0.875rem;
-    transition: color 0.3s ease;
-    width: fit-content;
+    color: #9ca3af;
+    transition: all 0.2s;
+    text-decoration: none;
 }
 
 .footer-link:hover {
     color: #dc2626;
+    padding-left: 0.5rem;
 }
 
-/* Contact Items */
+/* Contact Info */
 .footer-contact {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .contact-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 0.875rem;
+    color: #9ca3af;
 }
 
 .contact-item i {
@@ -250,29 +234,24 @@ const currentYear = new Date().getFullYear();
 }
 
 .contact-link {
-    color: #d1d5db;
-    transition: color 0.3s ease;
+    color: #9ca3af;
+    transition: color 0.2s;
+    text-decoration: none;
 }
 
 .contact-link:hover {
     color: #dc2626;
 }
 
-/* ========== FOOTER BOTTOM ========== */
+/* Footer Bottom */
 .footer-bottom {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    gap: 1rem;
     padding-top: 2rem;
-    font-size: 0.875rem;
-}
-
-@media (min-width: 768px) {
-    .footer-bottom {
-        flex-direction: row;
-        justify-content: space-between;
-    }
+    border-top: 1px solid #374151;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .footer-copyright {
@@ -282,12 +261,13 @@ const currentYear = new Date().getFullYear();
 .footer-legal {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .legal-link {
-    color: #d1d5db;
-    transition: color 0.3s ease;
+    color: #9ca3af;
+    transition: color 0.2s;
+    text-decoration: none;
 }
 
 .legal-link:hover {
@@ -296,5 +276,22 @@ const currentYear = new Date().getFullYear();
 
 .legal-divider {
     color: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer-top {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-social {
+        justify-content: center;
+    }
 }
 </style>

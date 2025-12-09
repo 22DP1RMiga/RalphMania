@@ -1,7 +1,14 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const currentYear = new Date().getFullYear();
+
+const subscribe = () => {
+    // Newsletter subscription logic will be implemented later
+    alert(t('footer.subscribe_success'));
+};
 </script>
 
 <template>
@@ -16,54 +23,54 @@ const currentYear = new Date().getFullYear();
                         <img src="/img/name_logo.png" alt="RalphMania" class="footer-brand-name">
                     </Link>
                     <p class="footer-tagline">
-                        Tavs uzticamākais avots ekskluzīviem RalphMania produktiem
+                        {{ t('footer.shop_tagline') }}
                     </p>
                 </div>
 
                 <!-- Shop Links -->
                 <div class="shop-footer-links">
                     <div class="footer-links-column">
-                        <h4 class="footer-links-heading">Veikals</h4>
+                        <h4 class="footer-links-heading">{{ t('footer.shop') }}</h4>
                         <nav class="footer-nav">
-                            <Link href="/shop" class="footer-nav-link">Visi produkti</Link>
-                            <Link href="/shop/category/apparel" class="footer-nav-link">Apģērbi</Link>
-                            <Link href="/shop/category/souvenirs" class="footer-nav-link">Suvenīri</Link>
-                            <Link href="/shop/category/gift-cards" class="footer-nav-link">Dāvanu kartes</Link>
+                            <Link href="/shop" class="footer-nav-link">{{ t('footer.all_products') }}</Link>
+                            <Link href="/shop/category/apparel" class="footer-nav-link">{{ t('footer.apparel') }}</Link>
+                            <Link href="/shop/category/souvenirs" class="footer-nav-link">{{ t('footer.souvenirs') }}</Link>
+                            <Link href="/shop/category/gift-cards" class="footer-nav-link">{{ t('footer.gift_cards') }}</Link>
                         </nav>
                     </div>
 
                     <div class="footer-links-column">
-                        <h4 class="footer-links-heading">Klientiem</h4>
+                        <h4 class="footer-links-heading">{{ t('footer.customers') }}</h4>
                         <nav class="footer-nav">
-                            <Link href="/shop/faq" class="footer-nav-link">Biežāk uzdotie jautājumi</Link>
-                            <Link href="/shop/shipping" class="footer-nav-link">Piegāde</Link>
-                            <Link href="/shop/returns" class="footer-nav-link">Atgriešana</Link>
-                            <Link href="/shop/contact" class="footer-nav-link">Kontakti</Link>
+                            <Link href="/shop/faq" class="footer-nav-link">{{ t('footer.faq') }}</Link>
+                            <Link href="/shop/shipping" class="footer-nav-link">{{ t('footer.shipping') }}</Link>
+                            <Link href="/shop/returns" class="footer-nav-link">{{ t('footer.returns') }}</Link>
+                            <Link href="/shop/contact" class="footer-nav-link">{{ t('footer.contact') }}</Link>
                         </nav>
                     </div>
 
                     <div class="footer-links-column">
-                        <h4 class="footer-links-heading">Informācija</h4>
+                        <h4 class="footer-links-heading">{{ t('footer.information') }}</h4>
                         <nav class="footer-nav">
-                            <Link href="/about" class="footer-nav-link">Par mums</Link>
-                            <Link href="/privacy" class="footer-nav-link">Privātuma politika</Link>
-                            <Link href="/terms" class="footer-nav-link">Lietošanas noteikumi</Link>
+                            <Link href="/about" class="footer-nav-link">{{ t('footer.about_us') }}</Link>
+                            <Link href="/privacy" class="footer-nav-link">{{ t('footer.privacy_policy') }}</Link>
+                            <Link href="/terms" class="footer-nav-link">{{ t('footer.terms_of_use') }}</Link>
                         </nav>
                     </div>
                 </div>
 
                 <!-- Newsletter & Social -->
                 <div class="shop-footer-subscribe">
-                    <h4 class="footer-links-heading">Seko mums</h4>
+                    <h4 class="footer-links-heading">{{ t('footer.follow_us') }}</h4>
                     <p class="subscribe-text">
-                        Uzzini pirmais par jauniem produktiem un akcijām!
+                        {{ t('footer.subscribe_description') }}
                     </p>
 
                     <!-- Newsletter Form -->
                     <form class="newsletter-form" @submit.prevent="subscribe">
                         <input
                             type="email"
-                            placeholder="Tavs e-pasts"
+                            :placeholder="t('footer.email_placeholder')"
                             class="newsletter-input"
                             required
                         >
@@ -89,7 +96,7 @@ const currentYear = new Date().getFullYear();
 
             <!-- Payment Methods -->
             <div class="shop-footer-payment">
-                <p class="payment-label">Pieņemam:</p>
+                <p class="payment-label">{{ t('footer.payment_methods') }}</p>
                 <div class="payment-icons">
                     <i class="fab fa-cc-visa payment-icon"></i>
                     <i class="fab fa-cc-mastercard payment-icon"></i>
@@ -100,13 +107,7 @@ const currentYear = new Date().getFullYear();
 
             <!-- Footer Bottom -->
             <div class="shop-footer-bottom">
-                <p class="footer-copyright">
-                    &copy; {{ currentYear }} RalphMania Shop. Visas tiesības aizsargātas.
-                </p>
-                <Link href="/" class="footer-back-home">
-                    <i class="fas fa-home"></i>
-                    Atpakaļ uz sākumlapu
-                </Link>
+                <p class="shop-copyright">{{ t('footer.copyright', { year: currentYear }) }}</p>
             </div>
         </div>
     </footer>
@@ -115,57 +116,53 @@ const currentYear = new Date().getFullYear();
 <style scoped>
 /* ========== SHOP FOOTER ========== */
 .shop-footer {
-    background-color: #111827;
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     color: #e5e7eb;
+    padding: 3rem 2rem 1.5rem;
 }
 
 .shop-footer-container {
-    max-width: 1280px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 3rem 1rem 1.5rem;
 }
 
-/* ========== FOOTER CONTENT ========== */
+/* Footer Content */
 .shop-footer-content {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid #374151;
-}
-
-@media (min-width: 768px) {
-    .shop-footer-content {
-        grid-template-columns: 1fr 2fr 1fr;
-    }
+    grid-template-columns: 1.5fr 2fr 1fr;
+    gap: 3rem;
+    margin-bottom: 2.5rem;
 }
 
 /* Brand Section */
 .shop-footer-brand {
-    /* Styling */
+    display: flex;
+    flex-direction: column;
 }
 
 .footer-logo-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
     margin-bottom: 1rem;
+    text-decoration: none;
 }
 
 .footer-logo {
-    height: 3rem;
-    width: auto;
+    width: 3.5rem;
+    height: 3.5rem;
+    object-fit: contain;
 }
 
 .footer-brand-name {
-    height: 1.75rem;
-    width: auto;
+    height: 2rem;
+    object-fit: contain;
 }
 
 .footer-tagline {
-    font-size: 0.875rem;
     color: #9ca3af;
     line-height: 1.6;
+    font-size: 0.95rem;
 }
 
 /* Shop Links */
@@ -175,19 +172,14 @@ const currentYear = new Date().getFullYear();
     gap: 2rem;
 }
 
-@media (max-width: 768px) {
-    .shop-footer-links {
-        grid-template-columns: 1fr;
-    }
-}
-
 .footer-links-column {
-    /* Column styling */
+    display: flex;
+    flex-direction: column;
 }
 
 .footer-links-heading {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.125rem;
+    font-weight: 700;
     color: white;
     margin-bottom: 1rem;
 }
@@ -195,63 +187,75 @@ const currentYear = new Date().getFullYear();
 .footer-nav {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.625rem;
 }
 
 .footer-nav-link {
-    color: #d1d5db;
-    font-size: 0.875rem;
-    transition: color 0.3s ease;
-    width: fit-content;
+    color: #9ca3af;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-size: 0.95rem;
 }
 
 .footer-nav-link:hover {
     color: #dc2626;
+    padding-left: 0.375rem;
 }
 
 /* Subscribe Section */
 .shop-footer-subscribe {
-    /* Styling */
+    display: flex;
+    flex-direction: column;
 }
 
 .subscribe-text {
-    font-size: 0.875rem;
     color: #9ca3af;
-    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
 }
 
+/* Newsletter Form */
 .newsletter-form {
     display: flex;
+    gap: 0.5rem;
     margin-bottom: 1.5rem;
 }
 
 .newsletter-input {
     flex: 1;
     padding: 0.75rem 1rem;
-    background-color: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 0.375rem 0 0 0.375rem;
+    background: #374151;
+    border: 2px solid #4b5563;
+    border-radius: 0.5rem;
     color: white;
-    outline: none;
-    transition: border-color 0.3s ease;
+    font-size: 0.95rem;
+    transition: all 0.2s;
 }
 
 .newsletter-input:focus {
+    outline: none;
     border-color: #dc2626;
+    background: #4b5563;
+}
+
+.newsletter-input::placeholder {
+    color: #9ca3af;
 }
 
 .newsletter-submit {
-    padding: 0.75rem 1.5rem;
-    background-color: #dc2626;
-    color: white;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     border: none;
-    border-radius: 0 0.375rem 0.375rem 0;
+    border-radius: 0.5rem;
+    color: white;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s;
 }
 
 .newsletter-submit:hover {
-    background-color: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
 }
 
 /* Social Links */
@@ -261,106 +265,117 @@ const currentYear = new Date().getFullYear();
 }
 
 .shop-social-link {
-    width: 2.5rem;
-    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.375rem;
-    font-size: 1.25rem;
-    transition: all 0.3s ease;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+    color: white;
+    font-size: 1.125rem;
+}
+
+.shop-social-link:hover {
+    transform: translateY(-3px);
 }
 
 .shop-social-youtube {
-    background-color: #FF0000;
-    color: white;
+    background: #FF0000;
 }
 
 .shop-social-youtube:hover {
-    background-color: #CC0000;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4);
 }
 
 .shop-social-instagram {
-    background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF);
-    color: white;
+    background: linear-gradient(135deg, #405DE6 0%, #E1306C 50%, #FCAF45 100%);
 }
 
 .shop-social-instagram:hover {
-    opacity: 0.8;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(225, 48, 108, 0.4);
 }
 
 .shop-social-facebook {
-    background-color: #4267B2;
-    color: white;
+    background: #1877F2;
 }
 
 .shop-social-facebook:hover {
-    background-color: #365899;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
 }
 
-/* ========== PAYMENT METHODS ========== */
+/* Payment Methods */
 .shop-footer-payment {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
+    justify-content: space-between;
     padding: 1.5rem 0;
+    border-top: 1px solid #374151;
     border-bottom: 1px solid #374151;
+    margin-bottom: 1.5rem;
 }
 
 .payment-label {
-    font-size: 0.875rem;
     color: #9ca3af;
+    font-weight: 600;
 }
 
 .payment-icons {
     display: flex;
     gap: 1rem;
+    align-items: center;
 }
 
 .payment-icon {
     font-size: 2rem;
-    color: #d1d5db;
+    color: #9ca3af;
+    transition: color 0.2s;
 }
 
-/* ========== FOOTER BOTTOM ========== */
+.payment-icon:hover {
+    color: white;
+}
+
+/* Footer Bottom */
 .shop-footer-bottom {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-top: 2rem;
+    text-align: center;
 }
 
-@media (min-width: 768px) {
-    .shop-footer-bottom {
-        flex-direction: row;
+.shop-copyright {
+    color: #9ca3af;
+    font-size: 0.95rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .shop-footer-content {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .shop-footer-links {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 }
 
-.footer-copyright {
-    font-size: 0.875rem;
-    color: #9ca3af;
-}
+@media (max-width: 768px) {
+    .shop-footer-payment {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
 
-.footer-back-home {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #d1d5db;
-    font-size: 0.875rem;
-    transition: color 0.3s ease;
-}
+    .payment-icons {
+        justify-content: center;
+    }
 
-.footer-back-home:hover {
-    color: #dc2626;
-}
+    .shop-footer-social {
+        justify-content: center;
+    }
 
-.footer-back-home i {
-    font-size: 1rem;
+    .newsletter-form {
+        flex-direction: column;
+    }
 }
 </style>
