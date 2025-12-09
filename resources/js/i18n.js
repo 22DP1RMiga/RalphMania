@@ -358,17 +358,54 @@ const messages = {
             empty_text: "Tukšs",
         },
         footer: {
-            about: 'Par RalphMania',
-            about_text: 'Tavs uzticamākais avots unikālam saturam un ekskluzīviem produktiem. Pievienojies mūsu kopienai!',
+            // "Par mums" sadaļa
+            about_title: 'Par RalphMania',
+            about_description: 'Tavs uzticamākais avots unikālam saturam un ekskluzīviem produktiem. Pievienojies mūsu kopienai!',
+
+            // Veikala sauklis
+            shop_tagline: 'Tavs uzticamākais avots ekskluzīviem RalphMania produktiem',
+
+            // Navigācijas virsraksti
             quick_links: 'Ātrās saites',
             categories: 'Kategorijas',
             contact_info: 'Kontaktinformācija',
+            shop: 'Veikals',
+            customers: 'Klientiem',
+            information: 'Informācija',
             follow_us: 'Seko mums',
-            newsletter: 'Jaunumi',
-            newsletter_text: 'Uzzini pirmais par jauniem produktiem un akcijām!',
-            copyright: 'Visas tiesības aizsargātas',
-            privacy: 'Privātuma politika',
-            terms: 'Lietošanas noteikumi',
+
+            // Saites
+            video: 'Video',
+            blog: 'Blogs',
+            apparel: 'Apģērbi',
+            souvenirs: 'Suvenīri',
+            gift_cards: 'Dāvanu kartes',
+            all_products: 'Visi produkti',
+
+            // Klientu saites
+            faq: 'Biežāk uzdotie jautājumi',
+            shipping: 'Piegāde',
+            returns: 'Atgriešana',
+            contact: 'Kontakti',
+
+            // Informācijas saites
+            about_us: 'Par mums',
+            privacy_policy: 'Privātuma politika',
+            terms_of_use: 'Lietošanas noteikumi',
+
+            // Kontakta informācija
+            location: 'Rīga, Latvija',
+
+            // Biļetens (Newsletter)
+            subscribe_description: 'Uzzini pirmais par jauniem produktiem un akcijām!',
+            email_placeholder: 'Tavs e-pasts',
+            subscribe_success: 'Paldies par abonēšanu!',
+
+            // Maksājums
+            payment_methods: 'Pieņemam:',
+
+            // Autortiesības
+            copyright: '© {year} RalphMania. Visas tiesības aizsargātas.',
         },
         profile: {
             profile: 'Profils',
@@ -772,17 +809,54 @@ const messages = {
             empty_text: "Empty",
         },
         footer: {
-            about: 'About RalphMania',
-            about_text: 'Your most trusted source for unique content and exclusive products. Join our community!',
+            // "Par mums" sadaļa
+            about_title: 'About RalphMania',
+            about_description: 'Your most trusted source for unique content and exclusive products. Join our community!',
+
+            // Veikala sauklis
+            shop_tagline: 'Your most trusted source for exclusive RalphMania products',
+
+            // Navigācijas virsraksti
             quick_links: 'Quick Links',
             categories: 'Categories',
             contact_info: 'Contact Information',
+            shop: 'Shop',
+            customers: 'Customers',
+            information: 'Information',
             follow_us: 'Follow Us',
-            newsletter: 'Newsletter',
-            newsletter_text: 'Be the first to know about new products and promotions!',
-            copyright: 'All rights reserved',
-            privacy: 'Privacy Policy',
-            terms: 'Terms of Service',
+
+            // Saites
+            video: 'Videos',
+            blog: 'Blog',
+            apparel: 'Apparel',
+            souvenirs: 'Souvenirs',
+            gift_cards: 'Gift Cards',
+            all_products: 'All Products',
+
+            // Klientu saites
+            faq: 'Frequently Asked Questions',
+            shipping: 'Shipping',
+            returns: 'Returns',
+            contact: 'Contact',
+
+            // Informācijas saites
+            about_us: 'About Us',
+            privacy_policy: 'Privacy Policy',
+            terms_of_use: 'Terms of Use',
+
+            // Kontakta informācija
+            location: 'Riga, Latvia',
+
+            // Biļetens (Newsletter)
+            subscribe_description: 'Be the first to know about new products and promotions!',
+            email_placeholder: 'Your email',
+            subscribe_success: 'Thank you for subscribing!',
+
+            // Maksājums
+            payment_methods: 'We Accept:',
+
+            // Autortiesības
+            copyright: '© {year} RalphMania. All rights reserved.',
         },
         profile: {
             profile: 'Profile',
