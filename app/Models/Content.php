@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Content extends Model
 {
@@ -25,6 +26,8 @@ class Content extends Model
         'video_url',
         'video_platform',
         'thumbnail',
+        'featured_image',
+        'blog_images',
         'duration',
         'category',
         'view_count',
@@ -37,16 +40,16 @@ class Content extends Model
 
     protected $casts = [
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
         'published_at' => 'datetime',
         'view_count' => 'integer',
         'like_count' => 'integer',
         'duration' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'blog_images' => 'array',
     ];
 
     /**
-     * Get the user who created this content
+     * Get the user that created this content.
      */
     public function creator(): BelongsTo
     {
@@ -54,65 +57,70 @@ class Content extends Model
     }
 
     /**
-     * Get comments for this content
+     * Get all likes for the content (polymorphic)
+     */
+    public function likes(): MorphMany
+    {
+        return $this->morphMany(Like::class, 'likeable');
+    }
+
+    /**
+     * Get the comments for the content.
      */
     public function comments(): HasMany
     {
-        return $this->hasMany(Comment::class, 'content_id');
+        return $this->hasMany(Comment::class, 'content_id')
+            ->where('is_approved', true)
+            ->orderBy('created_at', 'desc');
     }
 
     /**
-     * Get localized title
+     * Get the reviews for the content.
      */
-    public function getTitleAttribute(): string
+    public function reviews(): HasMany
     {
-        $locale = app()->getLocale();
-        return $locale === 'lv' ? $this->title_lv : ($this->title_en ?? $this->title_lv);
+        return $this->hasMany(Review::class, 'content_id')
+            ->where('is_approved', true)
+            ->orderBy('created_at', 'desc');
     }
 
     /**
-     * Get localized description
+     * ✅ NEW: Get full URL for featured image
      */
-    public function getDescriptionAttribute(): ?string
+    public function getFeaturedImageUrlAttribute(): ?string
     {
-        $locale = app()->getLocale();
-        return $locale === 'lv' ? $this->description_lv : ($this->description_en ?? $this->description_lv);
-    }
-
-    /**
-     * Get localized content body
-     */
-    public function getBodyAttribute(): ?string
-    {
-        $locale = app()->getLocale();
-        return $locale === 'lv' ? $this->content_body_lv : ($this->content_body_en ?? $this->content_body_lv);
-    }
-
-    /**
-     * Get formatted duration (MM:SS)
-     */
-    public function getFormattedDurationAttribute(): ?string
-    {
-        if (!$this->duration) {
+        if (!$this->featured_image) {
             return null;
         }
 
-        $minutes = floor($this->duration / 60);
-        $seconds = $this->duration % 60;
+        // If it's already a full URL
+        if (str_starts_with($this->featured_image, 'http')) {
+            return $this->featured_image;
+        }
 
-        return sprintf('%02d:%02d', $minutes, $seconds);
+        // Build storage URL
+        return '/storage/' . $this->featured_image;
     }
 
     /**
-     * Check if content is a video
+     * ✅ NEW: Get full URLs for all blog images
      */
-    public function isVideo(): bool
+    public function getBlogImageUrlsAttribute(): array
     {
-        return $this->type === 'video';
+        if (!$this->blog_images || !is_array($this->blog_images)) {
+            return [];
+        }
+
+        return array_map(function ($image) {
+            if (str_starts_with($image, 'http')) {
+                return $image;
+            }
+            return '/storage/' . $image;
+        }, $this->blog_images);
     }
 
     /**
-     * Check if content is a blog post
+     * ✅ NEW: Check if content is a blog post
      */
     public function isBlog(): bool
     {
@@ -120,59 +128,40 @@ class Content extends Model
     }
 
     /**
-     * Get embed URL for video
+     * ✅ NEW: Check if content is a video
      */
-    public function getEmbedUrlAttribute(): ?string
+    public function isVideo(): bool
     {
-        if (!$this->video_url || !$this->isVideo()) {
-            return null;
-        }
-
-        switch ($this->video_platform) {
-            case 'YouTube':
-                // Extract video ID from various YouTube URL formats
-                if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $this->video_url, $matches)) {
-                    return "https://www.youtube.com/embed/{$matches[1]}";
-                }
-                break;
-
-            case 'Vimeo':
-                if (preg_match('/vimeo\.com\/(\d+)/', $this->video_url, $matches)) {
-                    return "https://player.vimeo.com/video/{$matches[1]}";
-                }
-                break;
-
-            case 'TikTok':
-            case 'Instagram':
-            case 'Facebook':
-            case 'Twitch':
-                // These platforms have different embed methods
-                return $this->video_url;
-        }
-
-        return $this->video_url;
+        return $this->type === 'video';
     }
 
     /**
-     * Scope: Only published content
+     * Scope a query to only include published content.
      */
     public function scopePublished($query)
     {
         return $query->where('is_published', true)
-            ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
     }
 
     /**
-     * Scope: Only videos
+     * Scope a query to only include featured content.
      */
-    public function scopeVideos($query)
+    public function scopeFeatured($query)
     {
-        return $query->where('type', 'video');
+        return $query->where('is_featured', true);
     }
 
     /**
-     * Scope: Only blogs
+     * Scope a query to filter by type.
+     */
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+
+    /**
+     * ✅ NEW: Scope for blogs only
      */
     public function scopeBlogs($query)
     {
@@ -180,10 +169,26 @@ class Content extends Model
     }
 
     /**
-     * Scope: By category
+     * ✅ NEW: Scope for videos only
      */
-    public function scopeByCategory($query, string $category)
+    public function scopeVideos($query)
+    {
+        return $query->where('type', 'video');
+    }
+
+    /**
+     * Scope a query to filter by category.
+     */
+    public function scopeInCategory($query, $category)
     {
         return $query->where('category', $category);
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 }

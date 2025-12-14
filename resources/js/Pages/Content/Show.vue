@@ -485,7 +485,7 @@ onMounted(() => {
                     <div v-else-if="comments.length > 0" class="comments-list">
                         <div v-for="comment in comments" :key="comment.id" class="comment-item">
                             <img
-                                :src="comment.user?.profile_picture ? `/storage/${comment.user.profile_picture}` : '/img/default-avatar.png'"
+                                :src="comment.user?.profile_picture ? `${comment.user.profile_picture}` : '/img/default-avatar.png'"
                                 :alt="comment.user?.username"
                                 class="comment-avatar"
                             >
