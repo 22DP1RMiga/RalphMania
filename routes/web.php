@@ -117,11 +117,22 @@ Route::middleware('auth')->group(function () {
     });
 
     // Cart
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-    Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
-    Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
+//    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+//    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+//    Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
+//    Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
+//    Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
+
+    // Grozs
+    Route::prefix('cart')->name('cart.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');   // apskata grozu
+        Route::post('/add', [CartController::class, 'add'])->name('add');   // pievieno grozā
+        Route::patch('/item/{cartItem}', [CartController::class, 'updateQuantity'])->name('update');    // atjaunina daudzumu
+        Route::delete('/item/{cartItem}', [CartController::class, 'remove'])->name('remove');   // noņem preci
+        Route::delete('/clear', [CartController::class, 'clear'])->name('clear');   // iztukšo grozu
+        Route::get('/count', [CartController::class, 'count'])->name('count');      // iegūst grozu skaitu (emblēmai)
+        Route::get('/data', [CartController::class, 'get'])->name('get');   // iegūst groza datus (API)
+    });
 
     // Checkout
     Route::get('/checkout', function () {

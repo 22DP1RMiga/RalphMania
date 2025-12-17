@@ -3,267 +3,258 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CartController extends Controller
 {
     /**
-     * Get or create session ID for guest users
+     * Display the shopping cart
+     * Renders: resources/js/Pages/Cart/Index.vue
      */
-    private function getSessionId()
+    public function index(): Response
     {
-        if (!session()->has('cart_session_id')) {
-            session(['cart_session_id' => Str::uuid()->toString()]);
-        }
-        return session('cart_session_id');
-    }
-
-    /**
-     * Get cart items count (for navbar badge)
-     * GET /api/cart/count
-     */
-    public function count()
-    {
-        $userId = auth()->id();
-        $sessionId = $this->getSessionId();
-
-        $count = Cart::where(function($query) use ($userId, $sessionId) {
-            if ($userId) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->where('session_id', $sessionId);
-            }
-        })
-            ->sum('quantity');
-
-        return response()->json(['count' => $count ?? 0]);
-    }
-
-    /**
-     * Display cart page
-     * GET /cart
-     */
-    public function index()
-    {
-        $userId = auth()->id();
-        $sessionId = $this->getSessionId();
-
-        $cartItems = Cart::with('product')
-            ->where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->get();
-
-        $subtotal = $cartItems->sum(function ($item) {
-            return $item->quantity * $item->product->price;
-        });
-
-        $shipping = $cartItems->count() > 0 ? 5.00 : 0;
-        $total = $subtotal + $shipping;
+        $cart = Cart::getCurrentCart();
+        $cart->load(['items.product']);
 
         return Inertia::render('Cart/Index', [
             'cart' => [
-                'items' => $cartItems->map(fn($item) => [
+                'id' => $cart->id,
+                'total_items' => $cart->total_items,
+                'total_amount' => $cart->total_amount,
+            ],
+            'items' => $cart->items->map(function ($item) {
+                return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
-                    'name_lv' => $item->product->name_lv,
-                    'name_en' => $item->product->name_en,
-                    'image' => $item->product->image,
-                    'price' => (float) $item->product->price,
                     'quantity' => $item->quantity,
-                    'stock_quantity' => $item->product->stock_quantity,
-                    'total' => $item->quantity * (float) $item->product->price,
-                ]),
-                'subtotal' => $subtotal,
-                'shipping' => $shipping,
-                'total' => $total,
-                'count' => $cartItems->sum('quantity'),
+                    'price' => $item->price,
+                    'total' => $item->total,
+                    'product' => [
+                        'id' => $item->product->id,
+                        'name_lv' => $item->product->name_lv,
+                        'name_en' => $item->product->name_en,
+                        'slug' => $item->product->slug,
+                        'price' => $item->product->price,
+                        'image' => $item->product->image,
+                        'stock_quantity' => $item->product->stock_quantity,
+                    ],
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Add item to cart
+     */
+    public function add(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        // Get product
+        $product = Product::findOrFail($validated['product_id']);
+
+        // Check stock
+        if ($product->stock_quantity < $validated['quantity']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient stock / Nepietiekams daudzums noliktavā'
+            ], 400);
+        }
+
+        // Get or create cart
+        $cart = Cart::getCurrentCart();
+
+        // Check if item already exists in cart
+        $cartItem = $cart->items()
+            ->where('product_id', $validated['product_id'])
+            ->first();
+
+        if ($cartItem) {
+            // Update quantity
+            $newQuantity = $cartItem->quantity + $validated['quantity'];
+
+            // Check stock again
+            if ($product->stock_quantity < $newQuantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot add more items. Stock limit reached / Nevar pievienot vairāk. Sasniegts noliktavas limits'
+                ], 400);
+            }
+
+            $cartItem->update([
+                'quantity' => $newQuantity,
+            ]);
+        } else {
+            // Create new cart item
+            CartItem::create([
+                'cart_id' => $cart->id,
+                'user_id' => auth()->id(),
+                'session_id' => session()->getId(),
+                'product_id' => $validated['product_id'],
+                'price' => $product->price,
+                'quantity' => $validated['quantity'],
+            ]);
+        }
+
+        // Reload cart with items
+        $cart->load('items');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product added to cart / Produkts pievienots grozam',
+            'cart' => [
+                'total_items' => $cart->total_items,
+                'total_amount' => $cart->total_amount,
             ]
         ]);
     }
 
     /**
-     * Add product to cart
-     * POST /cart/add
-     */
-    public function add(Request $request)
-    {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'integer|min:1',
-        ]);
-
-        $product = Product::findOrFail($request->product_id);
-
-        // Check stock
-        if ($product->stock_quantity < ($request->quantity ?? 1)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Not enough stock'
-            ], 400);
-        }
-
-        $userId = auth()->id();
-        $sessionId = $this->getSessionId();
-
-        // Check if item already in cart
-        $cartItem = Cart::where('product_id', $request->product_id)
-            ->where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->first();
-
-        if ($cartItem) {
-            // Update quantity
-            $newQuantity = $cartItem->quantity + ($request->quantity ?? 1);
-
-            if ($product->stock_quantity < $newQuantity) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Not enough stock'
-                ], 400);
-            }
-
-            $cartItem->update(['quantity' => $newQuantity]);
-        } else {
-            // Create new cart item
-            Cart::create([
-                'user_id' => $userId,
-                'session_id' => $sessionId,
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity ?? 1,
-            ]);
-        }
-
-        // Get updated count
-        $count = Cart::where(function($query) use ($userId, $sessionId) {
-            if ($userId) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->where('session_id', $sessionId);
-            }
-        })
-            ->sum('quantity');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product added to cart',
-            'count' => $count
-        ]);
-    }
-
-    /**
      * Update cart item quantity
-     * PUT /cart/{id}
      */
-    public function update(Request $request, $id)
+    public function updateQuantity(Request $request, CartItem $cartItem): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $userId = auth()->id();
-        $sessionId = $this->getSessionId();
-
-        $cartItem = Cart::where('id', $id)
-            ->where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->firstOrFail();
-
-        $product = Product::findOrFail($cartItem->product_id);
-
-        // Check stock
-        if ($product->stock_quantity < $request->quantity) {
+        // Check if item belongs to current user's cart
+        $cart = Cart::getCurrentCart();
+        if ($cartItem->cart_id !== $cart->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Not enough stock'
+                'message' => 'Unauthorized / Nav autorizēts'
+            ], 403);
+        }
+
+        // Check stock
+        if ($cartItem->product->stock_quantity < $validated['quantity']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient stock / Nepietiekams daudzums'
             ], 400);
         }
 
-        $cartItem->update(['quantity' => $request->quantity]);
+        $cartItem->update([
+            'quantity' => $validated['quantity'],
+        ]);
+
+        // Reload cart
+        $cart->load('items');
 
         return response()->json([
             'success' => true,
-            'message' => 'Cart updated'
+            'message' => 'Quantity updated / Daudzums atjaunināts',
+            'item' => [
+                'id' => $cartItem->id,
+                'quantity' => $cartItem->quantity,
+                'total' => $cartItem->total,
+            ],
+            'cart' => [
+                'total_items' => $cart->total_items,
+                'total_amount' => $cart->total_amount,
+            ]
         ]);
     }
 
     /**
      * Remove item from cart
-     * DELETE /cart/{id}
      */
-    public function remove($id)
+    public function remove(CartItem $cartItem): JsonResponse
     {
-        $userId = auth()->id();
-        $sessionId = $this->getSessionId();
-
-        $cartItem = Cart::where('id', $id)
-            ->where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->firstOrFail();
+        // Check if item belongs to current user's cart
+        $cart = Cart::getCurrentCart();
+        if ($cartItem->cart_id !== $cart->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized / Nav autorizēts'
+            ], 403);
+        }
 
         $cartItem->delete();
 
-        // Get updated count
-        $count = Cart::where(function($query) use ($userId, $sessionId) {
-            if ($userId) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->where('session_id', $sessionId);
-            }
-        })
-            ->sum('quantity');
+        // Reload cart
+        $cart->load('items');
 
         return response()->json([
             'success' => true,
-            'message' => 'Item removed from cart',
-            'count' => $count
+            'message' => 'Item removed / Produkts izņemts',
+            'cart' => [
+                'total_items' => $cart->total_items,
+                'total_amount' => $cart->total_amount,
+            ]
         ]);
     }
 
     /**
-     * Clear cart
-     * DELETE /cart
+     * Clear entire cart
      */
-    public function clear()
+    public function clear(): JsonResponse
     {
-        $userId = auth()->id();
-        $sessionId = $this->getSessionId();
-
-        Cart::where(function($query) use ($userId, $sessionId) {
-            if ($userId) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->where('session_id', $sessionId);
-            }
-        })
-            ->delete();
+        $cart = Cart::getCurrentCart();
+        $cart->clearCart();
 
         return response()->json([
             'success' => true,
-            'message' => 'Cart cleared',
-            'count' => 0
+            'message' => 'Cart cleared / Grozs iztīrīts',
+            'cart' => [
+                'total_items' => 0,
+                'total_amount' => 0,
+            ]
+        ]);
+    }
+
+    /**
+     * Get cart count (for header badge)
+     */
+    public function count(): JsonResponse
+    {
+        $cart = Cart::getCurrentCart();
+
+        return response()->json([
+            'count' => $cart->total_items,
+        ]);
+    }
+
+    /**
+     * Get cart data (API endpoint)
+     */
+    public function get(): JsonResponse
+    {
+        $cart = Cart::getCurrentCart();
+        $cart->load(['items.product']);
+
+        return response()->json([
+            'cart' => [
+                'id' => $cart->id,
+                'total_items' => $cart->total_items,
+                'total_amount' => $cart->total_amount,
+            ],
+            'items' => $cart->items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                    'total' => $item->total,
+                    'product' => [
+                        'id' => $item->product->id,
+                        'name_lv' => $item->product->name_lv,
+                        'name_en' => $item->product->name_en,
+                        'slug' => $item->product->slug,
+                        'price' => $item->product->price,
+                        'image' => $item->product->image,
+                    ],
+                ];
+            }),
         ]);
     }
 }

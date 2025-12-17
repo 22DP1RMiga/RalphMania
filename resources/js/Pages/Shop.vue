@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import ToastNotification from '@/Components/ToastNotification.vue';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
 import LoadingSpinner from '@/Components/LoadingSpinner.vue';
 import axios from 'axios';
@@ -121,19 +122,24 @@ const addToCart = async (product) => {
             quantity: 1,
         });
 
-        // Emit event to update cart count in navbar
+        // Update cart count
         window.dispatchEvent(new CustomEvent('cart-updated', {
-            detail: { count: response.data.count }
+            detail: { count: response.data.cart.total_items }
         }));
 
-        alert(`${getProductName(product)} ${locale.value === 'lv' ? 'pievienots grozam!' : 'added to cart!'}`);
+        // Show success toast
+        displayToast(
+            `${getProductName(product)} ${locale.value === 'lv' ? 'pievienots grozam!' : 'added to cart!'}`,
+            'success'
+        );
     } catch (error) {
         console.error('Error adding to cart:', error);
-        if (error.response?.data?.message) {
-            alert(error.response.data.message);
-        } else {
-            alert(locale.value === 'lv' ? 'Kļūda! Lūdzu mēģiniet vēlreiz.' : 'Error! Please try again.');
-        }
+
+        // Show error toast
+        const errorMessage = error.response?.data?.message ||
+            (locale.value === 'lv' ? 'Kļūda! Lūdzu mēģiniet vēlreiz.' : 'Error! Please try again.');
+
+        displayToast(errorMessage, 'error');
     }
 };
 
@@ -141,12 +147,35 @@ onMounted(() => {
     fetchProducts();
     fetchCategories();
 });
+
+// Toast notification state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success');
+
+const displayToast = (message, type = 'success') => {
+    toastMessage.value = message;
+    toastType.value = type;
+    showToast.value = true;
+};
+
+const closeToast = () => {
+    showToast.value = false;
+};
 </script>
 
 <template>
     <Head :title="$t('nav.shop')" />
 
     <ShopLayout>
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="showToast"
+            :message="toastMessage"
+            :type="toastType"
+            @close="closeToast"
+        />
+
         <!-- Shop Hero -->
         <section class="shop-hero">
             <div class="hero-container">
