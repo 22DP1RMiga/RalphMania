@@ -11,6 +11,7 @@ const messages = {
             content: 'Saturs',
             dashboard: 'Panelis',
             profile: 'Profils',
+            cart: 'Grozs',
         },
         auth: {
             login: 'Pieteikties',
@@ -347,7 +348,7 @@ const messages = {
             stock_quantity: 'Krājumu daudzums',
         },
         cart: {
-            title: 'Iepirkšanās grozs',
+            title: 'Iepirkumu grozs',
             empty: 'Jūsu grozs ir tukšs',
             subtotal: 'Starpsumma',
             shipping: 'Piegāde',
@@ -356,6 +357,16 @@ const messages = {
             items_in_cart: 'preces grozā',
             continue_shopping: 'Turpināt iepirkties',
             empty_text: "Tukšs",
+            view_product: 'Skatīt produktu',
+            quantity: 'Daudzums',
+            in_stock: 'Noliktavā',
+            summary: 'Kopsavilkums',
+            calculated_at_checkout: 'Aprēķināts izrakstīšanās laikā',
+            proceed_to_checkout: 'Turpināt uz apmaksu',
+            clear_cart: 'Iztukšot grozu',
+            your_cart_is_empty: 'Jūsu grozs ir tukšs',
+            add_products_to_start_shopping: 'Pievienojiet produktus, lai sāktu iepirkties',
+            shop_now: 'Iepirkties tagad',
         },
         footer: {
             // "Par mums" sadaļa
@@ -462,6 +473,7 @@ const messages = {
             content: 'Content',
             dashboard: 'Dashboard',
             profile: 'Profile',
+            cart: 'Cart',
         },
         auth: {
             login: 'Login',
@@ -807,6 +819,16 @@ const messages = {
             items_in_cart: 'items in cart',
             continue_shopping: 'Continue shopping',
             empty_text: "Empty",
+            view_product: 'View Product',
+            quantity: 'Quantity',
+            in_stock: 'In stock',
+            summary: 'Summary',
+            calculated_at_checkout: 'Calculated at checkout',
+            proceed_to_checkout: 'Proceed to Checkout',
+            clear_cart: 'Clear Cart',
+            your_cart_is_empty: 'Your cart is empty',
+            add_products_to_start_shopping: 'Add products to start shopping',
+            shop_now: 'Shop Now',
         },
         footer: {
             // "Par mums" sadaļa

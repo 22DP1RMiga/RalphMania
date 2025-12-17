@@ -83,6 +83,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user's cart
+     */
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    /**
      * Get user's cart items
      */
     public function cartItems()

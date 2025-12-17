@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CartItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'cart_id',
         'user_id',
         'session_id',
         'product_id',
@@ -18,26 +20,61 @@ class CartItem extends Model
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
         'quantity' => 'integer',
+        'price' => 'decimal:2',
     ];
 
-    protected $appends = ['total'];
+    protected $appends = [
+        'total',
+    ];
 
-    // Relationships
-    public function user()
+    /**
+     * Get the cart that owns the item
+     */
+    public function cart(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Cart::class);
     }
 
-    public function product()
+    /**
+     * Get the product
+     */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    // Accessors
-    public function getTotalAttribute()
+    /**
+     * Get the user (for guest carts)
+     */
+    public function user(): BelongsTo
     {
-        return $this->quantity * $this->price;
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get total for this item (quantity * price)
+     */
+    public function getTotalAttribute(): float
+    {
+        return (float) ($this->quantity * $this->price);
+    }
+
+    /**
+     * Boot method to auto-fill price from product
+     *
+     * CRITICAL: This prevents "Field 'price' doesn't have a default value" error
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($cartItem) {
+            // If price is not set, get it from product
+            if (is_null($cartItem->price) || $cartItem->price == 0) {
+                $product = Product::find($cartItem->product_id);
+                $cartItem->price = $product ? $product->price : 0;
+            }
+        });
     }
 }

@@ -1,7 +1,8 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import axios from 'axios';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -67,6 +68,40 @@ const handleSearch = () => {
         console.log('Searching for:', searchQuery.value);
     }
 };
+
+// Cart count state
+const cartCount = ref(0);
+
+// Fetch cart count from API
+const fetchCartCount = async () => {
+    try {
+        const response = await axios.get('/cart/count');
+        cartCount.value = response.data.count || 0;
+    } catch (error) {
+        console.error('Error fetching cart count:', error);
+        cartCount.value = 0;
+    }
+};
+
+// Listen for cart updates
+const handleCartUpdate = (event) => {
+    if (event.detail?.count !== undefined) {
+        cartCount.value = event.detail.count;
+    } else {
+        fetchCartCount();
+    }
+};
+
+// On mount, fetch cart count and setup listener
+onMounted(() => {
+    fetchCartCount();
+    window.addEventListener('cart-updated', handleCartUpdate);
+});
+
+// Cleanup listener on unmount
+onUnmounted(() => {
+    window.removeEventListener('cart-updated', handleCartUpdate);
+});
 </script>
 
 <template>
@@ -125,7 +160,7 @@ const handleSearch = () => {
                 <!-- Cart Button -->
                 <Link href="/cart" class="shop-icon-btn shop-cart-btn">
                     <i class="fas fa-shopping-cart"></i>
-                    <span class="shop-cart-badge">3</span>
+                    <span v-if="cartCount > 0" class="shop-cart-badge">{{ cartCount }}</span>
                 </Link>
 
                 <!-- Locale Switcher -->
