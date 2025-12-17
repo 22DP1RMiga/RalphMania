@@ -5,89 +5,129 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class CommentController extends Controller
 {
-    /**
-     * Get comments for specific content (API)
-     */
-    public function byContent(int $contentId): JsonResponse
+    public function byContent($contentId): JsonResponse
     {
-        $comments = Comment::where('content_id', $contentId)
-            ->where('is_approved', true)
-            ->with('user:id,username,profile_picture')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        try {
+            $comments = Comment::where('content_id', $contentId)
+                ->where('is_approved', true)
+                ->with('user:id,username,first_name,last_name,profile_picture')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($comment) {
+                    // veido parādāmo vārdu no vārda + uzvārda vai izmanto lietotājvārdu
+                    $displayName = trim($comment->user->first_name . ' ' . $comment->user->last_name);
+                    if (empty($displayName)) {
+                        $displayName = $comment->user->username;
+                    }
 
-        return response()->json($comments);
+                    // ✅ FIX: Correct profile picture path
+                    $profilePicture = '/img/default-avatar.png'; // Default
+
+                    if ($comment->user->profile_picture) {
+                        // DB stores: "avatars/xxx.png"
+                        // We need: "/storage/avatars/xxx.png"
+                        $profilePicture = '/storage/' . $comment->user->profile_picture;
+                    }
+
+                    return [
+                        'id' => $comment->id,
+                        'user_id' => $comment->user_id,
+                        'comment_text' => $comment->comment_text,
+                        'created_at' => $comment->created_at->format('Y-m-d H:i:s'),
+                        'user' => [
+                            'id' => $comment->user->id,
+                            'username' => $comment->user->username,
+                            'name' => $displayName,
+                            'profile_picture' => $profilePicture,
+                        ],
+                    ];
+                });
+
+            return response()->json($comments);
+        } catch (\Exception $e) {
+            \Log::error('Error loading comments: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to load comments',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Store a new comment (WEB - Inertia)
+     * glabā jaunu komentāru
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'content_id' => 'required|exists:content,id',
-            'comment_text' => 'required|string|max:1000',
+            'comment_text' => 'required|string|min:3|max:1000',
             'parent_id' => 'nullable|exists:comments,id',
         ]);
 
-        $validated['user_id'] = auth()->id();
-        $validated['is_approved'] = false; // Requires admin approval
+        $comment = Comment::create([
+            'user_id' => auth()->id(),
+            'content_id' => $validated['content_id'],
+            'comment_text' => $validated['comment_text'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'is_approved' => true, // automātiskais apstiprināšana
+        ]);
 
-        Comment::create($validated);
-
-        return redirect()->back()->with('success', 'Komentārs pievienots un gaida apstiprinājumu');
+        return back()->with('success', 'Comment submitted successfully.');
     }
 
     /**
-     * Update a comment
+     * rediģē eksistējošo komentāru
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
 
-        // Check if user owns the comment
+        // Check authorization
         if ($comment->user_id !== auth()->id()) {
             abort(403, 'Unauthorized');
         }
 
         $validated = $request->validate([
-            'comment_text' => 'required|string|max:1000',
+            'comment_text' => 'required|string|min:3|max:1000',
         ]);
 
-        $comment->update($validated);
+        $comment->update([
+            'comment_text' => $validated['comment_text'],
+        ]);
 
-        return redirect()->back()->with('success', 'Komentārs atjaunināts');
+        return back()->with('success', 'Comment updated successfully.');
     }
 
     /**
-     * Delete a comment
+     * izdzēš komentāru
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy($id)
     {
         $comment = Comment::findOrFail($id);
 
-        // Check if user owns the comment
+        // Check authorization
         if ($comment->user_id !== auth()->id()) {
             abort(403, 'Unauthorized');
         }
 
         $comment->delete();
 
-        return redirect()->back()->with('success', 'Komentārs dzēsts');
+        return back()->with('success', 'Comment deleted successfully.');
     }
 
     /**
-     * Admin: List all comments
+     * Administrators: Iegūst visus komentārus moderēšanai
      */
-    public function adminIndex(): Response
+    public function adminIndex()
     {
-        $comments = Comment::with(['user', 'content'])
+        $comments = Comment::with([
+            'user:id,username,first_name,last_name',
+            'content:id,title_lv,slug'
+        ])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -97,24 +137,24 @@ class CommentController extends Controller
     }
 
     /**
-     * Admin: Approve comment
+     * Administrators: apstiprina komentāru
      */
-    public function approve(int $id): RedirectResponse
+    public function approve($id)
     {
         $comment = Comment::findOrFail($id);
         $comment->update(['is_approved' => true]);
 
-        return redirect()->back()->with('success', 'Komentārs apstiprināts');
+        return back()->with('success', 'Comment approved successfully.');
     }
 
     /**
-     * Admin: Reject comment
+     * Administrators: noraida (dzēš) komentāru
      */
-    public function reject(int $id): RedirectResponse
+    public function reject($id)
     {
         $comment = Comment::findOrFail($id);
         $comment->delete();
 
-        return redirect()->back()->with('success', 'Komentārs noraidīts');
+        return back()->with('success', 'Comment rejected and deleted.');
     }
 }

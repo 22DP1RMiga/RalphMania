@@ -10,7 +10,7 @@ const isAuthenticated = computed(() => !!user.value);
 // Get user avatar with correct path
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
-        return '/img/default-avatar.png'; // Default avatar
+        return '/img/default-avatar.png';
     }
     // If profile_picture already starts with /, use it as is
     if (user.value.profile_picture.startsWith('/')) {
