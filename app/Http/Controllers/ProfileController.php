@@ -232,4 +232,22 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    public function updatePrivacy(Request $request)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'is_private' => 'required|boolean'
+        ]);
+
+        // Invert to save as is_public
+        $user->update([
+            'is_public' => !$validated['is_private']
+        ]);
+
+        return response()->json([
+            'message' => 'Privacy settings updated successfully'
+        ]);
+    }
 }

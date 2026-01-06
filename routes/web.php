@@ -10,6 +10,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -89,9 +91,7 @@ Route::prefix('content')->group(function () {
 Route::middleware('auth')->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Profile Management
     Route::prefix('profile')->group(function () {
@@ -114,14 +114,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/addresses/{id}/edit', [ProfileController::class, 'addressEdit'])->name('profile.addresses.edit');
         Route::put('/addresses/{id}', [ProfileController::class, 'addressUpdate'])->name('profile.addresses.update');
         Route::delete('/addresses/{id}', [ProfileController::class, 'addressDelete'])->name('profile.addresses.delete');
-    });
 
-    // Cart
-//    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-//    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-//    Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
-//    Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
-//    Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
+        // Privacy settings update
+        Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy'])
+            ->middleware('auth')
+            ->name('profile.privacy.update');
+    });
 
     // Grozs
     Route::prefix('cart')->name('cart.')->group(function () {
@@ -135,11 +133,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // Checkout
-    Route::get('/checkout', function () {
-        return Inertia::render('Shop/Checkout');
-    })->name('checkout');
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 
-    // Orders
+    // Pasūtījumi
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/{id}', [OrderController::class, 'show'])->name('orders.show');
@@ -147,12 +143,16 @@ Route::middleware('auth')->group(function () {
         Route::put('/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
-    // Reviews
+    // Rēķinu lejupielāde
+    Route::get('/orders/{id}/invoice', [InvoiceController::class, 'download'])->name('orders.invoice.download');
+    Route::get('/orders/{id}/invoice/view', [InvoiceController::class, 'view'])->name('orders.invoice.view');
+
+    // Atsauksmes
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::put('/reviews/{id}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 
-    // Comments
+    // Komentāri
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::put('/comments/{id}', [CommentController::class, 'update'])->name('comments.update');
     Route::delete('/comments/{id}', [CommentController::class, 'destroy'])->name('comments.destroy');

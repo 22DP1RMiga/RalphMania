@@ -58,12 +58,12 @@ class Product extends Model
     }
 
     // Helper methods
-    public function isInStock()
+    public function isInStock(): bool
     {
         return $this->stock_quantity > 0;
     }
 
-    public function isLowStock()
+    public function isLowStock(): bool
     {
         return $this->stock_quantity <= $this->low_stock_threshold;
     }

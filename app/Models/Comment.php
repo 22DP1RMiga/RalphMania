@@ -13,8 +13,8 @@ class Comment extends Model
     protected $fillable = [
         'user_id',
         'content_id',
-        'parent_id',
         'comment_text',
+        'parent_id',
         'is_approved',
     ];
 
@@ -33,7 +33,7 @@ class Comment extends Model
     }
 
     /**
-     * Get the content this comment belongs to
+     * Get the content that was commented on
      */
     public function content(): BelongsTo
     {
@@ -41,7 +41,7 @@ class Comment extends Model
     }
 
     /**
-     * Get the parent comment (for replies)
+     * Get parent comment (for threads)
      */
     public function parent(): BelongsTo
     {
@@ -49,7 +49,7 @@ class Comment extends Model
     }
 
     /**
-     * Get the replies to this comment
+     * Get child comments (replies)
      */
     public function replies()
     {
@@ -65,10 +65,10 @@ class Comment extends Model
     }
 
     /**
-     * Scope: Only pending comments
+     * Scope: Only root comments (not replies)
      */
-    public function scopePending($query)
+    public function scopeRootOnly($query)
     {
-        return $query->where('is_approved', false);
+        return $query->whereNull('parent_id');
     }
 }
