@@ -269,7 +269,7 @@ const goToDashboard = () => {
 }
 
 .navbar-brand-name {
-    height: 1.5rem;
+    height: 2rem;
     width: auto;
 }
 
