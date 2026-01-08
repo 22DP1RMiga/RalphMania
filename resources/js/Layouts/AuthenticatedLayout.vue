@@ -70,7 +70,7 @@ const logout = () => {
                 <!-- Left: Logo -->
                 <Link href="/" class="auth-brand">
                     <img src="/img/RoltonsLV_Icon.png" alt="RalphMania Logo" class="auth-logo">
-                    <img src="/img/name_logo.png" alt="RalphMania" class="auth-brand-name">
+                    <img src="/img/name_logo2.png" alt="RalphMania" class="auth-brand-name">
                 </Link>
 
                 <!-- Center: Dashboard Button -->
@@ -182,7 +182,7 @@ const logout = () => {
 }
 
 .auth-brand-name {
-    height: 1.75rem;
+    height: 2rem;
     width: auto;
 }
 

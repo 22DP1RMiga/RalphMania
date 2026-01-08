@@ -328,8 +328,19 @@ onUnmounted(() => {
 }
 
 .shop-brand-name {
-    height: 1.5rem;
+    height: 2rem;
     width: auto;
+}
+
+/* Hide brand name on mobile */
+@media (max-width: 768px) {
+    .shop-logo {
+        display: none;
+    }
+
+    .shop-brand-name {
+        display: none;
+    }
 }
 
 /* ========== RIGHT SECTION ========== */
