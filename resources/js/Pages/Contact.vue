@@ -1,22 +1,108 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import LoadingSpinner from '@/Components/LoadingSpinner.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+const page = usePage();
 
+// Get authenticated user data
+const user = computed(() => page.props.auth?.user);
+
+// Country codes list
+const countryCodes = [
+    { code: '+371', country: 'LV', flag: '🇱🇻', name: 'Latvija' },
+    { code: '+370', country: 'LT', flag: '🇱🇹', name: 'Lietuva' },
+    { code: '+372', country: 'EE', flag: '🇪🇪', name: 'Igaunija' },
+    { code: '+7', country: 'RU', flag: '🇷🇺', name: 'Krievija' },
+    { code: '+380', country: 'UA', flag: '🇺🇦', name: 'Ukraina' },
+    { code: '+48', country: 'PL', flag: '🇵🇱', name: 'Polija' },
+    { code: '+49', country: 'DE', flag: '🇩🇪', name: 'Vācija' },
+    { code: '+44', country: 'GB', flag: '🇬🇧', name: 'Apvienotā Karaliste' },
+    { code: '+1', country: 'US', flag: '🇺🇸', name: 'ASV' },
+    { code: '+33', country: 'FR', flag: '🇫🇷', name: 'Francija' },
+    { code: '+34', country: 'ES', flag: '🇪🇸', name: 'Spānija' },
+    { code: '+39', country: 'IT', flag: '🇮🇹', name: 'Itālija' },
+    { code: '+46', country: 'SE', flag: '🇸🇪', name: 'Zviedrija' },
+    { code: '+47', country: 'NO', flag: '🇳🇴', name: 'Norvēģija' },
+    { code: '+45', country: 'DK', flag: '🇩🇰', name: 'Dānija' },
+    { code: '+358', country: 'FI', flag: '🇫🇮', name: 'Somija' },
+    { code: '+31', country: 'NL', flag: '🇳🇱', name: 'Nīderlande' },
+    { code: '+32', country: 'BE', flag: '🇧🇪', name: 'Beļģija' },
+    { code: '+43', country: 'AT', flag: '🇦🇹', name: 'Austrija' },
+    { code: '+41', country: 'CH', flag: '🇨🇭', name: 'Šveice' },
+];
+
+const showCountryDropdown = ref(false);
+const selectedCountry = ref(countryCodes[0]); // Default to Latvia
+
+// Toast notification state
+const toast = ref({
+    show: false,
+    message: '',
+    type: 'success',
+});
+
+// Form with pre-filled user data
 const form = useForm({
-    name: '',
+    username: '',
     email: '',
+    country_code: '+371',
+    phone: '',
     subject: '',
     message: '',
 });
 
+// Pre-fill form with user data on mount
+onMounted(() => {
+    if (user.value) {
+        form.username = user.value.username || '';
+        form.email = user.value.email || '';
+        // If user has phone saved in profile, could use it here
+        // form.phone = user.value.phone || '';
+    }
+});
+
+// Select country code
+const selectCountry = (country) => {
+    selectedCountry.value = country;
+    form.country_code = country.code;
+    showCountryDropdown.value = false;
+};
+
+// Close dropdown when clicking outside
+const closeDropdown = () => {
+    showCountryDropdown.value = false;
+};
+
+// Show toast notification
+const showToast = (message, type = 'success') => {
+    toast.value = {
+        show: true,
+        message,
+        type,
+    };
+};
+
+// Close toast
+const closeToast = () => {
+    toast.value.show = false;
+};
+
+// Submit form
 const submit = () => {
     form.post(route('contact.store'), {
+        preserveScroll: true,
         onSuccess: () => {
-            form.reset();
+            form.reset('subject', 'message', 'phone');
+            showToast('Paldies! Jūsu ziņojums ir veiksmīgi nosūtīts. Mēs ar jums sazināsimies pēc iespējas ātrāk!', 'success');
+        },
+        onError: (errors) => {
+            const firstError = Object.values(errors)[0];
+            showToast(firstError || 'Kļūda nosūtot ziņojumu. Lūdzu, mēģiniet vēlreiz.', 'error');
         },
     });
 };
@@ -26,6 +112,22 @@ const submit = () => {
     <Head :title="$t('nav.contact')" />
 
     <MainLayout>
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="closeToast"
+        />
+
+        <!-- Loading Overlay -->
+        <LoadingSpinner
+            v-if="form.processing"
+            :fullscreen="true"
+            size="lg"
+            :text="$t('contact.form.sending') || 'Nosūta...'"
+        />
+
         <!-- Contact Hero -->
         <section class="contact-hero">
             <div class="hero-container">
@@ -52,41 +154,111 @@ const submit = () => {
                         <h2 class="form-title">{{ $t('contact.form.title') }}</h2>
                         <p class="form-subtitle">{{ $t('contact.form.subtitle') }}</p>
 
+                        <!-- Auth Notice -->
+                        <div class="auth-notice">
+                            <i class="fas fa-user-check"></i>
+                            <span>{{ $t('contact.hero.youAreLoggedInAs') }} <strong>{{ user.username }}</strong></span>
+                        </div>
+
                         <form @submit.prevent="submit" class="contact-form">
-                            <!-- Name -->
+                            <!-- Username (readonly - from user) -->
                             <div class="form-group">
-                                <label for="name" class="form-label">{{ $t('contact.form.name') }}</label>
+                                <label for="username" class="form-label">
+                                    {{ $t('contact.form.username') }}
+                                    <span class="required">*</span>
+                                </label>
                                 <input
-                                    id="name"
-                                    v-model="form.name"
+                                    id="username"
+                                    v-model="form.username"
                                     type="text"
-                                    class="form-input"
+                                    class="form-input readonly"
+                                    readonly
                                     required
                                 />
-                                <span v-if="form.errors.name" class="form-error">{{ form.errors.name }}</span>
+                                <span class="form-hint">{{ $t('contact.form.usernameHint') }}</span>
+                                <span v-if="form.errors.username" class="form-error">{{ form.errors.username }}</span>
                             </div>
 
-                            <!-- Email -->
+                            <!-- Email (readonly - from user) -->
                             <div class="form-group">
-                                <label for="email" class="form-label">{{ $t('contact.form.email') }}</label>
+                                <label for="email" class="form-label">
+                                    {{ $t('contact.form.email') }}
+                                    <span class="required">*</span>
+                                </label>
                                 <input
                                     id="email"
                                     v-model="form.email"
                                     type="email"
-                                    class="form-input"
+                                    class="form-input readonly"
+                                    readonly
                                     required
                                 />
+                                <span class="form-hint">{{ $t('contact.form.emailHint') }}</span>
                                 <span v-if="form.errors.email" class="form-error">{{ form.errors.email }}</span>
+                            </div>
+
+                            <!-- Phone with Country Code -->
+                            <div class="form-group">
+                                <label for="phone" class="form-label">
+                                    {{ $t('contact.form.phone') }}
+                                    <span class="required">*</span>
+                                </label>
+                                <div class="phone-input-wrapper">
+                                    <!-- Country Code Selector -->
+                                    <div class="country-selector" @click.stop>
+                                        <button
+                                            type="button"
+                                            class="country-button"
+                                            @click="showCountryDropdown = !showCountryDropdown"
+                                        >
+                                            <span class="country-flag">{{ selectedCountry.flag }}</span>
+                                            <span class="country-code">{{ selectedCountry.code }}</span>
+                                            <i class="fas fa-chevron-down dropdown-icon" :class="{ 'rotated': showCountryDropdown }"></i>
+                                        </button>
+
+                                        <!-- Dropdown -->
+                                        <div v-if="showCountryDropdown" class="country-dropdown" @click.stop>
+                                            <div
+                                                v-for="country in countryCodes"
+                                                :key="country.code"
+                                                class="country-option"
+                                                :class="{ 'selected': selectedCountry.code === country.code }"
+                                                @click="selectCountry(country)"
+                                            >
+                                                <span class="country-flag">{{ country.flag }}</span>
+                                                <span class="country-name">{{ country.name }}</span>
+                                                <span class="country-code">{{ country.code }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Phone Number Input -->
+                                    <input
+                                        id="phone"
+                                        v-model="form.phone"
+                                        type="tel"
+                                        class="form-input phone-input"
+                                        placeholder="20 000 000"
+                                        required
+                                        @focus="showCountryDropdown = false"
+                                    />
+                                </div>
+                                <span v-if="form.errors.phone" class="form-error">{{ form.errors.phone }}</span>
+                                <span v-if="form.errors.country_code" class="form-error">{{ form.errors.country_code }}</span>
                             </div>
 
                             <!-- Subject -->
                             <div class="form-group">
-                                <label for="subject" class="form-label">{{ $t('contact.form.subject') }}</label>
+                                <label for="subject" class="form-label">
+                                    {{ $t('contact.form.subject') }}
+                                    <span class="required">*</span>
+                                </label>
                                 <input
                                     id="subject"
                                     v-model="form.subject"
                                     type="text"
                                     class="form-input"
+                                    :placeholder="$t('contact.form.subjectPlaceholder') || 'Par ko jūs vēlaties runāt?'"
                                     required
                                 />
                                 <span v-if="form.errors.subject" class="form-error">{{ form.errors.subject }}</span>
@@ -94,27 +266,38 @@ const submit = () => {
 
                             <!-- Message -->
                             <div class="form-group">
-                                <label for="message" class="form-label">{{ $t('contact.form.message') }}</label>
+                                <label for="message" class="form-label">
+                                    {{ $t('contact.form.message') }}
+                                    <span class="required">*</span>
+                                </label>
                                 <textarea
                                     id="message"
                                     v-model="form.message"
                                     class="form-textarea"
                                     rows="5"
+                                    :placeholder="$t('contact.form.messagePlaceholder') || 'Jūsu ziņojums...'"
                                     required
+                                    maxlength="1000"
                                 ></textarea>
-                                <span v-if="form.errors.message" class="form-error">{{ form.errors.message }}</span>
+                                <div class="textarea-footer">
+                                    <span v-if="form.errors.message" class="form-error">{{ form.errors.message }}</span>
+                                    <span class="char-count" :class="{ 'near-limit': form.message.length > 900 }">
+                                        {{ form.message.length }}/1000
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Submit Button -->
                             <button type="submit" class="submit-button" :disabled="form.processing">
-                                <span v-if="form.processing">{{ $t('contact.form.sending') }}</span>
-                                <span v-else>{{ $t('contact.form.send') }}</span>
+                                <span v-if="form.processing" class="button-content">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    {{ $t('contact.form.sending') || 'Nosūta...' }}
+                                </span>
+                                <span v-else class="button-content">
+                                    <i class="fas fa-paper-plane"></i>
+                                    {{ $t('contact.form.send') || 'Nosūtīt ziņojumu' }}
+                                </span>
                             </button>
-
-                            <!-- Success Message -->
-                            <div v-if="form.recentlySuccessful" class="success-message">
-                                {{ $t('contact.form.success') }}
-                            </div>
                         </form>
                     </div>
 
@@ -130,7 +313,9 @@ const submit = () => {
                                 </div>
                                 <div class="info-content">
                                     <h3 class="info-label">{{ $t('contact.info.email') }}</h3>
-                                    <p class="info-value">info@ralphmania.lv</p>
+                                    <p class="info-value">
+                                        <a href="mailto:ralphmania.roltonslv@gmail.com">ralphmania.roltonslv@gmail.com</a>
+                                    </p>
                                 </div>
                             </div>
 
@@ -152,7 +337,18 @@ const submit = () => {
                                 </div>
                                 <div class="info-content">
                                     <h3 class="info-label">{{ $t('contact.info.address') }}</h3>
-                                    <p class="info-value">Rīga, Latvija</p>
+                                    <p class="info-value">{{ $t('contact.contact_info.place') }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Response Time -->
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="info-content">
+                                    <h3 class="info-label">{{ $t('contact.info.responseTime') }}</h3>
+                                    <p class="info-value">{{ $t('contact.contact_info.responseTimePrompt') }}</p>
                                 </div>
                             </div>
 
@@ -164,17 +360,17 @@ const submit = () => {
                                 <div class="info-content">
                                     <h3 class="info-label">{{ $t('contact.info.social') }}</h3>
                                     <div class="social-links">
-                                        <a href="#" class="social-link youtube">
+                                        <a href="https://www.youtube.com/@RoltonsLV" class="social-link youtube" title="YouTube">
                                             <i class="fab fa-youtube"></i>
                                         </a>
-                                        <a href="#" class="social-link tiktok">
+                                        <a href="https://www.tiktok.com/@realroltonslv" class="social-link tiktok" title="TikTok">
                                             <i class="fab fa-tiktok"></i>
                                         </a>
-                                        <a href="#" class="social-link instagram">
+                                        <a href="https://www.instagram.com/ralfsmigals/" class="social-link instagram" title="Instagram">
                                             <i class="fab fa-instagram"></i>
                                         </a>
-                                        <a href="#" class="social-link twitter">
-                                            <i class="fab fa-twitter"></i>
+                                        <a href="https://x.com/RealRoltonsLV" class="social-link social-x-twitter" title="Twitter/X">
+                                            <i class="fab fa-x-twitter"></i>
                                         </a>
                                     </div>
                                 </div>
@@ -284,7 +480,30 @@ const submit = () => {
 .form-subtitle {
     font-size: 1rem;
     color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+/* Auth Notice */
+.auth-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #10b981;
+    border-radius: 0.75rem;
     margin-bottom: 2rem;
+    color: #065f46;
+    font-size: 0.95rem;
+}
+
+.auth-notice i {
+    font-size: 1.25rem;
+    color: #10b981;
+}
+
+.auth-notice strong {
+    color: #047857;
 }
 
 .contact-form {
@@ -305,6 +524,10 @@ const submit = () => {
     margin-bottom: 0.5rem;
 }
 
+.required {
+    color: #dc2626;
+}
+
 .form-input,
 .form-textarea {
     width: 100%;
@@ -313,6 +536,7 @@ const submit = () => {
     border-radius: 0.5rem;
     font-size: 1rem;
     transition: all 0.3s ease;
+    background: white;
 }
 
 .form-input:focus,
@@ -322,9 +546,38 @@ const submit = () => {
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
+.form-input.readonly {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+}
+
 .form-textarea {
     resize: vertical;
     min-height: 120px;
+}
+
+.textarea-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.25rem;
+}
+
+.char-count {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.char-count.near-limit {
+    color: #f59e0b;
+    font-weight: 600;
 }
 
 .form-error {
@@ -333,6 +586,102 @@ const submit = () => {
     margin-top: 0.25rem;
 }
 
+/* Phone Input with Country Code */
+.phone-input-wrapper {
+    display: flex;
+    gap: 0;
+}
+
+.country-selector {
+    position: relative;
+}
+
+.country-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-right: none;
+    border-radius: 0.5rem 0 0 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.country-button:hover {
+    background: #e5e7eb;
+}
+
+.country-flag {
+    font-size: 1.25rem;
+}
+
+.country-code {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.dropdown-icon {
+    font-size: 0.75rem;
+    color: #6b7280;
+    transition: transform 0.2s ease;
+}
+
+.dropdown-icon.rotated {
+    transform: rotate(180deg);
+}
+
+.country-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 280px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    margin-top: 4px;
+}
+
+.country-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.country-option:hover {
+    background: #f3f4f6;
+}
+
+.country-option.selected {
+    background: #fef2f2;
+}
+
+.country-option .country-name {
+    flex: 1;
+    color: #374151;
+}
+
+.country-option .country-code {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.phone-input {
+    flex: 1;
+    border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+/* Submit Button */
 .submit-button {
     width: 100%;
     padding: 1rem;
@@ -355,15 +704,14 @@ const submit = () => {
 .submit-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
-.success-message {
-    padding: 1rem;
-    background-color: #d1fae5;
-    color: #065f46;
-    border-radius: 0.5rem;
-    text-align: center;
-    font-weight: 500;
+.button-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 /* Contact Info */
@@ -422,6 +770,17 @@ const submit = () => {
     font-weight: 500;
 }
 
+.info-value a {
+    color: #dc2626;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.info-value a:hover {
+    color: #b91c1c;
+    text-decoration: underline;
+}
+
 .social-links {
     display: flex;
     gap: 0.75rem;
@@ -456,17 +815,36 @@ const submit = () => {
     background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 }
 
-.social-link.twitter {
-    background-color: #1DA1F2;
+.social-x-twitter {
+    background: #181a1c;
+}
+
+.social-x-twitter:hover {
+    background-color: #222629;
 }
 
 @media (max-width: 640px) {
     .hero-title {
-        font-size: 2rem;
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.125rem;
     }
 
     .contact-form-container {
         padding: 1.5rem;
+    }
+
+    .form-title,
+    .info-title {
+        font-size: 1.5rem;
+    }
+
+    .country-dropdown {
+        width: 100%;
+        left: 0;
+        right: 0;
     }
 }
 </style>

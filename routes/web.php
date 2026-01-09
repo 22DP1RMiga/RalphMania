@@ -27,22 +27,22 @@ use Inertia\Inertia;
 
 // Home Page
 Route::get('/', [HomeController::class, 'index'])->name('home');
-//Route::get('/', function () {
-//    return Inertia::render('Home');
-//})->name('home');
 
 // About Page
 Route::get('/about', function () {
     return Inertia::render('About');
 })->name('about');
 
-// Contact Page
-Route::get('/contact', function () {
-    return Inertia::render('Contact');
-})->name('contact');
+// Contact Page - REQUIRES AUTHENTICATION
+Route::middleware('auth')->group(function () {
+    // Contact Page View
+    Route::get('/contact', function () {
+        return Inertia::render('Contact');
+    })->name('contact');
 
-// Contact Form Submission
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+    // Contact Form Submission
+    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+});
 
 // Shop Pages
 Route::prefix('shop')->group(function () {
@@ -123,13 +123,13 @@ Route::middleware('auth')->group(function () {
 
     // Grozs
     Route::prefix('cart')->name('cart.')->group(function () {
-        Route::get('/', [CartController::class, 'index'])->name('index');   // apskata grozu
-        Route::post('/add', [CartController::class, 'add'])->name('add');   // pievieno grozā
-        Route::patch('/item/{cartItem}', [CartController::class, 'updateQuantity'])->name('update');    // atjaunina daudzumu
-        Route::delete('/item/{cartItem}', [CartController::class, 'remove'])->name('remove');   // noņem preci
-        Route::delete('/clear', [CartController::class, 'clear'])->name('clear');   // iztukšo grozu
-        Route::get('/count', [CartController::class, 'count'])->name('count');      // iegūst grozu skaitu (emblēmai)
-        Route::get('/data', [CartController::class, 'get'])->name('get');   // iegūst groza datus (API)
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::post('/add', [CartController::class, 'add'])->name('add');
+        Route::patch('/item/{cartItem}', [CartController::class, 'updateQuantity'])->name('update');
+        Route::delete('/item/{cartItem}', [CartController::class, 'remove'])->name('remove');
+        Route::delete('/clear', [CartController::class, 'clear'])->name('clear');
+        Route::get('/count', [CartController::class, 'count'])->name('count');
+        Route::get('/data', [CartController::class, 'get'])->name('get');
     });
 
     // Checkout
@@ -240,5 +240,4 @@ Route::middleware(['auth', 'role:administrator'])->prefix('admin')->group(functi
 });
 
 // ========== AUTH ROUTES (BREEZE) ==========
-// This includes: /login, /register, /logout, /forgot-password, etc.
 require __DIR__.'/auth.php';
