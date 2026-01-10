@@ -89,6 +89,7 @@ const messages = {
                 },
                 profile: {
                     title: 'Mans Profils',
+                    admin_title: 'Admin panelis',
                 },
                 orders: {
                     title: 'Mani Pasūtījumi',
@@ -760,6 +761,7 @@ const messages = {
                 },
                 profile: {
                     title: 'My Profile',
+                    admin_title: 'Admin Dashboard',
                 },
                 orders: {
                     title: 'My Orders',

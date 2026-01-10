@@ -1,5 +1,5 @@
 <script setup>
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
@@ -8,16 +8,17 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const isAuthenticated = computed(() => !!user.value);
 
+// Check if user is administrator
+const isAdministrator = computed(() => user.value?.is_administrator || false);
+
 // Get user avatar with correct path
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
-        return '/img/default-avatar.png'; // Default avatar
+        return '/img/default-avatar.png';
     }
-    // If profile_picture already starts with /, use it as is
     if (user.value.profile_picture.startsWith('/')) {
         return user.value.profile_picture;
     }
-    // Otherwise add /storage/ prefix
     return `/storage/${user.value.profile_picture}`;
 });
 
@@ -36,6 +37,7 @@ watch(currentLocale, (newLang) => {
 
 const isCategoriesOpen = ref(false);
 const isSearchOpen = ref(false);
+const isUserDropdownOpen = ref(false);
 
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
@@ -45,6 +47,7 @@ const toggleCategories = () => {
     isCategoriesOpen.value = !isCategoriesOpen.value;
     if (isCategoriesOpen.value) {
         isSearchOpen.value = false;
+        isUserDropdownOpen.value = false;
     }
 };
 
@@ -52,12 +55,22 @@ const toggleSearch = () => {
     isSearchOpen.value = !isSearchOpen.value;
     if (isSearchOpen.value) {
         isCategoriesOpen.value = false;
+        isUserDropdownOpen.value = false;
+    }
+};
+
+const toggleUserDropdown = () => {
+    isUserDropdownOpen.value = !isUserDropdownOpen.value;
+    if (isUserDropdownOpen.value) {
+        isCategoriesOpen.value = false;
+        isSearchOpen.value = false;
     }
 };
 
 const closeMenus = () => {
     isCategoriesOpen.value = false;
     isSearchOpen.value = false;
+    isUserDropdownOpen.value = false;
 };
 
 const searchQuery = ref('');
@@ -90,6 +103,26 @@ const handleCartUpdate = (event) => {
     } else {
         fetchCartCount();
     }
+};
+
+// Navigation functions
+const goToDashboard = () => {
+    closeMenus();
+    router.visit('/dashboard');
+};
+
+const goToAdminPanel = () => {
+    closeMenus();
+    router.visit('/admin/dashboard');
+};
+
+const logout = () => {
+    closeMenus();
+    router.post('/logout', {}, {
+        onSuccess: () => {
+            window.location.href = '/';
+        }
+    });
 };
 
 // On mount, fetch cart count and setup listener
@@ -145,16 +178,47 @@ onUnmounted(() => {
                     <i class="fas fa-search"></i>
                 </button>
 
-                <!-- User Profile -->
-                <div v-if="isAuthenticated" class="shop-user">
-                    <Link href="/dashboard" class="shop-user-profile">
+                <!-- User Profile with Dropdown -->
+                <div v-if="isAuthenticated" class="shop-user-dropdown-container">
+                    <button @click.stop="toggleUserDropdown" class="shop-user-profile">
                         <img
                             :src="userAvatar"
                             :alt="user.username"
                             class="shop-user-avatar"
                         >
-                        <span class="shop-user-tooltip">{{ user.username }}</span>
-                    </Link>
+                    </button>
+
+                    <!-- User Dropdown Menu -->
+                    <Transition name="dropdown">
+                        <div v-if="isUserDropdownOpen" class="shop-user-dropdown">
+                            <div class="dropdown-header">
+                                <img :src="userAvatar" :alt="user.username" class="dropdown-avatar">
+                                <span class="dropdown-username">{{ user.username }}</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Admin Panel Link (if administrator) -->
+                            <button v-if="isAdministrator" @click="goToAdminPanel" class="dropdown-item dropdown-item-admin">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>{{ $t('dashboard.sections.profile.admin_title') }}</span>
+                            </button>
+
+                            <!-- Dashboard Link -->
+                            <button @click="goToDashboard" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>{{ $t('dashboard.sections.profile.title') }}</span>
+                            </button>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Logout -->
+                            <button @click="logout" class="dropdown-item dropdown-item-logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Iziet</span>
+                            </button>
+                        </div>
+                    </Transition>
                 </div>
 
                 <!-- Cart Button -->
@@ -179,19 +243,19 @@ onUnmounted(() => {
                     <h3 class="categories-title">{{ $t('shop.categories') }}</h3>
 
                     <div class="categories-list">
-                        <Link href="/shop/category/clothing" class="category-item">
+                        <Link href="/shop/category/clothing" class="category-item" @click="closeMenus">
                             <i class="fas fa-tshirt"></i>
                             <span>{{ currentLocale === 'lv' ? 'Apģērbi' : 'Clothing' }}</span>
                         </Link>
-                        <Link href="/shop/category/accessories" class="category-item">
+                        <Link href="/shop/category/accessories" class="category-item" @click="closeMenus">
                             <i class="fas fa-watch"></i>
                             <span>{{ currentLocale === 'lv' ? 'Aksesuāri' : 'Accessories' }}</span>
                         </Link>
-                        <Link href="/shop/category/souvenirs" class="category-item">
+                        <Link href="/shop/category/souvenirs" class="category-item" @click="closeMenus">
                             <i class="fas fa-gift"></i>
                             <span>{{ currentLocale === 'lv' ? 'Suvenīri' : 'Souvenirs' }}</span>
                         </Link>
-                        <Link href="/shop/category/gift-cards" class="category-item">
+                        <Link href="/shop/category/gift-cards" class="category-item" @click="closeMenus">
                             <i class="fas fa-credit-card"></i>
                             <span>{{ currentLocale === 'lv' ? 'Dāvanu kartes' : 'Gift Cards' }}</span>
                         </Link>
@@ -231,7 +295,7 @@ onUnmounted(() => {
         <!-- Overlay -->
         <Transition name="fade">
             <div
-                v-if="isCategoriesOpen || isSearchOpen"
+                v-if="isCategoriesOpen || isSearchOpen || isUserDropdownOpen"
                 class="navbar-overlay"
                 @click="closeMenus"
             ></div>
@@ -332,12 +396,8 @@ onUnmounted(() => {
     width: auto;
 }
 
-/* Hide brand name on mobile */
 @media (max-width: 768px) {
-    .shop-logo {
-        display: none;
-    }
-
+    .shop-logo,
     .shop-brand-name {
         display: none;
     }
@@ -387,14 +447,16 @@ onUnmounted(() => {
     border-radius: 50%;
 }
 
-/* User Profile */
-.shop-user {
+/* ========== USER DROPDOWN ========== */
+.shop-user-dropdown-container {
     position: relative;
 }
 
 .shop-user-profile {
-    position: relative;
-    display: block;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
 }
 
 .shop-user-avatar {
@@ -403,7 +465,6 @@ onUnmounted(() => {
     border-radius: 50%;
     border: 2px solid #dc2626;
     object-fit: cover;
-    cursor: pointer;
     transition: transform 0.3s ease;
 }
 
@@ -411,24 +472,118 @@ onUnmounted(() => {
     transform: scale(1.1);
 }
 
-.shop-user-tooltip {
+.shop-user-dropdown {
     position: absolute;
-    bottom: -2.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #1f2937;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 220px;
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    z-index: 100;
 }
 
-.shop-user-profile:hover .shop-user-tooltip {
-    opacity: 1;
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
+}
+
+.dropdown-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 2px solid #dc2626;
+    object-fit: cover;
+}
+
+.dropdown-username {
+    font-weight: 600;
+    color: #111827;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #e5e7eb;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    color: #374151;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.dropdown-item i {
+    font-size: 1rem;
+    width: 1.25rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.dropdown-item:hover i {
+    color: #374151;
+}
+
+/* Admin item styling */
+.dropdown-item-admin {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.dropdown-item-admin:hover {
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+}
+
+.dropdown-item-admin i {
+    color: #d97706;
+}
+
+/* Logout item styling */
+.dropdown-item-logout {
+    color: #dc2626;
+}
+
+.dropdown-item-logout:hover {
+    background-color: #fef2f2;
+}
+
+.dropdown-item-logout i {
+    color: #dc2626;
+}
+
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+    transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 /* Locale Switcher */
@@ -447,6 +602,19 @@ onUnmounted(() => {
 .shop-locale-switcher:hover {
     border-color: #dc2626;
     background-color: #fef2f2;
+}
+
+.locale-current {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.locale-divider {
+    color: #d1d5db;
+}
+
+.locale-other {
+    color: #9ca3af;
 }
 
 /* ========== CATEGORIES PANEL ========== */
@@ -596,10 +764,7 @@ onUnmounted(() => {
     transition: transform 0.3s ease;
 }
 
-.slide-left-enter-from {
-    transform: translateX(-100%);
-}
-
+.slide-left-enter-from,
 .slide-left-leave-to {
     transform: translateX(-100%);
 }
@@ -609,10 +774,7 @@ onUnmounted(() => {
     transition: transform 0.3s ease;
 }
 
-.slide-right-enter-from {
-    transform: translateX(100%);
-}
-
+.slide-right-enter-from,
 .slide-right-leave-to {
     transform: translateX(100%);
 }
