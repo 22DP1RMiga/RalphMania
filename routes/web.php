@@ -1,5 +1,13 @@
 <?php
-
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminCategoryController;
+use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminContentController;
+use App\Http\Controllers\Admin\AdminReviewController;
+use App\Http\Controllers\Admin\AdminCommentController;
+use App\Http\Controllers\Admin\AdminContactController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
@@ -161,6 +169,89 @@ Route::middleware('auth')->group(function () {
     Route::post('/content/{id}/like', [ContentController::class, 'toggleLike'])->name('content.like');
 });
 
+// ========== ADMIN ROUTES ==========
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Administrator Management (Super Admin only)
+    Route::post('/administrators', [AdminDashboardController::class, 'storeAdministrator'])->name('administrators.store');
+    Route::put('/administrators/{id}/permissions', [AdminDashboardController::class, 'updatePermissions'])->name('administrators.permissions');
+    Route::delete('/administrators/{id}', [AdminDashboardController::class, 'destroyAdministrator'])->name('administrators.destroy');
+
+    // Products
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [AdminProductController::class, 'index'])->name('index');
+        Route::get('/create', [AdminProductController::class, 'create'])->name('create');
+        Route::post('/', [AdminProductController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [AdminProductController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminProductController::class, 'update'])->name('update');
+        Route::put('/{id}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{id}', [AdminProductController::class, 'destroy'])->name('destroy');
+    });
+
+    // Categories
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
+        Route::post('/', [AdminCategoryController::class, 'store'])->name('store');
+        Route::put('/{id}', [AdminCategoryController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminCategoryController::class, 'destroy'])->name('destroy');
+    });
+
+    // Orders
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [AdminOrderController::class, 'index'])->name('index');
+        Route::get('/{id}', [AdminOrderController::class, 'show'])->name('show');
+        Route::put('/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('status');
+    });
+
+    // Content
+    Route::prefix('content')->name('content.')->group(function () {
+        Route::get('/', [AdminContentController::class, 'index'])->name('index');
+        Route::get('/create', [AdminContentController::class, 'create'])->name('create');
+        Route::post('/', [AdminContentController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [AdminContentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminContentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminContentController::class, 'destroy'])->name('destroy');
+    });
+
+    // Reviews
+    Route::prefix('reviews')->name('reviews.')->group(function () {
+        Route::get('/', [AdminReviewController::class, 'index'])->name('index');
+        Route::put('/{id}/approve', [AdminReviewController::class, 'approve'])->name('approve');
+        Route::put('/{id}/reject', [AdminReviewController::class, 'reject'])->name('reject');
+    });
+
+    // Comments
+    Route::prefix('comments')->name('comments.')->group(function () {
+        Route::get('/', [AdminCommentController::class, 'index'])->name('index');
+        Route::put('/{id}/approve', [AdminCommentController::class, 'approve'])->name('approve');
+        Route::put('/{id}/reject', [AdminCommentController::class, 'reject'])->name('reject');
+    });
+
+    // Contact Messages
+    Route::prefix('contacts')->name('contacts.')->group(function () {
+        Route::get('/', [AdminContactController::class, 'index'])->name('index');
+        Route::get('/{id}', [AdminContactController::class, 'show'])->name('show');
+        Route::put('/{id}/read', [AdminContactController::class, 'markAsRead'])->name('read');
+        Route::put('/{id}/reply', [AdminContactController::class, 'reply'])->name('reply');
+        Route::delete('/{id}', [AdminContactController::class, 'destroy'])->name('destroy');
+    });
+
+    // Users
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        Route::get('/{id}', [AdminUserController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AdminUserController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AdminUserController::class, 'update'])->name('update');
+        Route::put('/{id}/toggle-active', [AdminUserController::class, 'toggleActive'])->name('toggle-active');
+        Route::put('/{id}/reset-password', [AdminUserController::class, 'resetPassword'])->name('reset-password');
+        Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
+    });
+
+});
+
 // ========== AUTH AND ADMIN ROUTES (BREEZE) ==========
 require __DIR__.'/auth.php';
-require __DIR__.'/admin_routes.php';
