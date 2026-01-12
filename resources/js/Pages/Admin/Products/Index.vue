@@ -1,7 +1,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
     products: {
@@ -52,7 +55,7 @@ const resetFilters = () => {
 
 // Delete product
 const deleteProduct = (id, name) => {
-    if (confirm(`Vai tiešām vēlaties dzēst produktu "${name}"?`)) {
+    if (confirm(t('admin.products.deleteConfirm', { name }))) {
         router.delete(`/admin/products/${id}`, {
             preserveScroll: true,
         });
@@ -61,10 +64,7 @@ const deleteProduct = (id, name) => {
 
 // Toggle product status
 const toggleStatus = (product) => {
-    router.put(`/admin/products/${product.id}`, {
-        ...product,
-        is_active: !product.is_active,
-    }, {
+    router.put(`/admin/products/${product.id}/toggle-status`, {}, {
         preserveScroll: true,
     });
 };
@@ -77,32 +77,43 @@ const formatPrice = (price) => {
     }).format(price);
 };
 
+// Get product name based on locale
+const getProductName = (product) => {
+    return locale.value === 'lv' ? product.name_lv : product.name_en;
+};
+
+// Get category name based on locale
+const getCategoryName = (category) => {
+    if (!category) return null;
+    return locale.value === 'lv' ? category.name_lv : category.name_en;
+};
+
 // Stock status
 const getStockStatus = (product) => {
     if (product.stock_quantity <= 0) {
-        return { class: 'stock-out', text: 'Nav noliktavā' };
+        return { class: 'stock-out', text: t('admin.products.stock.outOfStock') };
     }
     if (product.stock_quantity <= product.low_stock_threshold) {
-        return { class: 'stock-low', text: 'Zems krājums' };
+        return { class: 'stock-low', text: t('admin.products.stock.lowStock') };
     }
-    return { class: 'stock-ok', text: 'Noliktavā' };
+    return { class: 'stock-ok', text: t('admin.products.stock.inStock') };
 };
 </script>
 
 <template>
-    <Head title="Produkti - Admin" />
+    <Head :title="t('admin.products.index.title')" />
 
     <AdminLayout>
-        <template #title>Produkti</template>
+        <template #title>{{ t('admin.products.index.title') }}</template>
 
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
-                <p class="header-subtitle">Pārvaldiet veikala produktus</p>
+                <p class="header-subtitle">{{ t('admin.products.index.subtitle') }}</p>
             </div>
             <Link href="/admin/products/create" class="btn btn-primary">
                 <i class="fas fa-plus"></i>
-                Jauns produkts
+                {{ t('admin.products.index.newProduct') }}
             </Link>
         </div>
 
@@ -114,27 +125,27 @@ const getStockStatus = (product) => {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Meklēt produktus..."
+                        :placeholder="t('admin.products.index.searchPlaceholder')"
                         class="search-input"
                     >
                 </div>
 
                 <select v-model="categoryFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visas kategorijas</option>
+                    <option value="">{{ t('admin.products.index.allCategories') }}</option>
                     <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                        {{ cat.name_lv }}
+                        {{ getCategoryName(cat) }}
                     </option>
                 </select>
 
                 <select v-model="statusFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visi statusi</option>
-                    <option value="active">Aktīvi</option>
-                    <option value="inactive">Neaktīvi</option>
+                    <option value="">{{ t('admin.products.status.allStatuses') }}</option>
+                    <option value="active">{{ t('admin.products.status.active') }}</option>
+                    <option value="inactive">{{ t('admin.products.status.inactive') }}</option>
                 </select>
 
                 <button @click="resetFilters" class="btn btn-secondary">
                     <i class="fas fa-times"></i>
-                    Notīrīt
+                    {{ t('admin.common.clear') }}
                 </button>
             </div>
         </div>
@@ -144,14 +155,14 @@ const getStockStatus = (product) => {
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>Attēls</th>
-                    <th>Nosaukums</th>
-                    <th>SKU</th>
-                    <th>Kategorija</th>
-                    <th>Cena</th>
-                    <th>Krājums</th>
-                    <th>Statuss</th>
-                    <th>Darbības</th>
+                    <th>{{ t('admin.products.table.image') }}</th>
+                    <th>{{ t('admin.products.table.name') }}</th>
+                    <th>{{ t('admin.products.table.sku') }}</th>
+                    <th>{{ t('admin.products.table.category') }}</th>
+                    <th>{{ t('admin.products.table.price') }}</th>
+                    <th>{{ t('admin.products.table.stock') }}</th>
+                    <th>{{ t('admin.products.table.status') }}</th>
+                    <th>{{ t('admin.products.table.actions') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -159,23 +170,23 @@ const getStockStatus = (product) => {
                     <td>
                         <img
                             :src="product.image ? product.image : '/img/Products/placeholder.png'"
-                            :alt="product.name_lv"
+                            :alt="getProductName(product)"
                             class="product-thumb"
                         >
                     </td>
                     <td>
                         <div class="product-name">
-                            <span class="name-lv">{{ product.name_lv }}</span>
-                            <span class="name-en">{{ product.name_en }}</span>
+                            <span class="name-primary">{{ getProductName(product) }}</span>
+                            <span class="name-secondary">{{ locale === 'lv' ? product.name_en : product.name_lv }}</span>
                         </div>
                     </td>
                     <td>
                         <code class="sku">{{ product.sku }}</code>
                     </td>
                     <td>
-                            <span class="category-badge" v-if="product.category">
-                                {{ product.category.name_lv }}
-                            </span>
+                        <span class="category-badge" v-if="product.category">
+                            {{ getCategoryName(product.category) }}
+                        </span>
                         <span v-else class="no-category">—</span>
                     </td>
                     <td>
@@ -188,7 +199,7 @@ const getStockStatus = (product) => {
                     </td>
                     <td>
                             <span :class="['stock-badge', getStockStatus(product).class]">
-                                {{ product.stock_quantity }} vien.
+                                {{ product.stock_quantity }} {{ t('admin.products.units') }}
                             </span>
                     </td>
                     <td>
@@ -197,18 +208,18 @@ const getStockStatus = (product) => {
                             :class="['status-toggle', product.is_active ? 'active' : 'inactive']"
                         >
                             <i :class="product.is_active ? 'fas fa-check' : 'fas fa-times'"></i>
-                            {{ product.is_active ? 'Aktīvs' : 'Neaktīvs' }}
+                            {{ product.is_active ? t('admin.products.status.active') : t('admin.products.status.inactive') }}
                         </button>
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <Link :href="`/shop/product/${product.slug}`" class="btn-icon btn-icon-view" title="Skatīt" target="_blank">
+                            <Link :href="`/shop/product/${product.slug}`" class="btn-icon btn-icon-view" :title="t('admin.common.view')" target="_blank">
                                 <i class="fas fa-eye"></i>
                             </Link>
-                            <Link :href="`/admin/products/${product.id}/edit`" class="btn-icon btn-icon-edit" title="Rediģēt">
+                            <Link :href="`/admin/products/${product.id}/edit`" class="btn-icon btn-icon-edit" :title="t('admin.common.edit')">
                                 <i class="fas fa-edit"></i>
                             </Link>
-                            <button @click="deleteProduct(product.id, product.name_lv)" class="btn-icon btn-icon-delete" title="Dzēst">
+                            <button @click="deleteProduct(product.id, getProductName(product))" class="btn-icon btn-icon-delete" :title="t('admin.common.delete')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -217,7 +228,7 @@ const getStockStatus = (product) => {
                 <tr v-if="products.data.length === 0">
                     <td colspan="8" class="empty-state">
                         <i class="fas fa-box-open"></i>
-                        <p>Nav atrasts neviens produkts</p>
+                        <p>{{ t('admin.products.index.noProducts') }}</p>
                     </td>
                 </tr>
                 </tbody>
@@ -352,12 +363,12 @@ const getStockStatus = (product) => {
     gap: 0.125rem;
 }
 
-.name-lv {
+.name-primary {
     font-weight: 600;
     color: #111827;
 }
 
-.name-en {
+.name-secondary {
     font-size: 0.75rem;
     color: #6b7280;
 }

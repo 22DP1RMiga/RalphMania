@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
     categories: {
@@ -137,12 +140,12 @@ const structuredCategories = computed(() => {
     <Head title="Kategorijas - Admin" />
 
     <AdminLayout>
-        <template #title>Kategorijas</template>
+        <template #title>{{ t('admin.categories.index.title') }}</template>
 
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
-                <p class="header-subtitle">Pārvaldiet produktu kategorijas</p>
+                <p class="header-subtitle">{{ t('admin.categories.index.subtitle') }}</p>
             </div>
             <button @click="openCreateModal" class="btn btn-primary">
                 <i class="fas fa-plus"></i>

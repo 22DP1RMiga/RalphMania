@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
@@ -7,32 +7,52 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 const { t, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
+    product: {
+        type: Object,
+        required: true,
+    },
     categories: {
         type: Array,
         default: () => [],
     },
 });
 
-// Form data
+// Form data - pre-populated with product data
 const form = useForm({
-    name_lv: '',
-    name_en: '',
-    sku: '',
-    category_id: '',
-    description_lv: '',
-    description_en: '',
-    price: '',
-    compare_price: '',
-    image: null,
-    stock_quantity: 0,
-    low_stock_threshold: 5,
-    is_active: true,
-    is_featured: false,
+    name_lv: props.product.name_lv || '',
+    name_en: props.product.name_en || '',
+    sku: props.product.sku || '',
+    category_id: props.product.category_id || '',
+    description_lv: props.product.description_lv || '',
+    description_en: props.product.description_en || '',
+    price: props.product.price || '',
+    compare_price: props.product.compare_price || '',
+    image: null, // New image to upload
+    stock_quantity: props.product.stock_quantity || 0,
+    low_stock_threshold: props.product.low_stock_threshold || 5,
+    is_active: props.product.is_active ?? true,
+    is_featured: props.product.is_featured ?? false,
+    _method: 'PUT', // For Laravel method spoofing
 });
 
 // Image handling
 const imagePreview = ref(null);
 const isDragging = ref(false);
+const currentImage = ref(props.product.image);
+
+// Set initial image preview if product has image
+onMounted(() => {
+    if (props.product.image) {
+        // Check if it's a full URL or storage path
+        if (props.product.image.startsWith('http')) {
+            imagePreview.value = props.product.image;
+        } else if (props.product.image.startsWith('/')) {
+            imagePreview.value = props.product.image;
+        } else {
+            imagePreview.value = `/storage/${props.product.image}`;
+        }
+    }
+});
 
 // Handle file selection (click)
 const handleImageChange = (event) => {
@@ -58,8 +78,7 @@ const handleDrop = (event) => {
     const files = event.dataTransfer.files;
     if (files.length > 0) {
         const file = files[0];
-        // Check if it's an image
-        if (file.type.startsWith('image/Products/')) {
+        if (file.type.startsWith('image/')) {
             processImage(file);
         }
     }
@@ -67,7 +86,7 @@ const handleDrop = (event) => {
 
 // Process image file
 const processImage = (file) => {
-    if (file && file.type.startsWith('image/Products/')) {
+    if (file && file.type.startsWith('image/')) {
         // Check file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             alert(t('admin.products.form.imageTooLarge'));
@@ -75,6 +94,7 @@ const processImage = (file) => {
         }
 
         form.image = file;
+        currentImage.value = null; // Clear current image reference
         const reader = new FileReader();
         reader.onload = (e) => {
             imagePreview.value = e.target.result;
@@ -85,26 +105,15 @@ const processImage = (file) => {
 
 const removeImage = () => {
     form.image = null;
+    currentImage.value = null;
     imagePreview.value = null;
     const input = document.getElementById('product-image');
     if (input) input.value = '';
 };
 
-// Auto-generate SKU from name
-const generateSku = () => {
-    if (form.name_en) {
-        form.sku = form.name_en
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, '-')
-                .replace(/-+/g, '-')
-                .substring(0, 20)
-            + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-    }
-};
-
 // Submit form
 const submitForm = () => {
-    form.post('/admin/products', {
+    form.post(`/admin/products/${props.product.id}`, {
         preserveScroll: true,
         forceFormData: true,
     });
@@ -114,23 +123,41 @@ const submitForm = () => {
 const getCategoryName = (category) => {
     return locale.value === 'lv' ? category.name_lv : category.name_en;
 };
+
+// Get product name for display
+const productName = computed(() => {
+    return locale.value === 'lv' ? props.product.name_lv : props.product.name_en;
+});
 </script>
 
 <template>
-    <Head :title="t('admin.products.create.title')" />
+    <Head :title="`${t('admin.products.edit.title')} - ${productName}`" />
 
     <AdminLayout>
-        <template #title>{{ t('admin.products.create.title') }}</template>
+        <template #title>{{ t('admin.products.edit.title') }}</template>
 
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
-                <p class="header-subtitle">{{ t('admin.products.create.subtitle') }}</p>
+                <p class="header-subtitle">{{ t('admin.products.edit.subtitle') }}</p>
+                <div class="product-info">
+                    <span class="product-sku">SKU: {{ props.product.sku }}</span>
+                    <span :class="['product-status', props.product.is_active ? 'active' : 'inactive']">
+                        <i :class="props.product.is_active ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                        {{ props.product.is_active ? t('admin.products.status.active') : t('admin.products.status.inactive') }}
+                    </span>
+                </div>
             </div>
-            <Link href="/admin/products" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i>
-                {{ t('admin.common.back') }}
-            </Link>
+            <div class="header-actions">
+                <Link :href="`/shop/product/${props.product.slug}`" class="btn btn-outline" target="_blank">
+                    <i class="fas fa-external-link-alt"></i>
+                    {{ t('admin.products.edit.viewInShop') }}
+                </Link>
+                <Link href="/admin/products" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    {{ t('admin.common.back') }}
+                </Link>
+            </div>
         </div>
 
         <!-- Form -->
@@ -172,27 +199,23 @@ const getCategoryName = (category) => {
                                 class="form-input"
                                 :class="{ 'error': form.errors.name_en }"
                                 :placeholder="t('admin.products.form.nameEnPlaceholder')"
-                                @blur="generateSku"
                             >
                             <span v-if="form.errors.name_en" class="error-text">{{ form.errors.name_en }}</span>
                         </div>
 
-                        <!-- SKU -->
+                        <!-- SKU (readonly for edit) -->
                         <div class="form-group">
-                            <label class="form-label">{{ t('admin.products.form.sku') }} *</label>
-                            <div class="input-with-button">
-                                <input
-                                    v-model="form.sku"
-                                    type="text"
-                                    class="form-input"
-                                    :class="{ 'error': form.errors.sku }"
-                                    :placeholder="t('admin.products.form.skuPlaceholder')"
-                                >
-                                <button type="button" @click="generateSku" class="btn-generate" :title="t('admin.products.form.generateSku')">
-                                    <i class="fas fa-magic"></i>
-                                </button>
-                            </div>
-                            <span v-if="form.errors.sku" class="error-text">{{ form.errors.sku }}</span>
+                            <label class="form-label">
+                                {{ t('admin.products.form.sku') }} *
+                                <span class="readonly-badge">{{ t('admin.products.form.readonly') }}</span>
+                            </label>
+                            <input
+                                v-model="form.sku"
+                                type="text"
+                                class="form-input readonly"
+                                readonly
+                            >
+                            <span class="form-hint">{{ t('admin.products.form.skuCannotChange') }}</span>
                         </div>
 
                         <!-- Category -->
@@ -322,12 +345,15 @@ const getCategoryName = (category) => {
                         </h3>
 
                         <div class="image-upload-area">
-                            <!-- Image Preview -->
+                            <!-- Image Preview (existing or new) -->
                             <div v-if="imagePreview" class="image-preview">
                                 <img :src="imagePreview" alt="Preview">
                                 <button type="button" @click="removeImage" class="remove-image-btn">
                                     <i class="fas fa-times"></i>
                                 </button>
+                                <span v-if="currentImage" class="current-image-label">
+                                    {{ t('admin.products.form.currentImage') }}
+                                </span>
                             </div>
 
                             <!-- Drag & Drop Zone -->
@@ -404,7 +430,7 @@ const getCategoryName = (category) => {
                 <button type="submit" class="btn btn-primary" :disabled="form.processing">
                     <i v-if="form.processing" class="fas fa-spinner fa-spin"></i>
                     <i v-else class="fas fa-save"></i>
-                    {{ t('admin.products.form.save') }}
+                    {{ t('admin.products.form.update') }}
                 </button>
             </div>
         </form>
@@ -416,13 +442,59 @@ const getCategoryName = (category) => {
 .page-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.header-info {
+    flex: 1;
 }
 
 .header-subtitle {
     color: #6b7280;
-    margin: 0;
+    margin: 0 0 0.5rem;
+}
+
+.product-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.product-sku {
+    background: #f3f4f6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-family: monospace;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.product-status {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.product-status.active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.product-status.inactive {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
 }
 
 /* Form Grid */
@@ -435,6 +507,15 @@ const getCategoryName = (category) => {
 @media (max-width: 1024px) {
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .page-header {
+        flex-direction: column;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 
@@ -503,6 +584,18 @@ const getCategoryName = (category) => {
     background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
 }
 
+.readonly-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.125rem 0.375rem;
+    background: #f3f4f6;
+    color: #6b7280;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+
 /* Form Inputs */
 .form-input,
 .form-select,
@@ -527,6 +620,12 @@ const getCategoryName = (category) => {
 .form-select.error,
 .form-textarea.error {
     border-color: #dc2626;
+}
+
+.form-input.readonly {
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
 }
 
 .form-textarea {
@@ -579,31 +678,6 @@ const getCategoryName = (category) => {
     padding-left: 2rem;
 }
 
-/* Input with Button */
-.input-with-button {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.input-with-button .form-input {
-    flex: 1;
-}
-
-.btn-generate {
-    padding: 0.75rem;
-    background: #f3f4f6;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    color: #6b7280;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-generate:hover {
-    background: #e5e7eb;
-    color: #374151;
-}
-
 /* Image Upload - Enhanced Drag & Drop */
 .image-upload-area {
     position: relative;
@@ -629,7 +703,6 @@ const getCategoryName = (category) => {
     background: #fef2f2;
 }
 
-/* Dragging state */
 .image-upload-label.dragging {
     border-color: #dc2626;
     background: #fee2e2;
@@ -730,6 +803,14 @@ const getCategoryName = (category) => {
 .remove-image-btn:hover {
     background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
     transform: scale(1.1);
+}
+
+.current-image-label {
+    display: block;
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
 }
 
 /* Toggle */
@@ -840,5 +921,16 @@ const getCategoryName = (category) => {
 
 .btn-secondary:hover {
     background: #e5e7eb;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #374151;
+}
+
+.btn-outline:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
 }
 </style>

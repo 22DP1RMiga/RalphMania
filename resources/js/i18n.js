@@ -358,6 +358,7 @@ const messages = {
             related_products: 'Līdzīgi Produkti',
             not_found: 'Produkts nav atrasts',
             stock_quantity: 'Krājumu daudzums',
+            low_stock: 'Zems krājums',
         },
         cart: {
             title: 'Iepirkumu grozs',
@@ -672,6 +673,114 @@ const messages = {
             zambia: 'Zambija',
             zimbabwe: 'Zimbabve',
             other: 'Cita'
+        },
+        // administratoriem
+        admin: {
+            products: {
+                index: {
+                    title: 'Produkti',
+                    subtitle: 'Pārvaldiet veikala produktus',
+                    searchPlaceholder: 'Meklēt produktus',
+                    allCategories: 'Visas kategorijas',
+                    newProduct: 'Jauns produkts',
+                },
+                table: {
+                    image: 'Attēls',
+                    name: 'Nosaukums',
+                    sku: 'SKU',
+                    category: 'Kategorija',
+                    price: 'Cena',
+                    stock: 'Krājums',
+                    status: 'Statuss',
+                    actions: 'Darbības',
+                },
+                status: {
+                    allStatuses: 'Visi statusi',
+                    active: 'Aktīvi',
+                    inactive: 'Neaktīvi',
+                },
+                create: {
+                    title: 'Jauns produkts',
+                    subtitle: 'Izveidojiet jaunu produktu, ko parādīt veikala katalogā',
+                },
+                edit: {
+                    title: 'Produkta rediģēšana',
+                    subtitle: 'Rediģējiet produktu un saglabājiet izmaiņas',
+                    viewInShop: 'Skatīt veikalā',
+                },
+                form: {
+                    basicInfo: 'Pamatinformācija',
+                    nameLv: 'Nosaukums latviešu valodā',
+                    nameLvPlaceholder: 'Produkta nosaukums latviešu valodā..',
+                    nameEn: 'Nosaukums angļu valodā',
+                    nameEnPlaceholder: 'Produkta nosaukums angļu valodā..',
+                    sku: 'SKU',
+                    skuPlaceholder: 'Krājumu uzskaites vienības kods..',
+                    skuCannotChange: 'Jūs nevarat nomainīt SKU kodu',
+                    generateSku: 'Ģenerēt SKU',
+                    category: 'Kategorija',
+                    selectCategory: 'Atlasiet kategoriju',
+                    descriptionLv: 'Apraksts latviešu valodā',
+                    descriptionEn: 'Apraksts angļu valodā',
+                    descriptionPlaceholder: 'Klasiskais produkts, kas paredzēts..',
+                    pricing: 'Cenu noteikšana',
+                    price: 'Cena',
+                    comparePrice: 'Salīdzināmā cena',
+                    comparePriceHint: 'Salīdzināmā cena ir veca cena (atlaide)',
+                    inventory: 'Inventārs',
+                    stockQuantity: 'Krājumu daudzums',
+                    lowStockThreshold: 'Zems krājumu slieksnis',
+                    lowStockHint: 'Brīdina par zemu krājumu līmeni, kad tas sasniedz noteikto skaitli',
+                    image: 'Attēls',
+                    dragDropImage: 'Velciet attēlu šeit',
+                    or: 'vai',
+                    browseFiles: 'pārlūkojiet failus',
+                    uploadHint: 'Velciet attēlu šeit / Noklikšķiniet, lai atlasītu',
+                    currentImage: 'Pašreizējais attēls',
+                    imageTooLarge: 'Pārāk apjomīgs attēls',
+                    status: 'Statuss',
+                    isActive: 'Ir aktīvs',
+                    isActiveHint: 'Aktīvie produkti tiek parādīti atšķirībā no neaktīvajiem.',
+                    isFeatured: 'Tiek piedāvāts',
+                    isFeaturedHint: 'Piedāvātie produkti tiek reklamēti sākumlapā',
+                    readonly: 'Tikai lasāms',
+                    save: 'Saglabāt',
+                    update: 'Atjaunināt',
+                },
+                units: 'vienības',
+            },
+            categories: {
+                index: {
+                    title: 'Kategorijas',
+                    subtitle: 'Pārvaldiet produktu kategorijas',
+                },
+            },
+            orders: {
+                //
+            },
+            content: {
+                //
+            },
+            reviews: {
+                //
+            },
+            comments: {
+                //
+            },
+            contacts: {
+                //
+            },
+            users: {
+                //
+            },
+            common: {
+                clear: 'Notīrīt',
+                back: 'Atpakaļ',
+                cancel: 'Atcelt',
+                delete: 'Dzēst',
+                edit: 'Rediģēt',
+                view: 'Skatīt',
+            },
         },
     },
     en: {
@@ -1030,6 +1139,7 @@ const messages = {
             related_products: 'Related Products',
             not_found: 'Product not found',
             stock_quantity: 'Stock quantity',
+            low_stock: 'Low stock',
         },
         cart: {
             title: 'Shopping Cart',
@@ -1345,6 +1455,113 @@ const messages = {
             zambia: 'Zambia',
             zimbabwe: 'Zimbabwe',
             other: 'Other'
+        },
+        // administratoriem
+        admin: {
+            products: {
+                index: {
+                    title: 'Products',
+                    subtitle: 'Manage store products',
+                    searchPlaceholder: 'Find products',
+                    allCategories: 'All Categories',
+                    newProduct: 'New Product',
+                },
+                table: {
+                    image: 'Image',
+                    name: 'Name',
+                    sku: 'SKU',
+                    category: 'Category',
+                    price: 'Price',
+                    stock: 'Stock',
+                    status: 'Status',
+                    actions: 'Actions',
+                },
+                status: {
+                    allStatuses: 'All stats',
+                    active: 'Active',
+                    inactive: 'Inactive',
+                },
+                create: {
+                    title: 'New Product',
+                    subtitle: 'Create a new product to display in the store catalog',
+                },
+                edit: {
+                    title: 'Edit Product',
+                    subtitle: 'Edit the product and save changes',
+                    viewInShop: 'View in Shop',
+                },
+                form: {
+                    basicInfo: 'Basic info',
+                    nameLv: 'Name in Latvian',
+                    nameLvPlaceholder: 'Name of the product in Latvian..',
+                    nameEn: 'Name in English',
+                    nameEnPlaceholder: 'Name of the product in English..',
+                    sku: 'SKU',
+                    skuPlaceholder: 'Code of the Stock Keeping Unit..',
+                    skuCannotChange: 'You cannot change SKU code',
+                    generateSku: 'Generate SKU',
+                    category: 'Category',
+                    selectCategory: 'Select Category',
+                    descriptionLv: 'Description in Latvian',
+                    descriptionEn: 'Description in English',
+                    descriptionPlaceholder: 'A classic product for..',
+                    pricing: 'Pricing',
+                    price: 'Price',
+                    comparePrice: 'Compare Price',
+                    comparePriceHint: 'Compare Price is an old price (discount)',
+                    inventory: 'Inventory',
+                    stockQuantity: 'Stock Quantity',
+                    lowStockThreshold: 'Low Stock Threshold',
+                    lowStockHint: 'Warns about a low stock when it hits the number',
+                    image: 'Image',
+                    dragDropImage: 'Drag Image here',
+                    or: 'or',
+                    browseFiles: 'browse files',
+                    uploadHint: 'Drag the image here / Click to select',
+                    currentImage: 'Current Image',
+                    imageTooLarge: 'The image is too large',
+                    status: 'Status',
+                    isActive: 'Is Active',
+                    isActiveHint: 'Active products get displayed unlike inactive ones',
+                    isFeatured: 'Is Featured',
+                    isFeaturedHint: 'Featured products are advertised in the homepage',
+                    save: 'Save',
+                    update: 'Update',
+                },
+                units: 'units',
+            },
+            categories: {
+                index: {
+                    title: 'Categories',
+                    subtitle: 'Manage product categories',
+                },
+            },
+            orders: {
+                //
+            },
+            content: {
+                //
+            },
+            reviews: {
+                //
+            },
+            comments: {
+                //
+            },
+            contacts: {
+                //
+            },
+            users: {
+                //
+            },
+            common: {
+                clear: 'Clear',
+                back: 'Back',
+                cancel: 'Cancel',
+                delete: 'Delete',
+                edit: 'Edit',
+                view: 'View',
+            },
         },
     },
 };
