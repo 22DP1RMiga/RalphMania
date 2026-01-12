@@ -203,8 +203,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Orders
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [AdminOrderController::class, 'index'])->name('index');
-        Route::get('/{id}', [AdminOrderController::class, 'show'])->name('show');
-        Route::put('/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('status');
+        Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
+        Route::put('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('status');
+        Route::get('/{order}/invoice/pdf', [AdminOrderController::class, 'downloadInvoicePdf'])->name('invoice.pdf');
+        Route::get('/{order}/invoice/print', [AdminOrderController::class, 'printInvoice'])->name('invoice.print');
     });
 
     // Content

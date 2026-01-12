@@ -215,7 +215,7 @@ onUnmounted(() => {
                             <!-- Logout -->
                             <button @click="logout" class="dropdown-item dropdown-item-logout">
                                 <i class="fas fa-sign-out-alt"></i>
-                                <span>Iziet</span>
+                                <span>{{ $t('profile.logout') }}</span>
                             </button>
                         </div>
                     </Transition>

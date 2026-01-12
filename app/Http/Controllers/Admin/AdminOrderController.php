@@ -6,62 +6,53 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminOrderController extends Controller
 {
-    /**
-     * Display a listing of orders for admin.
-     */
+    private function getCompanyInfo()
+    {
+        return [
+            'name' => config('app.company_name', 'RalphMania'),
+            'address' => 'Brīvības iela 123',
+            'city' => 'Rīga, LV-1001',
+            'country' => 'Latvija',
+            'reg_number' => '40001234567',
+            'vat_number' => 'LV40001234567',
+            'email' => 'info@ralphmania.lv',
+            'phone' => '+371 20000000',
+            'website' => 'www.ralphmania.lv',
+        ];
+    }
+
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'items']);
+        $query = Order::withCount('items')
+            ->with(['user'])
+            ->latest();
 
-        // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('order_number', 'LIKE', "%{$search}%")
-                    ->orWhere('customer_name', 'LIKE', "%{$search}%")
-                    ->orWhere('customer_email', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_email', 'like', "%{$search}%");
             });
         }
 
-        // Filter by status
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter by date range
-        if ($request->has('date_from') && $request->date_from) {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to) {
+
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Sort
-        $query->orderBy('created_at', 'desc');
-
-        // Paginate
-        $orders = $query->paginate(20)->through(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
-                'customer_name' => $order->customer_name,
-                'customer_email' => $order->customer_email,
-                'customer_phone' => $order->customer_phone,
-                'subtotal' => (float) $order->subtotal,
-                'shipping_cost' => (float) $order->shipping_cost,
-                'total_amount' => (float) $order->total_amount,
-                'status' => $order->status,
-                'items_count' => $order->items->count(),
-                'created_at' => $order->created_at,
-                'user' => $order->user ? [
-                    'id' => $order->user->id,
-                    'username' => $order->user->username,
-                ] : null,
-            ];
-        });
+        $orders = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Orders/Index', [
             'orders' => $orders,
@@ -69,84 +60,58 @@ class AdminOrderController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified order.
-     */
-    public function show($id)
+    public function show(Order $order)
     {
-        $order = Order::with(['user', 'items.product', 'payment'])->findOrFail($id);
+        $order->load([
+            'items.product',
+            'payment',
+            'user',
+        ]);
 
         return Inertia::render('Admin/Orders/Show', [
-            'order' => [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
-                'customer_name' => $order->customer_name,
-                'customer_email' => $order->customer_email,
-                'customer_phone' => $order->customer_phone,
-                'delivery_country' => $order->delivery_country,
-                'delivery_city' => $order->delivery_city,
-                'delivery_address' => $order->delivery_address,
-                'delivery_postal_code' => $order->delivery_postal_code,
-                'subtotal' => (float) $order->subtotal,
-                'shipping_cost' => (float) $order->shipping_cost,
-                'total_amount' => (float) $order->total_amount,
-                'status' => $order->status,
-                'notes' => $order->notes,
-                'shipped_at' => $order->shipped_at,
-                'delivered_at' => $order->delivered_at,
-                'created_at' => $order->created_at,
-                'user' => $order->user ? [
-                    'id' => $order->user->id,
-                    'username' => $order->user->username,
-                    'email' => $order->user->email,
-                ] : null,
-                'items' => $order->items->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'product_name' => $item->product_name,
-                        'quantity' => $item->quantity,
-                        'price' => (float) $item->price,
-                        'total' => (float) ($item->price * $item->quantity),
-                        'product' => $item->product ? [
-                            'id' => $item->product->id,
-                            'slug' => $item->product->slug,
-                            'image' => $item->product->image,
-                        ] : null,
-                    ];
-                }),
-                'payment' => $order->payment ? [
-                    'payment_method' => $order->payment->payment_method,
-                    'status' => $order->payment->status,
-                    'card_last4' => $order->payment->card_last4,
-                    'card_brand' => $order->payment->card_brand,
-                ] : null,
-            ],
+            'order' => $order,
         ]);
     }
 
-    /**
-     * Update order status.
-     */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, Order $order)
     {
-        $validated = $request->validate([
+        $request->validate([
             'status' => 'required|in:pending,confirmed,processing,packed,shipped,in_transit,delivered,cancelled,refunded',
         ]);
 
-        $order = Order::findOrFail($id);
+        $order->status = $request->status;
 
-        $updateData = ['status' => $validated['status']];
-
-        // Set timestamps based on status
-        if ($validated['status'] === 'shipped' && !$order->shipped_at) {
-            $updateData['shipped_at'] = now();
-        }
-        if ($validated['status'] === 'delivered' && !$order->delivered_at) {
-            $updateData['delivered_at'] = now();
+        // Atjaunināt papildus datumus
+        if ($request->status === 'delivered') {
+            $order->delivered_at = now();
+        } elseif ($request->status === 'shipped') {
+            $order->shipped_at = now();
         }
 
-        $order->update($updateData);
+        $order->save();
 
         return back()->with('success', 'Pasūtījuma statuss veiksmīgi atjaunināts!');
+    }
+
+    public function downloadInvoicePdf(Order $order)
+    {
+        $order->load('items.product', 'payment', 'user');
+
+        $pdf = Pdf::loadView('invoices.order', [
+            'order' => $order,
+            'company' => $this->getCompanyInfo(),
+        ]);
+
+        return $pdf->download("rekins-{$order->order_number}.pdf");
+    }
+
+    public function printInvoice(Order $order)
+    {
+        $order->load('items.product', 'payment', 'user');
+
+        return view('invoices.order', [
+            'order' => $order,
+            'company' => $this->getCompanyInfo(),
+        ]);
     }
 }

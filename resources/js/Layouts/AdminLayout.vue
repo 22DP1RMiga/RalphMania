@@ -78,59 +78,59 @@ const logout = () => {
     router.post(route('logout'));
 };
 
-// Navigation items
+// Navigation items with translation keys
 const navItems = computed(() => {
     const items = [
         {
-            name: 'Pārskats',
+            nameKey: 'admin.nav.dashboard',
             icon: 'fas fa-tachometer-alt',
             route: 'admin.dashboard',
             url: '/admin/dashboard',
         },
         {
-            name: 'Produkti',
+            nameKey: 'admin.nav.products',
             icon: 'fas fa-box',
             route: 'admin.products.index',
             url: '/admin/products',
         },
         {
-            name: 'Kategorijas',
+            nameKey: 'admin.nav.categories',
             icon: 'fas fa-tags',
             route: 'admin.categories.index',
             url: '/admin/categories',
         },
         {
-            name: 'Pasūtījumi',
+            nameKey: 'admin.nav.orders',
             icon: 'fas fa-shopping-cart',
             route: 'admin.orders.index',
             url: '/admin/orders',
         },
         {
-            name: 'Saturs',
+            nameKey: 'admin.nav.content',
             icon: 'fas fa-newspaper',
             route: 'admin.content.index',
             url: '/admin/content',
         },
         {
-            name: 'Atsauksmes',
+            nameKey: 'admin.nav.reviews',
             icon: 'fas fa-star',
             route: 'admin.reviews.index',
             url: '/admin/reviews',
         },
         {
-            name: 'Komentāri',
+            nameKey: 'admin.nav.comments',
             icon: 'fas fa-comments',
             route: 'admin.comments.index',
             url: '/admin/comments',
         },
         {
-            name: 'Kontakti',
+            nameKey: 'admin.nav.contacts',
             icon: 'fas fa-envelope',
             route: 'admin.contacts.index',
             url: '/admin/contacts',
         },
         {
-            name: 'Lietotāji',
+            nameKey: 'admin.nav.users',
             icon: 'fas fa-users',
             route: 'admin.users.index',
             url: '/admin/users',
@@ -140,7 +140,7 @@ const navItems = computed(() => {
     // Add admin management for super admins only
     if (isSuperAdmin.value) {
         items.push({
-            name: 'Administratori',
+            nameKey: 'admin.nav.administrators',
             icon: 'fas fa-user-shield',
             route: 'admin.administrators.index',
             url: '/admin/administrators',
@@ -189,7 +189,7 @@ const isActiveRoute = (url) => {
                     @click="closeMobileSidebar"
                 >
                     <i :class="item.icon"></i>
-                    <span v-if="isSidebarOpen">{{ item.name }}</span>
+                    <span v-if="isSidebarOpen">{{ t(item.nameKey) }}</span>
                 </Link>
             </nav>
 
@@ -197,7 +197,7 @@ const isActiveRoute = (url) => {
             <div class="sidebar-footer">
                 <Link href="/" class="sidebar-nav-item sidebar-back">
                     <i class="fas fa-arrow-left"></i>
-                    <span v-if="isSidebarOpen">Uz mājaslapu</span>
+                    <span v-if="isSidebarOpen">{{ t('admin.nav.backToSite') }}</span>
                 </Link>
             </div>
         </aside>
@@ -220,7 +220,7 @@ const isActiveRoute = (url) => {
                         <i class="fas fa-bars"></i>
                     </button>
                     <h1 class="admin-page-title">
-                        <slot name="title">Admin Panelis</slot>
+                        <slot name="title">{{ t('admin.dashboard.title') }}</slot>
                     </h1>
                 </div>
 
@@ -243,18 +243,18 @@ const isActiveRoute = (url) => {
                             <div v-if="isUserDropdownOpen" class="admin-dropdown-menu">
                                 <Link href="/dashboard" class="admin-dropdown-item" @click="closeUserDropdown">
                                     <i class="fas fa-user"></i>
-                                    <span>Mans profils</span>
+                                    <span>{{ t('admin.user.myProfile') }}</span>
                                 </Link>
                                 <button @click="logout" class="admin-dropdown-item admin-dropdown-logout">
                                     <i class="fas fa-sign-out-alt"></i>
-                                    <span>Iziet</span>
+                                    <span>{{ t('admin.user.logout') }}</span>
                                 </button>
                             </div>
                         </Transition>
                     </div>
 
                     <!-- Locale Switcher -->
-                    <button @click="toggleLocale" class="admin-locale-switcher">
+                    <button @click="toggleLocale" class="admin-locale-switcher" :title="t('admin.switchLanguage')">
                         <span class="locale-current">{{ currentLocale.toUpperCase() }}</span>
                         <span class="locale-divider">/</span>
                         <span class="locale-other">{{ currentLocale === 'lv' ? 'EN' : 'LV' }}</span>
@@ -309,6 +309,7 @@ const isActiveRoute = (url) => {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    text-decoration: none;
 }
 
 .sidebar-logo {
@@ -332,6 +333,9 @@ const isActiveRoute = (url) => {
     border-radius: 0.375rem;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-toggle:hover {
@@ -339,20 +343,22 @@ const isActiveRoute = (url) => {
 }
 
 .sidebar-close {
-    background: none;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
-    font-size: 1.25rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Sidebar Navigation */
 .sidebar-nav {
     flex: 1;
     padding: 1rem 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
     overflow-y: auto;
 }
 
@@ -361,11 +367,12 @@ const isActiveRoute = (url) => {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.25rem;
     border-radius: 0.5rem;
-    transition: all 0.2s;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 500;
     text-decoration: none;
+    transition: all 0.2s;
 }
 
 .sidebar-nav-item:hover {
@@ -383,6 +390,7 @@ const isActiveRoute = (url) => {
     width: 1.25rem;
     text-align: center;
     font-size: 1rem;
+    flex-shrink: 0;
 }
 
 .sidebar-collapsed .sidebar-nav-item span {
@@ -407,6 +415,7 @@ const isActiveRoute = (url) => {
 .sidebar-footer {
     padding: 1rem 0.75rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
 }
 
 .sidebar-back {
@@ -422,6 +431,9 @@ const isActiveRoute = (url) => {
     flex: 1;
     margin-left: 260px;
     transition: margin-left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .sidebar-collapsed .admin-main {
@@ -439,12 +451,15 @@ const isActiveRoute = (url) => {
     position: sticky;
     top: 0;
     z-index: 50;
+    gap: 1rem;
 }
 
 .admin-header-left {
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
+    flex: 1;
 }
 
 .mobile-menu-btn {
@@ -454,6 +469,7 @@ const isActiveRoute = (url) => {
     color: #374151;
     cursor: pointer;
     padding: 0.5rem;
+    flex-shrink: 0;
 }
 
 .admin-page-title {
@@ -461,12 +477,16 @@ const isActiveRoute = (url) => {
     font-weight: 700;
     color: #111827;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .admin-header-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
+    flex-shrink: 0;
 }
 
 /* Super Admin Badge */
@@ -512,6 +532,7 @@ const isActiveRoute = (url) => {
     height: 2rem;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .admin-username {
@@ -608,6 +629,7 @@ const isActiveRoute = (url) => {
 /* Page Content */
 .admin-content {
     padding: 1.5rem;
+    flex: 1;
 }
 
 /* Animations */
@@ -648,6 +670,7 @@ const isActiveRoute = (url) => {
     z-index: 99;
 }
 
+/* Tablet - 1024px */
 @media (max-width: 1024px) {
     .mobile-only {
         display: flex;
@@ -659,7 +682,7 @@ const isActiveRoute = (url) => {
 
     .admin-sidebar {
         transform: translateX(-100%);
-        width: 260px;
+        width: 280px;
     }
 
     .admin-sidebar.mobile-open {
@@ -667,7 +690,7 @@ const isActiveRoute = (url) => {
     }
 
     .sidebar-collapsed .admin-sidebar {
-        width: 260px;
+        width: 280px;
     }
 
     .admin-main {
@@ -691,9 +714,34 @@ const isActiveRoute = (url) => {
     }
 }
 
-@media (max-width: 640px) {
+/* Mobile - 768px */
+@media (max-width: 768px) {
     .admin-header {
         padding: 0.75rem 1rem;
+    }
+
+    .admin-page-title {
+        font-size: 1.25rem;
+    }
+
+    .admin-content {
+        padding: 1rem;
+    }
+
+    .admin-header-right {
+        gap: 0.5rem;
+    }
+
+    .admin-locale-switcher {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Small Mobile - 480px */
+@media (max-width: 480px) {
+    .admin-header {
+        padding: 0.5rem 0.75rem;
     }
 
     .admin-page-title {
@@ -701,7 +749,15 @@ const isActiveRoute = (url) => {
     }
 
     .admin-content {
-        padding: 1rem;
+        padding: 0.75rem;
+    }
+
+    .admin-user-btn {
+        padding: 0.375rem;
+    }
+
+    .super-admin-badge {
+        display: none;
     }
 }
 </style>

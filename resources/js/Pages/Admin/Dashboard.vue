@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { Head, usePage, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, usePage, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -36,62 +39,62 @@ const props = defineProps({
     },
 });
 
-// Available permissions
-const availablePermissions = {
-    'Produkti': [
-        { key: 'products.view', label: 'Skatīt produktus' },
-        { key: 'products.create', label: 'Izveidot produktus' },
-        { key: 'products.edit', label: 'Rediģēt produktus' },
-        { key: 'products.delete', label: 'Dzēst produktus' },
+// Available permissions with translation keys
+const availablePermissions = computed(() => ({
+    [t('admin.permissions.products')]: [
+        { key: 'products.view', labelKey: 'admin.permissions.productsView' },
+        { key: 'products.create', labelKey: 'admin.permissions.productsCreate' },
+        { key: 'products.edit', labelKey: 'admin.permissions.productsEdit' },
+        { key: 'products.delete', labelKey: 'admin.permissions.productsDelete' },
     ],
-    'Kategorijas': [
-        { key: 'categories.view', label: 'Skatīt kategorijas' },
-        { key: 'categories.create', label: 'Izveidot kategorijas' },
-        { key: 'categories.edit', label: 'Rediģēt kategorijas' },
-        { key: 'categories.delete', label: 'Dzēst kategorijas' },
+    [t('admin.permissions.categories')]: [
+        { key: 'categories.view', labelKey: 'admin.permissions.categoriesView' },
+        { key: 'categories.create', labelKey: 'admin.permissions.categoriesCreate' },
+        { key: 'categories.edit', labelKey: 'admin.permissions.categoriesEdit' },
+        { key: 'categories.delete', labelKey: 'admin.permissions.categoriesDelete' },
     ],
-    'Pasūtījumi': [
-        { key: 'orders.view', label: 'Skatīt pasūtījumus' },
-        { key: 'orders.edit', label: 'Rediģēt pasūtījumus' },
-        { key: 'orders.delete', label: 'Dzēst pasūtījumus' },
+    [t('admin.permissions.orders')]: [
+        { key: 'orders.view', labelKey: 'admin.permissions.ordersView' },
+        { key: 'orders.edit', labelKey: 'admin.permissions.ordersEdit' },
+        { key: 'orders.delete', labelKey: 'admin.permissions.ordersDelete' },
     ],
-    'Lietotāji': [
-        { key: 'users.view', label: 'Skatīt lietotājus' },
-        { key: 'users.create', label: 'Izveidot lietotājus' },
-        { key: 'users.edit', label: 'Rediģēt lietotājus' },
-        { key: 'users.delete', label: 'Dzēst lietotājus' },
-        { key: 'users.ban', label: 'Bloķēt lietotājus' },
+    [t('admin.permissions.users')]: [
+        { key: 'users.view', labelKey: 'admin.permissions.usersView' },
+        { key: 'users.create', labelKey: 'admin.permissions.usersCreate' },
+        { key: 'users.edit', labelKey: 'admin.permissions.usersEdit' },
+        { key: 'users.delete', labelKey: 'admin.permissions.usersDelete' },
+        { key: 'users.ban', labelKey: 'admin.permissions.usersBan' },
     ],
-    'Saturs': [
-        { key: 'content.view', label: 'Skatīt saturu' },
-        { key: 'content.create', label: 'Izveidot saturu' },
-        { key: 'content.edit', label: 'Rediģēt saturu' },
-        { key: 'content.delete', label: 'Dzēst saturu' },
-        { key: 'content.publish', label: 'Publicēt saturu' },
+    [t('admin.permissions.content')]: [
+        { key: 'content.view', labelKey: 'admin.permissions.contentView' },
+        { key: 'content.create', labelKey: 'admin.permissions.contentCreate' },
+        { key: 'content.edit', labelKey: 'admin.permissions.contentEdit' },
+        { key: 'content.delete', labelKey: 'admin.permissions.contentDelete' },
+        { key: 'content.publish', labelKey: 'admin.permissions.contentPublish' },
     ],
-    'Atsauksmes': [
-        { key: 'reviews.view', label: 'Skatīt atsauksmes' },
-        { key: 'reviews.moderate', label: 'Moderēt atsauksmes' },
-        { key: 'reviews.delete', label: 'Dzēst atsauksmes' },
+    [t('admin.permissions.reviews')]: [
+        { key: 'reviews.view', labelKey: 'admin.permissions.reviewsView' },
+        { key: 'reviews.moderate', labelKey: 'admin.permissions.reviewsModerate' },
+        { key: 'reviews.delete', labelKey: 'admin.permissions.reviewsDelete' },
     ],
-    'Komentāri': [
-        { key: 'comments.view', label: 'Skatīt komentārus' },
-        { key: 'comments.moderate', label: 'Moderēt komentārus' },
-        { key: 'comments.delete', label: 'Dzēst komentārus' },
+    [t('admin.permissions.comments')]: [
+        { key: 'comments.view', labelKey: 'admin.permissions.commentsView' },
+        { key: 'comments.moderate', labelKey: 'admin.permissions.commentsModerate' },
+        { key: 'comments.delete', labelKey: 'admin.permissions.commentsDelete' },
     ],
-    'Kontakti': [
-        { key: 'contacts.view', label: 'Skatīt kontaktus' },
-        { key: 'contacts.reply', label: 'Atbildēt uz ziņojumiem' },
-        { key: 'contacts.delete', label: 'Dzēst ziņojumus' },
+    [t('admin.permissions.contacts')]: [
+        { key: 'contacts.view', labelKey: 'admin.permissions.contactsView' },
+        { key: 'contacts.reply', labelKey: 'admin.permissions.contactsReply' },
+        { key: 'contacts.delete', labelKey: 'admin.permissions.contactsDelete' },
     ],
-    'Iestatījumi': [
-        { key: 'settings.view', label: 'Skatīt iestatījumus' },
-        { key: 'settings.edit', label: 'Rediģēt iestatījumus' },
+    [t('admin.permissions.settings')]: [
+        { key: 'settings.view', labelKey: 'admin.permissions.settingsView' },
+        { key: 'settings.edit', labelKey: 'admin.permissions.settingsEdit' },
     ],
-    'Žurnāls': [
-        { key: 'logs.view', label: 'Skatīt aktivitāšu žurnālu' },
+    [t('admin.permissions.logs')]: [
+        { key: 'logs.view', labelKey: 'admin.permissions.logsView' },
     ],
-};
+}));
 
 // Modal states
 const showAddAdminModal = ref(false);
@@ -124,6 +127,7 @@ const closeModals = () => {
     selectedAdmin.value = null;
     selectedUserId.value = null;
     selectedPermissions.value = [];
+    errorMessage.value = '';
 };
 
 // Toggle permission
@@ -142,10 +146,8 @@ const toggleGroup = (groupPermissions) => {
     const allSelected = groupKeys.every(key => selectedPermissions.value.includes(key));
 
     if (allSelected) {
-        // Remove all from group
         selectedPermissions.value = selectedPermissions.value.filter(p => !groupKeys.includes(p));
     } else {
-        // Add all from group
         groupKeys.forEach(key => {
             if (!selectedPermissions.value.includes(key)) {
                 selectedPermissions.value.push(key);
@@ -156,7 +158,7 @@ const toggleGroup = (groupPermissions) => {
 
 // Select all permissions
 const selectAllPermissions = () => {
-    const allKeys = Object.values(availablePermissions).flat().map(p => p.key);
+    const allKeys = Object.values(availablePermissions.value).flat().map(p => p.key);
     selectedPermissions.value = [...allKeys];
 };
 
@@ -168,7 +170,7 @@ const clearAllPermissions = () => {
 // Save new administrator
 const saveNewAdmin = () => {
     if (!selectedUserId.value) {
-        errorMessage.value = 'Lūdzu izvēlieties lietotāju';
+        errorMessage.value = t('admin.dashboard.selectUserError');
         return;
     }
 
@@ -181,12 +183,12 @@ const saveNewAdmin = () => {
     }, {
         preserveScroll: true,
         onSuccess: () => {
-            successMessage.value = 'Administrators veiksmīgi pievienots!';
+            successMessage.value = t('admin.dashboard.adminAdded');
             closeModals();
             setTimeout(() => successMessage.value = '', 3000);
         },
         onError: (errors) => {
-            errorMessage.value = Object.values(errors)[0] || 'Kļūda pievienojot administratoru';
+            errorMessage.value = Object.values(errors)[0] || t('admin.dashboard.addAdminError');
         },
         onFinish: () => {
             isLoading.value = false;
@@ -206,12 +208,12 @@ const updatePermissions = () => {
     }, {
         preserveScroll: true,
         onSuccess: () => {
-            successMessage.value = 'Atļaujas veiksmīgi atjauninātas!';
+            successMessage.value = t('admin.dashboard.permissionsUpdated');
             closeModals();
             setTimeout(() => successMessage.value = '', 3000);
         },
         onError: (errors) => {
-            errorMessage.value = Object.values(errors)[0] || 'Kļūda atjauninot atļaujas';
+            errorMessage.value = Object.values(errors)[0] || t('admin.dashboard.updateError');
         },
         onFinish: () => {
             isLoading.value = false;
@@ -221,12 +223,12 @@ const updatePermissions = () => {
 
 // Remove administrator
 const removeAdmin = (adminId) => {
-    if (!confirm('Vai tiešām vēlaties noņemt šo administratoru?')) return;
+    if (!confirm(t('admin.dashboard.removeAdminConfirm'))) return;
 
     router.delete(`/admin/administrators/${adminId}`, {
         preserveScroll: true,
         onSuccess: () => {
-            successMessage.value = 'Administrators veiksmīgi noņemts!';
+            successMessage.value = t('admin.dashboard.adminRemoved');
             setTimeout(() => successMessage.value = '', 3000);
         },
     });
@@ -234,11 +236,27 @@ const removeAdmin = (adminId) => {
 
 // Format currency
 const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('lv-LV', {
+    return new Intl.NumberFormat(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
         style: 'currency',
         currency: 'EUR',
     }).format(amount);
 };
+
+// Format date
+const formatDate = (date) => {
+    if (!date) return t('admin.dashboard.noData');
+    return new Date(date).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US');
+};
+
+// Current date formatted
+const currentDateFormatted = computed(() => {
+    return new Date().toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+});
 
 // Get non-admin users for selection
 const nonAdminUsers = computed(() => {
@@ -248,10 +266,10 @@ const nonAdminUsers = computed(() => {
 </script>
 
 <template>
-    <Head title="Admin Panelis" />
+    <Head :title="t('admin.dashboard.title')" />
 
     <AdminLayout>
-        <template #title>Pārskats</template>
+        <template #title>{{ t('admin.dashboard.overview') }}</template>
 
         <!-- Success/Error Messages -->
         <Transition name="slide-down">
@@ -262,7 +280,7 @@ const nonAdminUsers = computed(() => {
         </Transition>
 
         <Transition name="slide-down">
-            <div v-if="errorMessage" class="alert alert-error">
+            <div v-if="errorMessage && !showAddAdminModal && !showEditPermissionsModal" class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i>
                 {{ errorMessage }}
             </div>
@@ -272,15 +290,15 @@ const nonAdminUsers = computed(() => {
         <div class="welcome-section">
             <div class="welcome-content">
                 <h2 class="welcome-title">
-                    Sveiks, {{ user.username }}!
+                    {{ t('admin.dashboard.welcome', { name: user.username }) }}
                     <span v-if="isSuperAdmin" class="super-badge">
                         <i class="fas fa-crown"></i> Super Admin
                     </span>
                 </h2>
-                <p class="welcome-subtitle">Šeit ir jūsu administrācijas paneļa pārskats.</p>
+                <p class="welcome-subtitle">{{ t('admin.dashboard.welcomeSubtitle') }}</p>
             </div>
             <div class="welcome-date">
-                {{ new Date().toLocaleDateString('lv-LV', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
+                {{ currentDateFormatted }}
             </div>
         </div>
 
@@ -292,10 +310,10 @@ const nonAdminUsers = computed(() => {
                 </div>
                 <div class="stat-content">
                     <span class="stat-value">{{ stats.totalUsers }}</span>
-                    <span class="stat-label">Lietotāji</span>
+                    <span class="stat-label">{{ t('admin.dashboard.stats.users') }}</span>
                 </div>
                 <div class="stat-badge" v-if="stats.newUsersToday > 0">
-                    +{{ stats.newUsersToday }} šodien
+                    +{{ stats.newUsersToday }} {{ t('admin.dashboard.stats.today') }}
                 </div>
             </div>
 
@@ -305,10 +323,10 @@ const nonAdminUsers = computed(() => {
                 </div>
                 <div class="stat-content">
                     <span class="stat-value">{{ stats.totalOrders }}</span>
-                    <span class="stat-label">Pasūtījumi</span>
+                    <span class="stat-label">{{ t('admin.dashboard.stats.orders') }}</span>
                 </div>
                 <div class="stat-badge stat-badge-warning" v-if="stats.pendingOrders > 0">
-                    {{ stats.pendingOrders }} gaida
+                    {{ stats.pendingOrders }} {{ t('admin.dashboard.stats.pending') }}
                 </div>
             </div>
 
@@ -318,7 +336,7 @@ const nonAdminUsers = computed(() => {
                 </div>
                 <div class="stat-content">
                     <span class="stat-value">{{ stats.totalProducts }}</span>
-                    <span class="stat-label">Produkti</span>
+                    <span class="stat-label">{{ t('admin.dashboard.stats.products') }}</span>
                 </div>
             </div>
 
@@ -328,30 +346,30 @@ const nonAdminUsers = computed(() => {
                 </div>
                 <div class="stat-content">
                     <span class="stat-value">{{ formatCurrency(stats.totalRevenue) }}</span>
-                    <span class="stat-label">Ieņēmumi</span>
+                    <span class="stat-label">{{ t('admin.dashboard.stats.revenue') }}</span>
                 </div>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <h3 class="section-title">Ātrās darbības</h3>
+            <h3 class="section-title">{{ t('admin.dashboard.quickActions') }}</h3>
             <div class="actions-grid">
                 <Link href="/admin/products/create" class="action-card">
                     <i class="fas fa-plus"></i>
-                    <span>Jauns produkts</span>
+                    <span>{{ t('admin.dashboard.newProduct') }}</span>
                 </Link>
                 <Link href="/admin/content/create" class="action-card">
                     <i class="fas fa-newspaper"></i>
-                    <span>Jauns saturs</span>
+                    <span>{{ t('admin.dashboard.newContent') }}</span>
                 </Link>
                 <Link href="/admin/orders" class="action-card action-card-warning" v-if="stats.pendingOrders > 0">
                     <i class="fas fa-clock"></i>
-                    <span>{{ stats.pendingOrders }} gaida apstrādi</span>
+                    <span>{{ stats.pendingOrders }} {{ t('admin.dashboard.awaitingProcessing') }}</span>
                 </Link>
                 <Link href="/admin/contacts" class="action-card action-card-info" v-if="stats.unreadContacts > 0">
                     <i class="fas fa-envelope"></i>
-                    <span>{{ stats.unreadContacts }} neizlasīti</span>
+                    <span>{{ stats.unreadContacts }} {{ t('admin.dashboard.unread') }}</span>
                 </Link>
             </div>
         </div>
@@ -361,25 +379,25 @@ const nonAdminUsers = computed(() => {
             <div class="section-header">
                 <h3 class="section-title">
                     <i class="fas fa-user-shield"></i>
-                    Administratoru pārvaldība
+                    {{ t('admin.dashboard.adminManagement') }}
                 </h3>
                 <button @click="openAddAdminModal" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
-                    Pievienot administratoru
+                    <span class="btn-text">{{ t('admin.dashboard.addAdmin') }}</span>
                 </button>
             </div>
 
-            <!-- Administrators Table -->
-            <div class="admin-table-container">
+            <!-- Administrators Table (Desktop) -->
+            <div class="admin-table-container desktop-only">
                 <table class="admin-table">
                     <thead>
                     <tr>
-                        <th>Lietotājs</th>
-                        <th>E-pasts</th>
-                        <th>Statuss</th>
-                        <th>Atļaujas</th>
-                        <th>Pēdējā pieslēgšanās</th>
-                        <th>Darbības</th>
+                        <th>{{ t('admin.dashboard.table.user') }}</th>
+                        <th>{{ t('admin.dashboard.table.email') }}</th>
+                        <th>{{ t('admin.dashboard.table.status') }}</th>
+                        <th>{{ t('admin.dashboard.table.permissions') }}</th>
+                        <th>{{ t('admin.dashboard.table.lastLogin') }}</th>
+                        <th>{{ t('admin.dashboard.table.actions') }}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -401,22 +419,20 @@ const nonAdminUsers = computed(() => {
                         </td>
                         <td>
                                 <span v-if="admin.is_super_admin" class="permissions-badge permissions-all">
-                                    Visas atļaujas
+                                    {{ t('admin.dashboard.allPermissions') }}
                                 </span>
                             <span v-else class="permissions-badge">
-                                    {{ admin.permissions?.length || 0 }} atļaujas
+                                    {{ admin.permissions?.length || 0 }} {{ t('admin.dashboard.permissionsCount') }}
                                 </span>
                         </td>
-                        <td>
-                            {{ admin.last_login_at ? new Date(admin.last_login_at).toLocaleDateString('lv-LV') : 'Nav datu' }}
-                        </td>
+                        <td>{{ formatDate(admin.last_login_at) }}</td>
                         <td>
                             <div class="action-buttons">
                                 <button
                                     v-if="!admin.is_super_admin"
                                     @click="openEditPermissionsModal(admin)"
                                     class="btn-icon btn-icon-edit"
-                                    title="Rediģēt atļaujas"
+                                    :title="t('admin.dashboard.editPermissions')"
                                 >
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -424,18 +440,69 @@ const nonAdminUsers = computed(() => {
                                     v-if="!admin.is_super_admin"
                                     @click="removeAdmin(admin.id)"
                                     class="btn-icon btn-icon-delete"
-                                    title="Noņemt administratoru"
+                                    :title="t('admin.dashboard.removeAdmin')"
                                 >
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <span v-if="admin.is_super_admin" class="protected-label">
-                                        <i class="fas fa-lock"></i> Aizsargāts
+                                        <i class="fas fa-lock"></i> {{ t('admin.dashboard.protected') }}
                                     </span>
                             </div>
                         </td>
                     </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Administrators Cards (Mobile) -->
+            <div class="admin-cards mobile-only">
+                <div v-for="admin in administrators" :key="admin.id" class="admin-card" :class="{ 'super-admin-card': admin.is_super_admin }">
+                    <div class="admin-card-header">
+                        <div class="user-cell">
+                            <img :src="admin.user?.profile_picture ? `/storage/${admin.user.profile_picture}` : '/img/default-avatar.png'" class="user-avatar-small">
+                            <div class="user-info">
+                                <span class="user-name">{{ admin.full_name }}</span>
+                                <span class="user-email">{{ admin.user?.email }}</span>
+                            </div>
+                        </div>
+                        <span v-if="admin.is_super_admin" class="status-badge status-super">
+                            <i class="fas fa-crown"></i>
+                        </span>
+                        <span v-else class="status-badge status-admin">
+                            <i class="fas fa-user-shield"></i>
+                        </span>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="admin-card-row">
+                            <span class="label">{{ t('admin.dashboard.table.permissions') }}:</span>
+                            <span v-if="admin.is_super_admin" class="permissions-badge permissions-all">
+                                {{ t('admin.dashboard.allPermissions') }}
+                            </span>
+                            <span v-else class="permissions-badge">
+                                {{ admin.permissions?.length || 0 }}
+                            </span>
+                        </div>
+                        <div class="admin-card-row">
+                            <span class="label">{{ t('admin.dashboard.table.lastLogin') }}:</span>
+                            <span>{{ formatDate(admin.last_login_at) }}</span>
+                        </div>
+                    </div>
+                    <div v-if="!admin.is_super_admin" class="admin-card-footer">
+                        <button @click="openEditPermissionsModal(admin)" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-edit"></i>
+                            {{ t('admin.common.edit') }}
+                        </button>
+                        <button @click="removeAdmin(admin.id)" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i>
+                            {{ t('admin.common.delete') }}
+                        </button>
+                    </div>
+                    <div v-else class="admin-card-footer protected">
+                        <span class="protected-label">
+                            <i class="fas fa-lock"></i> {{ t('admin.dashboard.protected') }}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -446,7 +513,7 @@ const nonAdminUsers = computed(() => {
                     <div class="modal-header">
                         <h3 class="modal-title">
                             <i class="fas fa-user-plus"></i>
-                            Pievienot jaunu administratoru
+                            {{ t('admin.dashboard.addNewAdmin') }}
                         </h3>
                         <button @click="closeModals" class="modal-close">
                             <i class="fas fa-times"></i>
@@ -454,11 +521,17 @@ const nonAdminUsers = computed(() => {
                     </div>
 
                     <div class="modal-body">
+                        <!-- Error in modal -->
+                        <div v-if="errorMessage" class="alert alert-error alert-sm">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ errorMessage }}
+                        </div>
+
                         <!-- User Selection -->
                         <div class="form-group">
-                            <label class="form-label">Izvēlieties lietotāju</label>
+                            <label class="form-label">{{ t('admin.dashboard.selectUser') }}</label>
                             <select v-model="selectedUserId" class="form-select">
-                                <option :value="null">-- Izvēlieties lietotāju --</option>
+                                <option :value="null">-- {{ t('admin.dashboard.selectUser') }} --</option>
                                 <option v-for="u in nonAdminUsers" :key="u.id" :value="u.id">
                                     {{ u.username }} ({{ u.email }})
                                 </option>
@@ -468,13 +541,13 @@ const nonAdminUsers = computed(() => {
                         <!-- Permissions Selection -->
                         <div class="permissions-section">
                             <div class="permissions-header">
-                                <label class="form-label">Atļaujas</label>
+                                <label class="form-label">{{ t('admin.dashboard.permissionsLabel') }}</label>
                                 <div class="permissions-actions">
                                     <button type="button" @click="selectAllPermissions" class="btn btn-sm btn-outline">
-                                        Atzīmēt visas
+                                        {{ t('admin.dashboard.selectAll') }}
                                     </button>
                                     <button type="button" @click="clearAllPermissions" class="btn btn-sm btn-outline">
-                                        Notīrīt
+                                        {{ t('admin.common.clear') }}
                                     </button>
                                 </div>
                             </div>
@@ -492,7 +565,7 @@ const nonAdminUsers = computed(() => {
                                                 :checked="selectedPermissions.includes(perm.key)"
                                                 @change="togglePermission(perm.key)"
                                             >
-                                            <span>{{ perm.label }}</span>
+                                            <span>{{ t(perm.labelKey) }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -502,11 +575,11 @@ const nonAdminUsers = computed(() => {
 
                     <div class="modal-footer">
                         <button @click="closeModals" class="btn btn-secondary">
-                            Atcelt
+                            {{ t('admin.common.cancel') }}
                         </button>
                         <button @click="saveNewAdmin" class="btn btn-primary" :disabled="isLoading">
                             <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-                            <span>Pievienot</span>
+                            <span>{{ t('admin.dashboard.add') }}</span>
                         </button>
                     </div>
                 </div>
@@ -520,7 +593,7 @@ const nonAdminUsers = computed(() => {
                     <div class="modal-header">
                         <h3 class="modal-title">
                             <i class="fas fa-edit"></i>
-                            Rediģēt atļaujas: {{ selectedAdmin?.full_name }}
+                            {{ t('admin.dashboard.editPermissionsFor', { name: selectedAdmin?.full_name }) }}
                         </h3>
                         <button @click="closeModals" class="modal-close">
                             <i class="fas fa-times"></i>
@@ -531,13 +604,13 @@ const nonAdminUsers = computed(() => {
                         <!-- Permissions Selection -->
                         <div class="permissions-section">
                             <div class="permissions-header">
-                                <label class="form-label">Atļaujas</label>
+                                <label class="form-label">{{ t('admin.dashboard.permissionsLabel') }}</label>
                                 <div class="permissions-actions">
                                     <button type="button" @click="selectAllPermissions" class="btn btn-sm btn-outline">
-                                        Atzīmēt visas
+                                        {{ t('admin.dashboard.selectAll') }}
                                     </button>
                                     <button type="button" @click="clearAllPermissions" class="btn btn-sm btn-outline">
-                                        Notīrīt
+                                        {{ t('admin.common.clear') }}
                                     </button>
                                 </div>
                             </div>
@@ -555,7 +628,7 @@ const nonAdminUsers = computed(() => {
                                                 :checked="selectedPermissions.includes(perm.key)"
                                                 @change="togglePermission(perm.key)"
                                             >
-                                            <span>{{ perm.label }}</span>
+                                            <span>{{ t(perm.labelKey) }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -565,11 +638,11 @@ const nonAdminUsers = computed(() => {
 
                     <div class="modal-footer">
                         <button @click="closeModals" class="btn btn-secondary">
-                            Atcelt
+                            {{ t('admin.common.cancel') }}
                         </button>
                         <button @click="updatePermissions" class="btn btn-primary" :disabled="isLoading">
                             <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-                            <span>Saglabāt</span>
+                            <span>{{ t('admin.common.save') }}</span>
                         </button>
                     </div>
                 </div>
@@ -588,6 +661,12 @@ const nonAdminUsers = computed(() => {
     border-radius: 0.5rem;
     margin-bottom: 1.5rem;
     font-weight: 500;
+}
+
+.alert-sm {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
 }
 
 .alert-success {
@@ -612,6 +691,8 @@ const nonAdminUsers = computed(() => {
     border-radius: 1rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .welcome-title {
@@ -622,6 +703,7 @@ const nonAdminUsers = computed(() => {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .super-badge {
@@ -648,6 +730,7 @@ const nonAdminUsers = computed(() => {
 .welcome-date {
     color: #6b7280;
     font-size: 0.875rem;
+    text-align: right;
 }
 
 /* Stats Grid */
@@ -656,18 +739,6 @@ const nonAdminUsers = computed(() => {
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
-}
-
-@media (max-width: 1200px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .stat-card {
@@ -690,30 +761,17 @@ const nonAdminUsers = computed(() => {
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    flex-shrink: 0;
 }
 
-.stat-users .stat-icon {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.stat-orders .stat-icon {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.stat-products .stat-icon {
-    background: #d1fae5;
-    color: #059669;
-}
-
-.stat-revenue .stat-icon {
-    background: #ede9fe;
-    color: #7c3aed;
-}
+.stat-users .stat-icon { background: #dbeafe; color: #2563eb; }
+.stat-orders .stat-icon { background: #fef3c7; color: #d97706; }
+.stat-products .stat-icon { background: #d1fae5; color: #059669; }
+.stat-revenue .stat-icon { background: #ede9fe; color: #7c3aed; }
 
 .stat-content {
     flex: 1;
+    min-width: 0;
 }
 
 .stat-value {
@@ -721,6 +779,9 @@ const nonAdminUsers = computed(() => {
     font-size: 1.75rem;
     font-weight: 700;
     color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-label {
@@ -750,17 +811,14 @@ const nonAdminUsers = computed(() => {
     font-size: 1.25rem;
     font-weight: 700;
     color: #111827;
-    margin: 0 0 1rem;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
+.section-title i {
+    color: #dc2626;
 }
 
 /* Quick Actions */
@@ -768,50 +826,56 @@ const nonAdminUsers = computed(() => {
     margin-bottom: 2rem;
 }
 
+.quick-actions .section-title {
+    margin-bottom: 1rem;
+}
+
 .actions-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
-    flex-wrap: wrap;
 }
 
 .action-card {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
     background: white;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
     color: #374151;
     font-weight: 500;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: all 0.2s;
 }
 
 .action-card:hover {
-    background: #dc2626;
-    color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-card i {
+    font-size: 1.25rem;
+    color: #dc2626;
 }
 
 .action-card-warning {
-    background: #fef3c7;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     color: #92400e;
 }
 
-.action-card-warning:hover {
-    background: #f59e0b;
-    color: white;
+.action-card-warning i {
+    color: #d97706;
 }
 
 .action-card-info {
-    background: #dbeafe;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
     color: #1e40af;
 }
 
-.action-card-info:hover {
-    background: #3b82f6;
-    color: white;
+.action-card-info i {
+    color: #2563eb;
 }
 
 /* Admin Management Section */
@@ -822,12 +886,13 @@ const nonAdminUsers = computed(() => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.admin-management-section .section-title {
-    color: #92400e;
-}
-
-.admin-management-section .section-title i {
-    color: #f59e0b;
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 /* Admin Table */
@@ -854,6 +919,7 @@ const nonAdminUsers = computed(() => {
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 .admin-table tr:hover {
@@ -861,9 +927,10 @@ const nonAdminUsers = computed(() => {
 }
 
 .super-admin-row {
-    background: linear-gradient(90deg, #fefce8 0%, #fff 50%);
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.3) 0%, rgba(253, 230, 138, 0.3) 100%);
 }
 
+/* User Cell */
 .user-cell {
     display: flex;
     align-items: center;
@@ -875,8 +942,25 @@ const nonAdminUsers = computed(() => {
     height: 2.5rem;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 500;
+    color: #111827;
+}
+
+.user-email {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Status Badges */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -901,6 +985,7 @@ const nonAdminUsers = computed(() => {
     color: #1e40af;
 }
 
+/* Permissions Badge */
 .permissions-badge {
     display: inline-block;
     padding: 0.25rem 0.5rem;
@@ -915,6 +1000,7 @@ const nonAdminUsers = computed(() => {
     color: #059669;
 }
 
+/* Action Buttons */
 .action-buttons {
     display: flex;
     gap: 0.5rem;
@@ -960,6 +1046,59 @@ const nonAdminUsers = computed(() => {
     font-size: 0.75rem;
 }
 
+/* Mobile Cards */
+.admin-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.admin-card {
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.super-admin-card {
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.5) 0%, rgba(253, 230, 138, 0.5) 100%);
+}
+
+.admin-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.admin-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.admin-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-card-row .label {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.admin-card-footer {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.admin-card-footer.protected {
+    justify-content: center;
+}
+
 /* Buttons */
 .btn {
     display: inline-flex;
@@ -971,6 +1110,7 @@ const nonAdminUsers = computed(() => {
     cursor: pointer;
     transition: all 0.2s;
     border: none;
+    text-decoration: none;
 }
 
 .btn-primary {
@@ -978,7 +1118,7 @@ const nonAdminUsers = computed(() => {
     color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     transform: translateY(-1px);
 }
@@ -996,6 +1136,16 @@ const nonAdminUsers = computed(() => {
 
 .btn-secondary:hover {
     background: #e5e7eb;
+}
+
+.btn-danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    color: white;
 }
 
 .btn-sm {
@@ -1056,6 +1206,10 @@ const nonAdminUsers = computed(() => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.modal-title i {
+    color: #dc2626;
 }
 
 .modal-close {
@@ -1121,6 +1275,8 @@ const nonAdminUsers = computed(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .permissions-actions {
@@ -1132,12 +1288,6 @@ const nonAdminUsers = computed(() => {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-}
-
-@media (max-width: 640px) {
-    .permissions-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .permission-group {
@@ -1221,18 +1371,129 @@ const nonAdminUsers = computed(() => {
     transform: scale(0.9);
 }
 
-/* Responsive */
+/* Responsive Visibility */
+.desktop-only {
+    display: block;
+}
+
+.mobile-only {
+    display: none;
+}
+
+/* Responsive - 1200px */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Responsive - 1024px */
+@media (max-width: 1024px) {
+    .permissions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive - 768px */
 @media (max-width: 768px) {
     .welcome-section {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        padding: 1.25rem;
+    }
+
+    .welcome-date {
+        text-align: left;
     }
 
     .section-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    .mobile-only {
+        display: flex;
+    }
+
+    .btn-text {
+        display: none;
+    }
+
+    .modal-lg {
+        max-width: 100%;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* Responsive - 640px */
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-title {
+        font-size: 1.25rem;
+    }
+
+    .admin-management-section {
+        padding: 1rem;
+    }
+}
+
+/* Responsive - 480px */
+@media (max-width: 480px) {
+    .permissions-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .permissions-actions {
+        width: 100%;
+    }
+
+    .permissions-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .admin-card-footer {
+        flex-direction: column;
+    }
+
+    .admin-card-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .modal-header,
+    .modal-footer {
+        padding: 1rem;
     }
 }
 </style>

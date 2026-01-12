@@ -1,7 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
     orders: {
@@ -49,21 +52,22 @@ const resetFilters = () => {
     router.get('/admin/orders');
 };
 
-// Status options
-const statusOptions = [
-    { value: 'pending', label: 'Gaida', color: 'yellow' },
-    { value: 'confirmed', label: 'Apstiprināts', color: 'blue' },
-    { value: 'processing', label: 'Apstrādē', color: 'blue' },
-    { value: 'packed', label: 'Iepakots', color: 'purple' },
-    { value: 'shipped', label: 'Nosūtīts', color: 'indigo' },
-    { value: 'in_transit', label: 'Ceļā', color: 'indigo' },
-    { value: 'delivered', label: 'Piegādāts', color: 'green' },
-    { value: 'cancelled', label: 'Atcelts', color: 'red' },
-    { value: 'refunded', label: 'Atmaksāts', color: 'gray' },
-];
+// Status options with translation keys
+const statusOptions = computed(() => [
+    { value: 'pending', labelKey: 'admin.orders.status.pending', color: 'yellow' },
+    { value: 'confirmed', labelKey: 'admin.orders.status.confirmed', color: 'blue' },
+    { value: 'processing', labelKey: 'admin.orders.status.processing', color: 'blue' },
+    { value: 'packed', labelKey: 'admin.orders.status.packed', color: 'purple' },
+    { value: 'shipped', labelKey: 'admin.orders.status.shipped', color: 'indigo' },
+    { value: 'in_transit', labelKey: 'admin.orders.status.inTransit', color: 'indigo' },
+    { value: 'delivered', labelKey: 'admin.orders.status.delivered', color: 'green' },
+    { value: 'cancelled', labelKey: 'admin.orders.status.cancelled', color: 'red' },
+    { value: 'refunded', labelKey: 'admin.orders.status.refunded', color: 'gray' },
+]);
 
 const getStatusInfo = (status) => {
-    return statusOptions.find(s => s.value === status) || { label: status, color: 'gray' };
+    const found = statusOptions.value.find(s => s.value === status);
+    return found ? { label: t(found.labelKey), color: found.color } : { label: status, color: 'gray' };
 };
 
 // Update order status
@@ -75,17 +79,17 @@ const updateStatus = (orderId, newStatus) => {
     });
 };
 
-// Format price
+// Format price based on locale
 const formatPrice = (price) => {
-    return new Intl.NumberFormat('lv-LV', {
+    return new Intl.NumberFormat(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
         style: 'currency',
         currency: 'EUR',
     }).format(price);
 };
 
-// Format date
+// Format date based on locale
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('lv-LV', {
+    return new Date(date).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -93,18 +97,42 @@ const formatDate = (date) => {
         minute: '2-digit',
     });
 };
+
+// Stats computed
+const pendingCount = computed(() => props.orders.data.filter(o => o.status === 'pending').length);
+const processingCount = computed(() => props.orders.data.filter(o => ['confirmed', 'processing', 'packed'].includes(o.status)).length);
+const shippedCount = computed(() => props.orders.data.filter(o => ['shipped', 'in_transit'].includes(o.status)).length);
+const deliveredCount = computed(() => props.orders.data.filter(o => o.status === 'delivered').length);
+
+const isDownloadingPdf = ref(null); // null vai order.id
+
+const downloadPdf = (orderId) => {
+    isDownloadingPdf.value = orderId;
+
+    // Izveidot paslēpto saiti un aktivizēt lejupielādi
+    const link = document.createElement('a');
+    link.href = `/admin/orders/${orderId}/invoice/pdf`;
+    link.download = `invoice-${orderId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        isDownloadingPdf.value = null;
+    }, 1000);
+};
 </script>
 
 <template>
-    <Head title="Pasūtījumi - Admin" />
+    <Head :title="t('admin.orders.index.title')" />
 
     <AdminLayout>
-        <template #title>Pasūtījumi</template>
+        <template #title>{{ t('admin.orders.index.title') }}</template>
 
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
-                <p class="header-subtitle">Pārvaldiet klientu pasūtījumus</p>
+                <p class="header-subtitle">{{ t('admin.orders.index.subtitle') }}</p>
             </div>
         </div>
 
@@ -112,23 +140,23 @@ const formatDate = (date) => {
         <div class="stats-row">
             <div class="stat-mini pending">
                 <i class="fas fa-clock"></i>
-                <span class="stat-count">{{ orders.data.filter(o => o.status === 'pending').length }}</span>
-                <span class="stat-label">Gaida</span>
+                <span class="stat-count">{{ pendingCount }}</span>
+                <span class="stat-label">{{ t('admin.orders.status.pending') }}</span>
             </div>
             <div class="stat-mini processing">
                 <i class="fas fa-cog"></i>
-                <span class="stat-count">{{ orders.data.filter(o => ['confirmed', 'processing', 'packed'].includes(o.status)).length }}</span>
-                <span class="stat-label">Apstrādē</span>
+                <span class="stat-count">{{ processingCount }}</span>
+                <span class="stat-label">{{ t('admin.orders.status.processing') }}</span>
             </div>
             <div class="stat-mini shipped">
                 <i class="fas fa-truck"></i>
-                <span class="stat-count">{{ orders.data.filter(o => ['shipped', 'in_transit'].includes(o.status)).length }}</span>
-                <span class="stat-label">Ceļā</span>
+                <span class="stat-count">{{ shippedCount }}</span>
+                <span class="stat-label">{{ t('admin.orders.status.inTransit') }}</span>
             </div>
             <div class="stat-mini delivered">
                 <i class="fas fa-check-circle"></i>
-                <span class="stat-count">{{ orders.data.filter(o => o.status === 'delivered').length }}</span>
-                <span class="stat-label">Piegādāti</span>
+                <span class="stat-count">{{ deliveredCount }}</span>
+                <span class="stat-label">{{ t('admin.orders.status.delivered') }}</span>
             </div>
         </div>
 
@@ -140,42 +168,55 @@ const formatDate = (date) => {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Meklēt pēc numura, klienta..."
+                        :placeholder="t('admin.orders.searchPlaceholder')"
                         class="search-input"
                     >
                 </div>
 
                 <select v-model="statusFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visi statusi</option>
+                    <option value="">{{ t('admin.orders.status.allStatuses') }}</option>
                     <option v-for="status in statusOptions" :key="status.value" :value="status.value">
-                        {{ status.label }}
+                        {{ t(status.labelKey) }}
                     </option>
                 </select>
 
                 <div class="date-filters">
-                    <input v-model="dateFrom" type="date" class="filter-input" @change="applyFilters">
+                    <input
+                        v-model="dateFrom"
+                        type="date"
+                        class="filter-input"
+                        @change="applyFilters"
+                        :title="t('admin.orders.dateFrom')"
+                    >
                     <span class="date-separator">—</span>
-                    <input v-model="dateTo" type="date" class="filter-input" @change="applyFilters">
+                    <input
+                        v-model="dateTo"
+                        type="date"
+                        class="filter-input"
+                        @change="applyFilters"
+                        :title="t('admin.orders.dateTo')"
+                    >
                 </div>
 
                 <button @click="resetFilters" class="btn btn-secondary">
                     <i class="fas fa-times"></i>
-                    Notīrīt
+                    <span class="btn-text">{{ t('admin.common.clear') }}</span>
                 </button>
             </div>
         </div>
 
         <!-- Orders Table -->
         <div class="table-card">
-            <table class="data-table">
+            <!-- Desktop Table -->
+            <table class="data-table desktop-table">
                 <thead>
                 <tr>
-                    <th>Pasūtījums</th>
-                    <th>Klients</th>
-                    <th>Datums</th>
-                    <th>Summa</th>
-                    <th>Statuss</th>
-                    <th>Darbības</th>
+                    <th>{{ t('admin.orders.table.order') }}</th>
+                    <th>{{ t('admin.orders.table.customer') }}</th>
+                    <th>{{ t('admin.orders.table.date') }}</th>
+                    <th>{{ t('admin.orders.table.amount') }}</th>
+                    <th>{{ t('admin.orders.table.status') }}</th>
+                    <th>{{ t('admin.orders.table.actions') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -183,7 +224,9 @@ const formatDate = (date) => {
                     <td>
                         <div class="order-number">
                             <span class="number">#{{ order.order_number }}</span>
-                            <span class="items-count">{{ order.items?.length || 0 }} preces</span>
+                            <span class="items-count">
+                                {{ order.items_count ?? order.items?.length ?? 0 }} {{ t('admin.orders.items') }}
+                            </span>
                         </div>
                     </td>
                     <td>
@@ -199,7 +242,7 @@ const formatDate = (date) => {
                         <div class="amount-cell">
                             <span class="amount">{{ formatPrice(order.total_amount) }}</span>
                             <span v-if="order.shipping_cost > 0" class="shipping">
-                                    + {{ formatPrice(order.shipping_cost) }} piegāde
+                                    + {{ formatPrice(order.shipping_cost) }} {{ t('admin.orders.shipping') }}
                                 </span>
                         </div>
                     </td>
@@ -210,17 +253,34 @@ const formatDate = (date) => {
                             :class="['status-select', `status-${getStatusInfo(order.status).color}`]"
                         >
                             <option v-for="status in statusOptions" :key="status.value" :value="status.value">
-                                {{ status.label }}
+                                {{ t(status.labelKey) }}
                             </option>
                         </select>
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <Link :href="`/admin/orders/${order.id}`" class="btn-icon btn-icon-view" title="Skatīt detaļas">
+                            <Link
+                                :href="`/admin/orders/${order.id}`"
+                                class="btn-icon btn-icon-view"
+                                :title="t('admin.orders.viewDetails')"
+                            >
                                 <i class="fas fa-eye"></i>
                             </Link>
-                            <a :href="`/orders/${order.id}/invoice`" target="_blank" class="btn-icon btn-icon-print" title="Rēķins">
-                                <i class="fas fa-file-invoice"></i>
+                            <button
+                                @click="downloadPdf(order.id)"
+                                class="btn-icon btn-icon-pdf"
+                                :title="t('admin.orders.downloadPdf')"
+                                :disabled="isDownloadingPdf === order.id"
+                            >
+                                <i :class="isDownloadingPdf === order.id ? 'fas fa-spinner fa-spin' : 'fas fa-file-pdf'"></i>
+                            </button>
+                            <a
+                                :href="`/admin/orders/${order.id}/invoice/print`"
+                                target="_blank"
+                                class="btn-icon btn-icon-print"
+                                :title="t('admin.orders.print')"
+                            >
+                                <i class="fas fa-print"></i>
                             </a>
                         </div>
                     </td>
@@ -228,11 +288,77 @@ const formatDate = (date) => {
                 <tr v-if="orders.data.length === 0">
                     <td colspan="6" class="empty-state">
                         <i class="fas fa-shopping-cart"></i>
-                        <p>Nav atrasts neviens pasūtījums</p>
+                        <p>{{ t('admin.orders.noOrders') }}</p>
                     </td>
                 </tr>
                 </tbody>
             </table>
+
+            <!-- Mobile Cards -->
+            <div class="mobile-cards">
+                <div v-for="order in orders.data" :key="order.id" class="order-card">
+                    <div class="order-card-header">
+                        <div class="order-card-number">
+                            <span class="number">#{{ order.order_number }}</span>
+                            <span class="items-count">
+                                {{ order.items_count ?? order.items?.length ?? 0 }} {{ t('admin.orders.items') }}
+                            </span>
+                        </div>
+                        <select
+                            :value="order.status"
+                            @change="updateStatus(order.id, $event.target.value)"
+                            :class="['status-select', `status-${getStatusInfo(order.status).color}`]"
+                        >
+                            <option v-for="status in statusOptions" :key="status.value" :value="status.value">
+                                {{ t(status.labelKey) }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="order-card-body">
+                        <div class="order-card-row">
+                            <span class="label">{{ t('admin.orders.table.customer') }}:</span>
+                            <div class="customer-info">
+                                <span class="customer-name">{{ order.customer_name }}</span>
+                                <span class="customer-email">{{ order.customer_email }}</span>
+                            </div>
+                        </div>
+                        <div class="order-card-row">
+                            <span class="label">{{ t('admin.orders.table.date') }}:</span>
+                            <span class="value">{{ formatDate(order.created_at) }}</span>
+                        </div>
+                        <div class="order-card-row">
+                            <span class="label">{{ t('admin.orders.table.amount') }}:</span>
+                            <div class="amount-cell">
+                                <span class="amount">{{ formatPrice(order.total_amount) }}</span>
+                                <span v-if="order.shipping_cost > 0" class="shipping">
+                                    + {{ formatPrice(order.shipping_cost) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="order-card-footer">
+                        <Link :href="`/admin/orders/${order.id}`" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                            {{ t('admin.common.view') }}
+                        </Link>
+                        <button
+                            @click="downloadPdf(order.id)"
+                            class="btn btn-sm btn-secondary"
+                            :disabled="isDownloadingPdf === order.id"
+                        >
+                            <i :class="isDownloadingPdf === order.id ? 'fas fa-spinner fa-spin' : 'fas fa-file-pdf'"></i>
+                            PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="orders.data.length === 0" class="empty-state">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>{{ t('admin.orders.noOrders') }}</p>
+                </div>
+            </div>
 
             <!-- Pagination -->
             <div v-if="orders.links && orders.links.length > 3" class="pagination">
@@ -268,12 +394,6 @@ const formatDate = (date) => {
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
-}
-
-@media (max-width: 768px) {
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
 
 .stat-mini {
@@ -416,7 +536,8 @@ const formatDate = (date) => {
     font-family: monospace;
 }
 
-.order-number .items-count {
+.order-number .items-count,
+.items-count {
     font-size: 0.75rem;
     color: #6b7280;
 }
@@ -532,6 +653,10 @@ const formatDate = (date) => {
     opacity: 0.5;
 }
 
+.empty-state p {
+    margin: 0;
+}
+
 /* Pagination */
 .pagination {
     display: flex;
@@ -539,6 +664,7 @@ const formatDate = (date) => {
     gap: 0.25rem;
     padding: 1rem;
     border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
 }
 
 .page-link {
@@ -577,6 +703,21 @@ const formatDate = (date) => {
     cursor: pointer;
     transition: all 0.2s;
     border: none;
+    text-decoration: none;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .btn-secondary {
@@ -586,6 +727,71 @@ const formatDate = (date) => {
 
 .btn-secondary:hover {
     background: #e5e7eb;
+}
+
+/* Mobile Cards - Hidden by default */
+.mobile-cards {
+    display: none;
+}
+
+.order-card {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem;
+}
+
+.order-card:last-child {
+    border-bottom: none;
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.order-card-number {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.order-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.order-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.order-card-row .label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.order-card-row .value {
+    font-size: 0.875rem;
+    color: #111827;
+    text-align: right;
+}
+
+.order-card-footer {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.order-card-footer .btn {
+    flex: 1;
+    justify-content: center;
 }
 
 /* Responsive */
@@ -603,9 +809,104 @@ const formatDate = (date) => {
         width: 100%;
     }
 
+    .filter-select {
+        width: 100%;
+    }
+
     .data-table {
         display: block;
         overflow-x: auto;
     }
+}
+
+@media (max-width: 768px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-mini {
+        padding: 0.75rem 1rem;
+    }
+
+    .stat-count {
+        font-size: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.625rem;
+    }
+
+    /* Hide desktop table, show mobile cards */
+    .desktop-table {
+        display: none;
+    }
+
+    .mobile-cards {
+        display: block;
+    }
+
+    .btn-text {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .stat-mini {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.25rem;
+        padding: 0.75rem;
+    }
+
+    .stat-mini i {
+        font-size: 1.25rem;
+    }
+
+    .filters-card {
+        padding: 0.75rem 1rem;
+    }
+
+    .date-filters {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .date-separator {
+        display: none;
+    }
+
+    .filter-input {
+        width: 100%;
+    }
+}
+
+.btn-icon-pdf {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-icon-pdf:hover:not(:disabled) {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-icon-pdf:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-icon-print {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-icon-print:hover {
+    background: #374151;
+    color: white;
 }
 </style>

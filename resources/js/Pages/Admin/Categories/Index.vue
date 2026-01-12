@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -31,6 +31,16 @@ const form = ref({
 
 const errors = ref({});
 const isLoading = ref(false);
+
+// Get category name based on locale
+const getCategoryName = (category) => {
+    return locale.value === 'lv' ? category.name_lv : category.name_en;
+};
+
+// Get category description based on locale
+const getCategoryDescription = (category) => {
+    return locale.value === 'lv' ? category.description_lv : category.description_en;
+};
 
 // Open create modal
 const openCreateModal = () => {
@@ -109,7 +119,8 @@ const saveCategory = () => {
 
 // Delete category
 const deleteCategory = (category) => {
-    if (confirm(`Vai tiešām vēlaties dzēst kategoriju "${category.name_lv}"?`)) {
+    const name = getCategoryName(category);
+    if (confirm(t('admin.categories.deleteConfirm', { name }))) {
         router.delete(`/admin/categories/${category.id}`, {
             preserveScroll: true,
         });
@@ -134,10 +145,17 @@ const structuredCategories = computed(() => {
         children: getSubcategories(parent.id),
     }));
 });
+
+// Modal title
+const modalTitle = computed(() => {
+    return isEditing.value
+        ? t('admin.categories.modal.editTitle')
+        : t('admin.categories.modal.createTitle');
+});
 </script>
 
 <template>
-    <Head title="Kategorijas - Admin" />
+    <Head :title="t('admin.categories.index.title')" />
 
     <AdminLayout>
         <template #title>{{ t('admin.categories.index.title') }}</template>
@@ -149,7 +167,7 @@ const structuredCategories = computed(() => {
             </div>
             <button @click="openCreateModal" class="btn btn-primary">
                 <i class="fas fa-plus"></i>
-                Jauna kategorija
+                {{ t('admin.categories.index.newCategory') }}
             </button>
         </div>
 
@@ -158,14 +176,24 @@ const structuredCategories = computed(() => {
             <div v-for="category in structuredCategories" :key="category.id" class="category-card">
                 <div class="category-header">
                     <div class="category-info">
-                        <h3 class="category-name">{{ category.name_lv }}</h3>
-                        <span class="category-name-en">{{ category.name_en }}</span>
+                        <h3 class="category-name">{{ getCategoryName(category) }}</h3>
+                        <span class="category-name-secondary">
+                            {{ locale === 'lv' ? category.name_en : category.name_lv }}
+                        </span>
                     </div>
                     <div class="category-actions">
-                        <button @click="openEditModal(category)" class="btn-icon btn-icon-edit" title="Rediģēt">
+                        <button
+                            @click="openEditModal(category)"
+                            class="btn-icon btn-icon-edit"
+                            :title="t('admin.common.edit')"
+                        >
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button @click="deleteCategory(category)" class="btn-icon btn-icon-delete" title="Dzēst">
+                        <button
+                            @click="deleteCategory(category)"
+                            class="btn-icon btn-icon-delete"
+                            :title="t('admin.common.delete')"
+                        >
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -178,31 +206,41 @@ const structuredCategories = computed(() => {
                     </span>
                     <span class="meta-item">
                         <i class="fas fa-sort"></i>
-                        Secība: {{ category.sort_order }}
+                        {{ t('admin.categories.form.sortOrder') }}: {{ category.sort_order }}
                     </span>
                     <span :class="['status-badge', category.is_active ? 'active' : 'inactive']">
-                        {{ category.is_active ? 'Aktīva' : 'Neaktīva' }}
+                        {{ category.is_active ? t('admin.categories.status.active') : t('admin.categories.status.inactive') }}
                     </span>
                 </div>
 
-                <p v-if="category.description_lv" class="category-description">
-                    {{ category.description_lv }}
+                <p v-if="getCategoryDescription(category)" class="category-description">
+                    {{ getCategoryDescription(category) }}
                 </p>
 
                 <!-- Subcategories -->
                 <div v-if="category.children.length > 0" class="subcategories">
-                    <h4 class="subcategories-title">Apakškategorijas ({{ category.children.length }})</h4>
+                    <h4 class="subcategories-title">
+                        {{ t('admin.categories.index.subcategories') }} ({{ category.children.length }})
+                    </h4>
                     <div class="subcategory-list">
                         <div v-for="sub in category.children" :key="sub.id" class="subcategory-item">
                             <div class="subcategory-info">
-                                <span class="subcategory-name">{{ sub.name_lv }}</span>
+                                <span class="subcategory-name">{{ getCategoryName(sub) }}</span>
                                 <span class="subcategory-slug">{{ sub.slug }}</span>
                             </div>
                             <div class="subcategory-actions">
-                                <button @click="openEditModal(sub)" class="btn-icon-sm" title="Rediģēt">
+                                <button
+                                    @click="openEditModal(sub)"
+                                    class="btn-icon-sm"
+                                    :title="t('admin.common.edit')"
+                                >
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button @click="deleteCategory(sub)" class="btn-icon-sm btn-icon-sm-delete" title="Dzēst">
+                                <button
+                                    @click="deleteCategory(sub)"
+                                    class="btn-icon-sm btn-icon-sm-delete"
+                                    :title="t('admin.common.delete')"
+                                >
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -214,10 +252,10 @@ const structuredCategories = computed(() => {
             <!-- Empty State -->
             <div v-if="categories.length === 0" class="empty-state">
                 <i class="fas fa-tags"></i>
-                <p>Nav pievienota neviena kategorija</p>
+                <p>{{ t('admin.categories.index.noCategories') }}</p>
                 <button @click="openCreateModal" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
-                    Pievienot pirmo kategoriju
+                    {{ t('admin.categories.index.addFirstCategory') }}
                 </button>
             </div>
         </div>
@@ -229,7 +267,7 @@ const structuredCategories = computed(() => {
                     <div class="modal-header">
                         <h3 class="modal-title">
                             <i :class="isEditing ? 'fas fa-edit' : 'fas fa-plus'"></i>
-                            {{ isEditing ? 'Rediģēt kategoriju' : 'Jauna kategorija' }}
+                            {{ modalTitle }}
                         </h3>
                         <button @click="closeModal" class="modal-close">
                             <i class="fas fa-times"></i>
@@ -239,64 +277,120 @@ const structuredCategories = computed(() => {
                     <div class="modal-body">
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Nosaukums (LV) *</label>
-                                <input v-model="form.name_lv" type="text" class="form-input" :class="{ 'error': errors.name_lv }">
+                                <label class="form-label">
+                                    {{ t('admin.categories.form.nameLv') }} *
+                                    <span class="lang-badge">LV</span>
+                                </label>
+                                <input
+                                    v-model="form.name_lv"
+                                    type="text"
+                                    class="form-input"
+                                    :class="{ 'error': errors.name_lv }"
+                                    :placeholder="t('admin.categories.form.nameLvPlaceholder')"
+                                >
                                 <span v-if="errors.name_lv" class="error-text">{{ errors.name_lv }}</span>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Nosaukums (EN) *</label>
-                                <input v-model="form.name_en" type="text" class="form-input" :class="{ 'error': errors.name_en }" @blur="generateSlug">
+                                <label class="form-label">
+                                    {{ t('admin.categories.form.nameEn') }} *
+                                    <span class="lang-badge lang-badge-en">EN</span>
+                                </label>
+                                <input
+                                    v-model="form.name_en"
+                                    type="text"
+                                    class="form-input"
+                                    :class="{ 'error': errors.name_en }"
+                                    :placeholder="t('admin.categories.form.nameEnPlaceholder')"
+                                    @blur="generateSlug"
+                                >
                                 <span v-if="errors.name_en" class="error-text">{{ errors.name_en }}</span>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Slug *</label>
-                            <input v-model="form.slug" type="text" class="form-input" :class="{ 'error': errors.slug }">
-                            <span class="form-hint">URL draudzīgs nosaukums (piem. "t-shirts")</span>
+                            <label class="form-label">{{ t('admin.categories.form.slug') }} *</label>
+                            <input
+                                v-model="form.slug"
+                                type="text"
+                                class="form-input"
+                                :class="{ 'error': errors.slug }"
+                                :placeholder="t('admin.categories.form.slugPlaceholder')"
+                            >
+                            <span class="form-hint">{{ t('admin.categories.form.slugHint') }}</span>
                             <span v-if="errors.slug" class="error-text">{{ errors.slug }}</span>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Apraksts (LV)</label>
-                                <textarea v-model="form.description_lv" class="form-textarea" rows="3"></textarea>
+                                <label class="form-label">
+                                    {{ t('admin.categories.form.descriptionLv') }}
+                                    <span class="lang-badge">LV</span>
+                                </label>
+                                <textarea
+                                    v-model="form.description_lv"
+                                    class="form-textarea"
+                                    rows="3"
+                                    :placeholder="t('admin.categories.form.descriptionPlaceholder')"
+                                ></textarea>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Apraksts (EN)</label>
-                                <textarea v-model="form.description_en" class="form-textarea" rows="3"></textarea>
+                                <label class="form-label">
+                                    {{ t('admin.categories.form.descriptionEn') }}
+                                    <span class="lang-badge lang-badge-en">EN</span>
+                                </label>
+                                <textarea
+                                    v-model="form.description_en"
+                                    class="form-textarea"
+                                    rows="3"
+                                    :placeholder="t('admin.categories.form.descriptionPlaceholder')"
+                                ></textarea>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Vecākkategorija</label>
+                                <label class="form-label">{{ t('admin.categories.form.parentCategory') }}</label>
                                 <select v-model="form.parent_id" class="form-select">
-                                    <option :value="null">— Galvenā kategorija —</option>
-                                    <option v-for="cat in parentCategories" :key="cat.id" :value="cat.id" :disabled="editingCategory && cat.id === editingCategory.id">
-                                        {{ cat.name_lv }}
+                                    <option :value="null">— {{ t('admin.categories.form.mainCategory') }} —</option>
+                                    <option
+                                        v-for="cat in parentCategories"
+                                        :key="cat.id"
+                                        :value="cat.id"
+                                        :disabled="editingCategory && cat.id === editingCategory.id"
+                                    >
+                                        {{ getCategoryName(cat) }}
                                     </option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Kārtošanas secība</label>
-                                <input v-model.number="form.sort_order" type="number" class="form-input" min="0">
+                                <label class="form-label">{{ t('admin.categories.form.sortOrder') }}</label>
+                                <input
+                                    v-model.number="form.sort_order"
+                                    type="number"
+                                    class="form-input"
+                                    min="0"
+                                >
+                                <span class="form-hint">{{ t('admin.categories.form.sortOrderHint') }}</span>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input v-model="form.is_active" type="checkbox">
-                                <span>Kategorija ir aktīva</span>
+                                <span>{{ t('admin.categories.form.isActive') }}</span>
                             </label>
+                            <span class="form-hint checkbox-hint">{{ t('admin.categories.form.isActiveHint') }}</span>
                         </div>
                     </div>
 
                     <div class="modal-footer">
-                        <button @click="closeModal" class="btn btn-secondary">Atcelt</button>
+                        <button @click="closeModal" class="btn btn-secondary">
+                            {{ t('admin.common.cancel') }}
+                        </button>
                         <button @click="saveCategory" class="btn btn-primary" :disabled="isLoading">
                             <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-                            <span>{{ isEditing ? 'Saglabāt' : 'Izveidot' }}</span>
+                            <i v-else class="fas fa-save"></i>
+                            {{ isEditing ? t('admin.common.update') : t('admin.common.save') }}
                         </button>
                     </div>
                 </div>
@@ -322,7 +416,7 @@ const structuredCategories = computed(() => {
 /* Categories Grid */
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
 }
 
@@ -347,14 +441,18 @@ const structuredCategories = computed(() => {
     margin-bottom: 1rem;
 }
 
-.category-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #111827;
-    margin: 0;
+.category-info {
+    flex: 1;
 }
 
-.category-name-en {
+.category-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem;
+}
+
+.category-name-secondary {
     font-size: 0.875rem;
     color: #6b7280;
 }
@@ -364,10 +462,11 @@ const structuredCategories = computed(() => {
     gap: 0.5rem;
 }
 
+/* Category Meta */
 .category-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.75rem;
     margin-bottom: 1rem;
 }
 
@@ -375,7 +474,7 @@ const structuredCategories = computed(() => {
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: #6b7280;
 }
 
@@ -383,10 +482,11 @@ const structuredCategories = computed(() => {
     color: #9ca3af;
 }
 
+/* Status Badge */
 .status-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.75rem;
+    padding: 0.25rem 0.5rem;
     border-radius: 1rem;
     font-size: 0.75rem;
     font-weight: 500;
@@ -398,13 +498,14 @@ const structuredCategories = computed(() => {
 }
 
 .status-badge.inactive {
-    background: #f3f4f6;
-    color: #6b7280;
+    background: #fee2e2;
+    color: #991b1b;
 }
 
+/* Category Description */
 .category-description {
-    color: #4b5563;
     font-size: 0.875rem;
+    color: #6b7280;
     margin: 0 0 1rem;
     line-height: 1.5;
 }
@@ -413,7 +514,6 @@ const structuredCategories = computed(() => {
 .subcategories {
     border-top: 1px solid #e5e7eb;
     padding-top: 1rem;
-    margin-top: 1rem;
 }
 
 .subcategories-title {
@@ -441,12 +541,13 @@ const structuredCategories = computed(() => {
 .subcategory-info {
     display: flex;
     flex-direction: column;
+    gap: 0.125rem;
 }
 
 .subcategory-name {
+    font-size: 0.875rem;
     font-weight: 500;
     color: #374151;
-    font-size: 0.875rem;
 }
 
 .subcategory-slug {
@@ -545,6 +646,10 @@ const structuredCategories = computed(() => {
     gap: 0.5rem;
 }
 
+.modal-title i {
+    color: #dc2626;
+}
+
 .modal-close {
     background: none;
     border: none;
@@ -552,6 +657,11 @@ const structuredCategories = computed(() => {
     font-size: 1.25rem;
     cursor: pointer;
     padding: 0.25rem;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #111827;
 }
 
 .modal-body {
@@ -586,11 +696,29 @@ const structuredCategories = computed(() => {
 }
 
 .form-label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-weight: 500;
     color: #374151;
     margin-bottom: 0.375rem;
     font-size: 0.875rem;
+}
+
+.lang-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.125rem 0.375rem;
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    color: white;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+}
+
+.lang-badge-en {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
 }
 
 .form-input,
@@ -636,12 +764,18 @@ const structuredCategories = computed(() => {
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
+    font-weight: 500;
+    color: #374151;
 }
 
 .checkbox-label input {
-    width: 1rem;
-    height: 1rem;
+    width: 1.125rem;
+    height: 1.125rem;
     accent-color: #dc2626;
+}
+
+.checkbox-hint {
+    margin-left: 1.625rem;
 }
 
 /* Buttons */
