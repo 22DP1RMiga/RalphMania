@@ -1,7 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
     content: {
@@ -46,21 +49,85 @@ const resetFilters = () => {
     router.get('/admin/content');
 };
 
-// Content types
-const contentTypes = [
-    { value: 'video', label: 'Video', icon: 'fas fa-video' },
-    { value: 'blog', label: 'Blogs', icon: 'fas fa-blog' },
-    { value: 'news', label: 'Ziņas', icon: 'fas fa-newspaper' },
-    { value: 'announcement', label: 'Paziņojumi', icon: 'fas fa-bullhorn' },
-];
+// Content types with translation keys
+const contentTypes = computed(() => [
+    { value: 'video', labelKey: 'admin.content.types.video', icon: 'fas fa-video' },
+    { value: 'blog', labelKey: 'admin.content.types.blog', icon: 'fas fa-blog' },
+    { value: 'news', labelKey: 'admin.content.types.news', icon: 'fas fa-newspaper' },
+    { value: 'announcement', labelKey: 'admin.content.types.announcement', icon: 'fas fa-bullhorn' },
+]);
 
 const getTypeInfo = (type) => {
-    return contentTypes.find(t => t.value === type) || { label: type, icon: 'fas fa-file' };
+    const found = contentTypes.value.find(t => t.value === type);
+    return found ? { label: t(found.labelKey), icon: found.icon } : { label: type, icon: 'fas fa-file' };
+};
+
+/**
+ * Get thumbnail URL based on content type
+ * - Videos: /img/thumbnails/{thumbnail} or placeholder
+ * - Blogs: /img/Blogs/{featured_image} or placeholder
+ * - Others: /img/thumbnails/{thumbnail} or placeholder
+ */
+const getThumbnailUrl = (item) => {
+    const placeholder = '/img/thumbnails/no-content-placeholder.png';
+
+    if (item.type === 'blog') {
+        // Blogs use featured_image from /img/Blogs/
+        if (item.featured_image) {
+            // Check if it's already a full path or URL
+            if (item.featured_image.startsWith('http') || item.featured_image.startsWith('/')) {
+                return item.featured_image;
+            }
+            return `/img/Blogs/${item.featured_image}`;
+        }
+        return '/img/Blogs/no-content-placeholder.png';
+    }
+
+    if (item.type === 'video') {
+        // Videos use thumbnail from /img/thumbnails/
+        if (item.thumbnail) {
+            if (item.thumbnail.startsWith('http') || item.thumbnail.startsWith('/')) {
+                return item.thumbnail;
+            }
+            return `/img/thumbnails/${item.thumbnail}`;
+        }
+        return placeholder;
+    }
+
+    // News, announcements, etc. - use thumbnail or featured_image
+    if (item.thumbnail) {
+        if (item.thumbnail.startsWith('http') || item.thumbnail.startsWith('/')) {
+            return item.thumbnail;
+        }
+        return `/img/thumbnails/${item.thumbnail}`;
+    }
+    if (item.featured_image) {
+        if (item.featured_image.startsWith('http') || item.featured_image.startsWith('/')) {
+            return item.featured_image;
+        }
+        return `/img/thumbnails/${item.featured_image}`;
+    }
+
+    return placeholder;
+};
+
+/**
+ * Get content title based on current locale
+ */
+const getTitle = (item) => {
+    return locale.value === 'lv' ? (item.title_lv || item.title_en) : (item.title_en || item.title_lv);
+};
+
+/**
+ * Get secondary title (opposite locale)
+ */
+const getSecondaryTitle = (item) => {
+    return locale.value === 'lv' ? item.title_en : item.title_lv;
 };
 
 // Delete content
 const deleteContent = (id, title) => {
-    if (confirm(`Vai tiešām vēlaties dzēst "${title}"?`)) {
+    if (confirm(t('admin.content.deleteConfirm', { name: title }))) {
         router.delete(`/admin/content/${id}`, {
             preserveScroll: true,
         });
@@ -77,30 +144,36 @@ const togglePublish = (content) => {
     });
 };
 
-// Format date
+// Format date based on locale
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('lv-LV', {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
     });
 };
+
+// Stats by type
+const getTypeCount = (type) => {
+    return props.content.data?.filter(c => c.type === type).length || 0;
+};
 </script>
 
 <template>
-    <Head title="Saturs - Admin" />
+    <Head :title="t('admin.content.index.title')" />
 
     <AdminLayout>
-        <template #title>Saturs</template>
+        <template #title>{{ t('admin.content.index.title') }}</template>
 
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
-                <p class="header-subtitle">Pārvaldiet video, blogus un ziņas</p>
+                <p class="header-subtitle">{{ t('admin.content.index.subtitle') }}</p>
             </div>
             <Link href="/admin/content/create" class="btn btn-primary">
                 <i class="fas fa-plus"></i>
-                Jauns saturs
+                <span class="btn-text">{{ t('admin.content.index.newContent') }}</span>
             </Link>
         </div>
 
@@ -108,8 +181,8 @@ const formatDate = (date) => {
         <div class="stats-row">
             <div v-for="type in contentTypes" :key="type.value" class="stat-mini">
                 <i :class="type.icon"></i>
-                <span class="stat-count">{{ props.content.data?.filter(c => c.type === type.value).length || 0 }}</span>
-                <span class="stat-label">{{ type.label }}</span>
+                <span class="stat-count">{{ getTypeCount(type.value) }}</span>
+                <span class="stat-label">{{ t(type.labelKey) }}</span>
             </div>
         </div>
 
@@ -121,27 +194,27 @@ const formatDate = (date) => {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Meklēt saturu..."
+                        :placeholder="t('admin.content.searchPlaceholder')"
                         class="search-input"
                     >
                 </div>
 
                 <select v-model="typeFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visi veidi</option>
+                    <option value="">{{ t('admin.content.allTypes') }}</option>
                     <option v-for="type in contentTypes" :key="type.value" :value="type.value">
-                        {{ type.label }}
+                        {{ t(type.labelKey) }}
                     </option>
                 </select>
 
                 <select v-model="statusFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visi statusi</option>
-                    <option value="published">Publicēts</option>
-                    <option value="draft">Melnraksts</option>
+                    <option value="">{{ t('admin.content.allStatuses') }}</option>
+                    <option value="published">{{ t('admin.content.status.published') }}</option>
+                    <option value="draft">{{ t('admin.content.status.draft') }}</option>
                 </select>
 
                 <button @click="resetFilters" class="btn btn-secondary">
                     <i class="fas fa-times"></i>
-                    Notīrīt
+                    <span class="btn-text">{{ t('admin.common.clear') }}</span>
                 </button>
             </div>
         </div>
@@ -152,52 +225,84 @@ const formatDate = (date) => {
                 <!-- Thumbnail -->
                 <div class="content-thumb">
                     <img
-                        :src="item.thumbnail ? `/storage/${item.thumbnail}` : '/img/content-placeholder.png'"
-                        :alt="item.title_lv"
+                        :src="getThumbnailUrl(item)"
+                        :alt="getTitle(item)"
+                        @error="$event.target.src = '/img/thumbnails/no-content-placeholder.png'"
                     >
+                    <!-- Video duration badge -->
+                    <span v-if="item.type === 'video' && item.duration" class="duration-badge">
+                        {{ Math.floor(item.duration / 60) }}:{{ String(item.duration % 60).padStart(2, '0') }}
+                    </span>
+                    <!-- Type badge -->
                     <span :class="['type-badge', `type-${item.type}`]">
                         <i :class="getTypeInfo(item.type).icon"></i>
                         {{ getTypeInfo(item.type).label }}
+                    </span>
+                    <!-- Featured badge -->
+                    <span v-if="item.is_featured" class="featured-badge">
+                        <i class="fas fa-star"></i>
                     </span>
                 </div>
 
                 <!-- Content Info -->
                 <div class="content-body">
-                    <h3 class="content-title">{{ item.title_lv }}</h3>
-                    <p class="content-title-en">{{ item.title_en }}</p>
+                    <h3 class="content-title">{{ getTitle(item) }}</h3>
+                    <p class="content-title-secondary" v-if="getSecondaryTitle(item)">
+                        {{ getSecondaryTitle(item) }}
+                    </p>
 
                     <div class="content-meta">
-                        <span class="meta-item">
+                        <span class="meta-item" :title="t('admin.content.views')">
                             <i class="fas fa-eye"></i>
                             {{ item.view_count || 0 }}
                         </span>
-                        <span class="meta-item">
+                        <span class="meta-item" :title="t('admin.content.likes')">
                             <i class="fas fa-heart"></i>
                             {{ item.like_count || 0 }}
                         </span>
-                        <span class="meta-item">
+                        <span class="meta-item" :title="t('admin.content.date')">
                             <i class="fas fa-calendar"></i>
                             {{ formatDate(item.published_at || item.created_at) }}
                         </span>
+                    </div>
+
+                    <!-- Category if exists -->
+                    <div v-if="item.category" class="content-category">
+                        <i class="fas fa-folder"></i>
+                        {{ item.category }}
                     </div>
 
                     <div class="content-footer">
                         <button
                             @click="togglePublish(item)"
                             :class="['status-toggle', item.is_published ? 'published' : 'draft']"
+                            :title="item.is_published ? t('admin.content.clickToDraft') : t('admin.content.clickToPublish')"
                         >
                             <i :class="item.is_published ? 'fas fa-check' : 'fas fa-edit'"></i>
-                            {{ item.is_published ? 'Publicēts' : 'Melnraksts' }}
+                            {{ item.is_published ? t('admin.content.status.published') : t('admin.content.status.draft') }}
                         </button>
 
                         <div class="content-actions">
-                            <Link :href="`/content/${item.slug}`" class="btn-icon btn-icon-view" title="Skatīt" target="_blank">
-                                <i class="fas fa-eye"></i>
+                            <Link
+                                :href="`/content/${item.slug}`"
+                                class="btn-icon btn-icon-view"
+                                :title="t('admin.common.view')"
+                                target="_blank"
+                            >
+                                <i class="fas fa-external-link-alt"></i>
                             </Link>
-                            <Link :href="`/admin/content/${item.id}/edit`" class="btn-icon btn-icon-edit" title="Rediģēt">
+                            <Link
+                                :href="`/admin/content/${item.id}/edit`"
+                                class="btn-icon btn-icon-edit"
+                                :title="t('admin.common.edit')"
+                            >
                                 <i class="fas fa-edit"></i>
                             </Link>
-                            <button @click="deleteContent(item.id, item.title_lv)" class="btn-icon btn-icon-delete" title="Dzēst">
+                            <button
+                                @click="deleteContent(item.id, getTitle(item))"
+                                class="btn-icon btn-icon-delete"
+                                :title="t('admin.common.delete')"
+                            >
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -208,10 +313,10 @@ const formatDate = (date) => {
             <!-- Empty State -->
             <div v-if="content.data.length === 0" class="empty-state">
                 <i class="fas fa-newspaper"></i>
-                <p>Nav atrasts neviens saturs</p>
+                <p>{{ t('admin.content.noContent') }}</p>
                 <Link href="/admin/content/create" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
-                    Pievienot pirmo saturu
+                    {{ t('admin.content.addFirstContent') }}
                 </Link>
             </div>
         </div>
@@ -236,6 +341,8 @@ const formatDate = (date) => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .header-subtitle {
@@ -249,12 +356,6 @@ const formatDate = (date) => {
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
-}
-
-@media (max-width: 768px) {
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
 
 .stat-mini {
@@ -333,6 +434,12 @@ const formatDate = (date) => {
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     background: white;
+    min-width: 140px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #dc2626;
 }
 
 /* Content Grid */
@@ -360,14 +467,21 @@ const formatDate = (date) => {
     position: relative;
     height: 180px;
     overflow: hidden;
+    background: #f3f4f6;
 }
 
 .content-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s;
 }
 
+.content-card:hover .content-thumb img {
+    transform: scale(1.05);
+}
+
+/* Badges */
 .type-badge {
     position: absolute;
     top: 0.75rem;
@@ -387,6 +501,35 @@ const formatDate = (date) => {
 .type-news { background: rgba(16, 185, 129, 0.9); color: white; }
 .type-announcement { background: rgba(245, 158, 11, 0.9); color: white; }
 
+.duration-badge {
+    position: absolute;
+    bottom: 0.75rem;
+    right: 0.75rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.featured-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Content Body */
 .content-body {
     padding: 1.25rem;
 }
@@ -403,16 +546,17 @@ const formatDate = (date) => {
     overflow: hidden;
 }
 
-.content-title-en {
+.content-title-secondary {
     font-size: 0.75rem;
     color: #6b7280;
     margin: 0 0 0.75rem;
+    font-style: italic;
 }
 
 .content-meta {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .meta-item {
@@ -425,6 +569,18 @@ const formatDate = (date) => {
 
 .meta-item i {
     color: #9ca3af;
+}
+
+.content-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    background: #f3f4f6;
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
 }
 
 .content-footer {
@@ -454,9 +610,17 @@ const formatDate = (date) => {
     color: #065f46;
 }
 
+.status-toggle.published:hover {
+    background: #a7f3d0;
+}
+
 .status-toggle.draft {
     background: #fef3c7;
     color: #92400e;
+}
+
+.status-toggle.draft:hover {
+    background: #fde68a;
 }
 
 .content-actions {
@@ -491,6 +655,7 @@ const formatDate = (date) => {
     justify-content: center;
     gap: 0.25rem;
     margin-top: 2rem;
+    flex-wrap: wrap;
 }
 
 .page-link {
@@ -595,7 +760,18 @@ const formatDate = (date) => {
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .filters-row {
         flex-direction: column;
         align-items: stretch;
@@ -603,6 +779,57 @@ const formatDate = (date) => {
 
     .search-box {
         min-width: 100%;
+    }
+
+    .filter-select {
+        width: 100%;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-text {
+        display: none;
+    }
+
+    .stat-mini {
+        padding: 0.75rem 1rem;
+    }
+
+    .stat-count {
+        font-size: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.625rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .stat-mini {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.25rem;
+    }
+
+    .content-thumb {
+        height: 160px;
+    }
+
+    .content-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .content-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 </style>

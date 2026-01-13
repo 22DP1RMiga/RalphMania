@@ -705,6 +705,83 @@ const messages = {
                 addAdmin: 'Pievienot administratoru',
                 protected: 'Apsargāts',
                 allPermissions: 'Visas atļaujas',
+                selectUser: 'Atlasīt lietotāju',
+                addNewAdmin: 'Pievienot jauno administratoru',
+                add: 'Pievienot',
+                permissionsLabel: 'Atļauju etiķete',
+                selectAll: 'Atlasīt visu',
+                selectUserError: 'Atlasiet lietotāju, kuram piešķirt administratora lomu!',
+                adminAdded: 'Jauns administrators tika veiksmīgi pievienots!',
+                editPermissions: 'Rediģēt atļaujas',
+                removeAdmin: 'Noņemt administratoru',
+                noData: 'Nav datu',
+                permissionsCount: 'atļaujas',
+                editPermissionsFor: 'Atļauju rediģēšana',
+            },
+            // jaunā administratora atļauju piešķiršanai
+            permissions: {
+                // produktiem
+                products: 'Produkti',
+                productsView: 'Skatīt produktus',
+                productsCreate: 'Izveidot produktus',
+                productsEdit: 'Rediģēt produktus',
+                productsDelete: 'Dzēst produktus',
+
+                // kategorijām
+                categories: 'Kategorijas',
+                categoriesView: 'Skatīt kategorijas',
+                categoriesCreate: 'Izveidot kategorijas',
+                categoriesEdit: 'Rediģēt kategorijas',
+                categoriesDelete: 'Dzēst kategorijas',
+
+                // pasūtījumiem
+                orders: 'Pasūtījumi',
+                ordersView: 'Skatīt pasūtījumus',
+                ordersEdit: 'Rediģēt pasūtījumus',
+                ordersDelete: 'Dzēst pasūtījumus',
+
+                // lietotājiem
+                users: 'Lietotāji',
+                usersView: 'Skatīt lietotājus',
+                usersCreate: 'Izveidot lietotājus',
+                usersEdit: 'Rediģēt lietotājus',
+                usersDelete: 'Dzēst lietotājus',
+                usersBan: 'Aizliegt lietotājus',
+
+                // saturam
+                content: 'Saturs',
+                contentView: 'Skatīt saturu',
+                contentCreate: 'Izveidot saturu',
+                contentEdit: 'Rediģēt saturu',
+                contentDelete: 'Dzēst saturu',
+                contentPublish: 'Publicēt saturu',
+
+                // atsauksmēm
+                reviews: 'Atsauksmes',
+                reviewsView: 'Skatīt atsauksmes',
+                reviewsModerate: 'Regulēt atsauksmes',
+                reviewsDelete: 'Dzēst atsauksmes',
+
+                // komentāriem
+                comments: 'Komentāri',
+                commentsView: 'Skatīt komentārus',
+                commentsModerate: 'Regulēt komentārus',
+                commentsDelete: 'Dzēst komentārus',
+
+                // kontaktiem
+                contacts: 'Kontakti',
+                contactsView: 'Skatīt kontaktus',
+                contactsReply: 'Atbildēt uz kontaktiem',
+                contactsDelete: 'Dzēst kontaktus',
+
+                // iestatījumiem
+                settings: 'Iestatījumi',
+                settingsView: 'Skatīt iestatījumus',
+                settingsEdit: 'Rediģēt iestatījumus',
+
+                // žurnāliem
+                logs: 'Žurnāli',
+                logsView: 'Skatīt žurnālus',
             },
             products: {
                 index: {
@@ -849,7 +926,105 @@ const messages = {
                 noOrders: 'Nav pasūtījumu',
             },
             content: {
-                //
+                // Index page
+                index: {
+                    title: 'Saturs',
+                    subtitle: 'Pārvaldiet video, emuārus un ziņas',
+                    newContent: 'Jauns saturs',
+                },
+
+                // Types
+                types: {
+                    video: 'Video',
+                    blogs: 'Emuāri',
+                    blog: 'Emuārs',
+                    news: 'Ziņas',
+                    announcement: 'Paziņojumi',
+                },
+
+                // Filters
+                searchPlaceholder: 'Meklēt saturu...',
+                allTypes: 'Visi veidi',
+                allStatuses: 'Visi statusi',
+
+                // Status
+                status: {
+                    published: 'Publicēts',
+                    draft: 'Melnraksts',
+                },
+
+                // Meta
+                views: 'Skatījumi',
+                likes: 'Patīk',
+                date: 'Datums',
+
+                // Actions
+                clickToPublish: 'Klikšķini, lai publicētu',
+                clickToDraft: 'Klikšķini, lai paslēptu',
+                deleteConfirm: 'Vai tiešām vēlaties dzēst "{name}"?',
+
+                // Empty state
+                noContent: 'Nav atrasts neviens saturs',
+                addFirstContent: 'Pievienot pirmo saturu',
+
+                // Create/Edit
+                create: {
+                    title: 'Jauns saturs',
+                    subtitle: 'Izveidojiet jaunu video, emuāru vai ziņu',
+                },
+                edit: {
+                    title: 'Rediģēt saturu',
+                    subtitle: 'Mainiet satura informāciju',
+                },
+
+                // Form fields
+                form: {
+                    type: 'Satura veids',
+                    selectType: 'Izvēlieties veidu',
+                    titleLv: 'Virsraksts (LV)',
+                    titleLvPlaceholder: 'Ievadiet virsrakstu latviešu valodā',
+                    titleEn: 'Virsraksts (EN)',
+                    titleEnPlaceholder: 'Ievadiet virsrakstu angļu valodā',
+                    slug: 'Slug (URL)',
+                    slugPlaceholder: 'piem. mans-pirmais-blogs',
+                    category: 'Kategorija',
+                    categoryPlaceholder: 'piem. Tehnoloģijas',
+                    descriptionLv: 'Apraksts (LV)',
+                    descriptionEn: 'Apraksts (EN)',
+                    descriptionPlaceholder: 'Īss satura apraksts...',
+                    contentLv: 'Saturs (LV)',
+                    contentEn: 'Saturs (EN)',
+                    contentPlaceholder: 'Rakstiet satura tekstu...',
+                    videoUrl: 'Video URL',
+                    videoUrlPlaceholder: 'YouTube vai Vimeo saite',
+                    videoPlatform: 'Video platforma',
+                    duration: 'Ilgums (sekundēs)',
+                    thumbnail: 'Sīktēls',
+                    featuredImage: 'Galvenais attēls',
+                    uploadImage: 'Augšupielādēt attēlu',
+                    dragDropImage: 'Ievelciet attēlu šeit',
+                    isPublished: 'Publicēts',
+                    isPublishedHint: 'Publicēts saturs ir redzams visiem',
+                    isFeatured: 'Ieteicamais',
+                    isFeaturedHint: 'Tiks rādīts sākumlapā',
+                    publishedAt: 'Publicēšanas datums',
+                    save: 'Saglabāt saturu',
+                    update: 'Atjaunināt saturu',
+
+                    // Izveidošanas un rediģēšanas lapai
+                    publishSettings: 'Publikācijas iestatījumi',
+                    titles: 'Tituli',
+                    stats: 'Statistika',
+                    seconds: 'sekundes',
+                    durationHint: 'Ievadiet video ilgumu sekundēs',
+                    content: 'Saturs',
+                    publishedAtHint: 'Ievadiet publikācijas datumu',
+                    featuredImageHint: 'Satura piedāvātais attēls',
+                    blogImages: 'Emuāra attēli',
+                    dragDropImages: 'Ievelciet attēlu šeit',
+                    orClickToSelect: 'vai uzklikšķiniet, lai atlasītu',
+                    videoSettings: 'Video iestatījumi',
+                },
             },
             reviews: {
                 //
@@ -906,7 +1081,7 @@ const messages = {
         auth: {
             login: 'Login',
             register: 'Sign Up',
-            logout: 'Logout',
+            logout: 'Log out',
             dashboard: 'Dashboard',
             username: 'Username',
             email: 'Email',
@@ -1596,6 +1771,84 @@ const messages = {
                 addAdmin: 'Add Admin',
                 protected: 'Protected',
                 allPermissions: 'All permissions',
+                selectUser: 'Select User',
+                addNewAdmin: 'Add New Admin',
+                add: 'Add',
+                permissionsLabel: 'Permissions Label',
+                selectAll: 'Select All',
+                selectUserError: 'Select a user to grant the Admin role!',
+                adminAdded: 'New Admin got added successfully!',
+                editPermissions: 'Edit Permissions',
+                removeAdmin: 'Remove Admin',
+                noData: 'No data',
+                permissionsCount: 'permissions',
+                editPermissionsFor: 'Editing Permissions',
+            },
+
+            // jaunā administratora atļauju piešķiršanai
+            permissions: {
+                // produktiem
+                products: 'Products',
+                productsView: 'View Products',
+                productsCreate: 'Create Products',
+                productsEdit: 'Edit Products',
+                productsDelete: 'Delete Products',
+
+                // kategorijām
+                categories: 'Categories',
+                categoriesView: 'View Categories',
+                categoriesCreate: 'Create Categories',
+                categoriesEdit: 'Edit Categories',
+                categoriesDelete: 'Delete Categories',
+
+                // pasūtījumiem
+                orders: 'Orders',
+                ordersView: 'View Orders',
+                ordersEdit: 'Edit Orders',
+                ordersDelete: 'Delete Orders',
+
+                // lietotājiem
+                users: 'Users',
+                usersView: 'View Users',
+                usersCreate: 'Create Users',
+                usersEdit: 'Edit Users',
+                usersDelete: 'Delete Users',
+                usersBan: 'Ban Users',
+
+                // saturam
+                content: 'Content',
+                contentView: 'View Content',
+                contentCreate: 'Create Content',
+                contentEdit: 'Edit Content',
+                contentDelete: 'Delete Content',
+                contentPublish: 'Publish Content',
+
+                // atsauksmēm
+                reviews: 'Reviews',
+                reviewsView: 'View Reviews',
+                reviewsModerate: 'Moderate Reviews',
+                reviewsDelete: 'Delete Reviews',
+
+                // komentāriem
+                comments: 'Comments',
+                commentsView: 'View Comments',
+                commentsModerate: 'Moderate Comments',
+                commentsDelete: 'Delete Comments',
+
+                // kontaktiem
+                contacts: 'Contacts',
+                contactsView: 'View Contacts',
+                contactsReply: 'Reply to Contacts',
+                contactsDelete: 'Delete Contacts',
+
+                // iestatījumiem
+                settings: 'Settings',
+                settingsView: 'View Settings',
+                settingsEdit: 'Edit Settings',
+
+                // žurnāliem
+                logs: 'Logs',
+                logsView: 'View Logs',
             },
             products: {
                 index: {
@@ -1739,7 +1992,105 @@ const messages = {
                 noOrders: 'No Orders',
             },
             content: {
-                //
+                // Index page
+                index: {
+                    title: 'Content',
+                    subtitle: 'Manage videos, blogs and news',
+                    newContent: 'New content',
+                },
+
+                // Types
+                types: {
+                    video: 'Video',
+                    blog: 'Blog',
+                    blogs: 'Blogs',
+                    news: 'News',
+                    announcement: 'Announcements',
+                },
+
+                // Filters
+                searchPlaceholder: 'Search content...',
+                allTypes: 'All types',
+                allStatuses: 'All statuses',
+
+                // Status
+                status: {
+                    published: 'Published',
+                    draft: 'Draft',
+                },
+
+                // Meta
+                views: 'Views',
+                likes: 'Likes',
+                date: 'Date',
+
+                // Actions
+                clickToPublish: 'Click to publish',
+                clickToDraft: 'Click to unpublish',
+                deleteConfirm: 'Are you sure you want to delete "{name}"?',
+
+                // Empty state
+                noContent: 'No content found',
+                addFirstContent: 'Add first content',
+
+                // Create/Edit
+                create: {
+                    title: 'New Content',
+                    subtitle: 'Create a new video, blog or news',
+                },
+                edit: {
+                    title: 'Edit Content',
+                    subtitle: 'Modify content information',
+                },
+
+                // Form fields
+                form: {
+                    type: 'Content type',
+                    selectType: 'Select type',
+                    titleLv: 'Title (LV)',
+                    titleLvPlaceholder: 'Enter title in Latvian',
+                    titleEn: 'Title (EN)',
+                    titleEnPlaceholder: 'Enter title in English',
+                    slug: 'Slug (URL)',
+                    slugPlaceholder: 'e.g. my-first-blog',
+                    category: 'Category',
+                    categoryPlaceholder: 'e.g. Technology',
+                    descriptionLv: 'Description (LV)',
+                    descriptionEn: 'Description (EN)',
+                    descriptionPlaceholder: 'Short content description...',
+                    contentLv: 'Content (LV)',
+                    contentEn: 'Content (EN)',
+                    contentPlaceholder: 'Write content text...',
+                    videoUrl: 'Video URL',
+                    videoUrlPlaceholder: 'YouTube or Vimeo link',
+                    videoPlatform: 'Video platform',
+                    duration: 'Duration (seconds)',
+                    thumbnail: 'Thumbnail',
+                    featuredImage: 'Featured image',
+                    uploadImage: 'Upload image',
+                    dragDropImage: 'Drag and drop image here',
+                    isPublished: 'Published',
+                    isPublishedHint: 'Published content is visible to everyone',
+                    isFeatured: 'Featured',
+                    isFeaturedHint: 'Will be shown on homepage',
+                    publishedAt: 'Publish date',
+                    save: 'Save content',
+                    update: 'Update content',
+
+                    // Izveidošanas un rediģēšanas lapai
+                    publishSettings: 'Publication Settings',
+                    titles: 'Titles',
+                    stats: 'Stats',
+                    seconds: 'seconds',
+                    durationHint: 'Enter the video duration in seconds',
+                    content: 'Content',
+                    publishedAtHint: 'Enter the publication date',
+                    featuredImageHint: 'Featured image of the content',
+                    blogImages: 'Blog Images',
+                    dragDropImages: 'Drag and drop image here',
+                    orClickToSelect: 'or Click to Select',
+                    videoSettings: 'Video Settings',
+                },
             },
             reviews: {
                 //

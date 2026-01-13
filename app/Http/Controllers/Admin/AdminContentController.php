@@ -18,49 +18,46 @@ class AdminContentController extends Controller
     {
         $query = Content::query();
 
-        // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title_lv', 'LIKE', "%{$search}%")
-                    ->orWhere('title_en', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title_lv', 'like', "%{$search}%")
+                    ->orWhere('title_en', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
-        // Filter by type
-        if ($request->has('type') && $request->type) {
+        if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
 
-        // Filter by status
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             if ($request->status === 'published') {
                 $query->where('is_published', true);
-            } elseif ($request->status === 'draft') {
+            } else {
                 $query->where('is_published', false);
             }
         }
 
-        // Sort
-        $query->orderBy('created_at', 'desc');
-
-        // Paginate
-        $content = $query->paginate(20)->through(function ($item) {
-            return [
+        $content = $query->orderBy('created_at', 'desc')
+            ->paginate(12)
+            ->through(fn ($item) => [
                 'id' => $item->id,
                 'title_lv' => $item->title_lv,
                 'title_en' => $item->title_en,
                 'slug' => $item->slug,
                 'type' => $item->type,
-                'thumbnail' => $item->thumbnail,
-                'is_published' => $item->is_published,
-                'is_featured' => $item->is_featured,
+                'category' => $item->category,
+                'thumbnail' => $item->thumbnail,        // Tikai faila nosaukums
+                'featured_image' => $item->featured_image, // Tikai faila nosaukums
                 'view_count' => $item->view_count,
                 'like_count' => $item->like_count,
+                'duration' => $item->duration,
+                'is_published' => $item->is_published,
+                'is_featured' => $item->is_featured,
                 'published_at' => $item->published_at,
                 'created_at' => $item->created_at,
-            ];
-        });
+            ]);
 
         return Inertia::render('Admin/Content/Index', [
             'content' => $content,

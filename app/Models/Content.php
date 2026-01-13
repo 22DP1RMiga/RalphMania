@@ -85,7 +85,7 @@ class Content extends Model
     }
 
     /**
-     * ✅ NEW: Get full URL for featured image
+     * Get full URL for featured image
      */
     public function getFeaturedImageUrlAttribute(): ?string
     {
@@ -120,7 +120,7 @@ class Content extends Model
     }
 
     /**
-     * ✅ NEW: Check if content is a blog post
+     * Check if content is a blog post
      */
     public function isBlog(): bool
     {
@@ -128,7 +128,7 @@ class Content extends Model
     }
 
     /**
-     * ✅ NEW: Check if content is a video
+     * Check if content is a video
      */
     public function isVideo(): bool
     {
@@ -161,7 +161,7 @@ class Content extends Model
     }
 
     /**
-     * ✅ NEW: Scope for blogs only
+     * Scope for blogs only
      */
     public function scopeBlogs($query)
     {
@@ -169,7 +169,7 @@ class Content extends Model
     }
 
     /**
-     * ✅ NEW: Scope for videos only
+     * Scope for videos only
      */
     public function scopeVideos($query)
     {
