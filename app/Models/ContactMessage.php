@@ -12,15 +12,11 @@ class ContactMessage extends Model
 
     /**
      * The table associated with the model.
-     *
-     * @var string
      */
     protected $table = 'contact_messages';
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'user_id',
@@ -32,14 +28,13 @@ class ContactMessage extends Model
         'message',
         'is_read',
         'is_replied',
+        'reply_text',
         'replied_at',
         'replied_by',
     ];
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
         'is_read' => 'boolean',
@@ -82,6 +77,22 @@ class ContactMessage extends Model
     public function scopeUnread($query)
     {
         return $query->where('is_read', false);
+    }
+
+    /**
+     * Scope for read but not replied messages.
+     */
+    public function scopeReadNotReplied($query)
+    {
+        return $query->where('is_read', true)->where('is_replied', false);
+    }
+
+    /**
+     * Scope for replied messages.
+     */
+    public function scopeReplied($query)
+    {
+        return $query->where('is_replied', true);
     }
 
     /**

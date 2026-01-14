@@ -206,7 +206,7 @@ const timeline = computed(() => {
                             <div v-for="item in order.items" :key="item.id" class="order-item">
                                 <div class="item-image">
                                     <img
-                                        :src="item.product?.image ? `/storage/${item.product.image}` : '/img/placeholder-product.png'"
+                                        :src="item.product?.image ? `/img/Products/${item.product.image}` : '/img/Products/placeholder-product.png'"
                                         :alt="item.product_name"
                                     >
                                 </div>

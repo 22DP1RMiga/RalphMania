@@ -88,11 +88,32 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's addresses
+     * Get user's addresses - returns empty collection since addresses are in users table
+     * This is for backwards compatibility
      */
     public function addresses()
     {
-        return $this->hasMany(UserAddress::class);
+        // Return empty collection - user address is stored directly in users table
+        // If you create user_addresses table later, change this to:
+        // return $this->hasMany(UserAddress::class);
+        return collect([]);
+    }
+
+    /**
+     * Get user's primary address as object
+     */
+    public function getPrimaryAddressAttribute()
+    {
+        if (!$this->address && !$this->city && !$this->country) {
+            return null;
+        }
+
+        return (object) [
+            'address' => $this->address,
+            'city' => $this->city,
+            'country' => $this->country,
+            'postal_code' => $this->postal_code,
+        ];
     }
 
     /**

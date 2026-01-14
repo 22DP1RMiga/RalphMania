@@ -1419,10 +1419,6 @@ const nonAdminUsers = computed(() => {
         display: flex;
     }
 
-    .btn-text {
-        display: none;
-    }
-
     .modal-lg {
         max-width: 100%;
     }

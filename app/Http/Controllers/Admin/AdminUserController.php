@@ -19,25 +19,26 @@ class AdminUserController extends Controller
         $query = User::with('role');
 
         // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('username', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%")
-                    ->orWhere('first_name', 'LIKE', "%{$search}%")
-                    ->orWhere('last_name', 'LIKE', "%{$search}%");
+                $q->where('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
         // Filter by role
-        if ($request->has('role') && $request->role) {
+        if ($request->filled('role')) {
             $query->whereHas('role', function($q) use ($request) {
                 $q->where('name', $request->role);
             });
         }
 
         // Filter by status
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             switch ($request->status) {
                 case 'active':
                     $query->where('is_active', true);
@@ -65,6 +66,7 @@ class AdminUserController extends Controller
                 'email' => $user->email,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
+                'phone' => $user->phone,
                 'profile_picture' => $user->profile_picture,
                 'is_active' => $user->is_active,
                 'email_verified_at' => $user->email_verified_at,
@@ -80,10 +82,19 @@ class AdminUserController extends Controller
         // Get roles for filter dropdown
         $roles = Role::orderBy('name')->get(['id', 'name']);
 
+        // Get stats
+        $stats = [
+            'total' => User::count(),
+            'active' => User::where('is_active', true)->count(),
+            'inactive' => User::where('is_active', false)->count(),
+            'verified' => User::whereNotNull('email_verified_at')->count(),
+        ];
+
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
             'roles' => $roles,
             'filters' => $request->only(['search', 'role', 'status']),
+            'stats' => $stats,
         ]);
     }
 
@@ -92,7 +103,18 @@ class AdminUserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with(['role', 'orders', 'addresses'])->findOrFail($id);
+        $user = User::with(['role', 'orders', 'reviews', 'comments'])->findOrFail($id);
+
+        // Build address from user fields (since addresses are stored in users table)
+        $address = null;
+        if ($user->address || $user->city || $user->country) {
+            $address = [
+                'address' => $user->address,
+                'city' => $user->city,
+                'country' => $user->country,
+                'postal_code' => $user->postal_code,
+            ];
+        }
 
         return Inertia::render('Admin/Users/Show', [
             'user' => [
@@ -114,7 +136,11 @@ class AdminUserController extends Controller
                 'created_at' => $user->created_at,
                 'role' => $user->role,
                 'orders_count' => $user->orders->count(),
-                'addresses' => $user->addresses,
+                'reviews_count' => $user->reviews->count(),
+                'comments_count' => $user->comments->count(),
+                'total_spent' => $user->orders->where('status', '!=', 'cancelled')->sum('total_amount'),
+                // Return address as array with single item for backwards compatibility
+                'addresses' => $address ? [$address] : [],
             ],
         ]);
     }
@@ -165,7 +191,12 @@ class AdminUserController extends Controller
 
         // Prevent deactivating super admin
         if ($user->isSuperAdmin()) {
-            return back()->withErrors(['error' => 'Nevar deaktivizēt Super Admin!']);
+            return back()->with('error', 'Nevar deaktivizēt Super Admin!');
+        }
+
+        // Prevent self-deactivation
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Nevar deaktivizēt savu kontu!');
         }
 
         $user->update(['is_active' => !$user->is_active]);
@@ -201,12 +232,12 @@ class AdminUserController extends Controller
 
         // Prevent deleting super admin
         if ($user->isSuperAdmin()) {
-            return back()->withErrors(['error' => 'Nevar dzēst Super Admin!']);
+            return back()->with('error', 'Nevar dzēst Super Admin!');
         }
 
         // Prevent self-deletion
         if ($user->id === auth()->id()) {
-            return back()->withErrors(['error' => 'Nevar dzēst savu kontu!']);
+            return back()->with('error', 'Nevar dzēst savu kontu!');
         }
 
         $user->delete();

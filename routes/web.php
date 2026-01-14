@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminCommentController;
 use App\Http\Controllers\Admin\AdminContactController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminAdministratorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
@@ -177,9 +178,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Administrator Management (Super Admin only)
-    Route::post('/administrators', [AdminDashboardController::class, 'storeAdministrator'])->name('administrators.store');
-    Route::put('/administrators/{id}/permissions', [AdminDashboardController::class, 'updatePermissions'])->name('administrators.permissions');
-    Route::delete('/administrators/{id}', [AdminDashboardController::class, 'destroyAdministrator'])->name('administrators.destroy');
+    Route::prefix('administrators')->name('administrators.')->group(function () {
+        Route::get('/', [AdminAdministratorController::class, 'index'])->name('index');
+        Route::post('/', [AdminAdministratorController::class, 'store'])->name('store');
+        Route::put('/{id}/permissions', [AdminAdministratorController::class, 'updatePermissions'])->name('permissions');
+        Route::delete('/{id}', [AdminAdministratorController::class, 'destroy'])->name('destroy');
+    });
 
     // Products
     Route::prefix('products')->name('products.')->group(function () {

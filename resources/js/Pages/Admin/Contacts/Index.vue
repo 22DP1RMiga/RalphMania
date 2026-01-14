@@ -1,60 +1,122 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
+const { t, locale } = useI18n({ useScope: 'global' });
+
 const props = defineProps({
-    messages: {
-        type: Object,
-        default: () => ({ data: [], links: [], meta: {} }),
-    },
-    filters: {
-        type: Object,
-        default: () => ({}),
-    },
+    messages: Object,
+    filters: Object,
+    stats: Object,
 });
 
-// Filters
-const search = ref(props.filters.search || '');
-const readFilter = ref(props.filters.is_read || '');
-const repliedFilter = ref(props.filters.is_replied || '');
+// Local filter state
+const search = ref(props.filters?.search || '');
+const statusFilter = ref(props.filters?.status || '');
 
-let searchTimeout;
-watch(search, (value) => {
+// Processing states
+const processingId = ref(null);
+
+// Reply modal state
+const showReplyModal = ref(false);
+const selectedMessage = ref(null);
+const replyText = ref('');
+const isSubmitting = ref(false);
+
+// Debounce helper
+let searchTimeout = null;
+const debounceSearch = (fn, delay = 300) => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        applyFilters();
-    }, 300);
-});
+    searchTimeout = setTimeout(fn, delay);
+};
 
+// Apply filters
 const applyFilters = () => {
     router.get('/admin/contacts', {
         search: search.value || undefined,
-        is_read: readFilter.value || undefined,
-        is_replied: repliedFilter.value || undefined,
+        status: statusFilter.value || undefined,
     }, {
         preserveState: true,
         replace: true,
     });
 };
 
-const resetFilters = () => {
+// Watch for filter changes
+watch(statusFilter, applyFilters);
+watch(search, () => debounceSearch(applyFilters));
+
+// Clear all filters
+const clearFilters = () => {
     search.value = '';
-    readFilter.value = '';
-    repliedFilter.value = '';
-    router.get('/admin/contacts');
+    statusFilter.value = '';
 };
+
+// Has active filters
+const hasFilters = computed(() => {
+    return search.value || statusFilter.value;
+});
 
 // Mark as read
 const markAsRead = (id) => {
+    processingId.value = id;
     router.put(`/admin/contacts/${id}/read`, {}, {
         preserveScroll: true,
+        onFinish: () => processingId.value = null,
+    });
+};
+
+// Delete message
+const deleteMessage = (id) => {
+    if (confirm(t('admin.contacts.confirmDelete'))) {
+        processingId.value = id;
+        router.delete(`/admin/contacts/${id}`, {
+            preserveScroll: true,
+            onFinish: () => processingId.value = null,
+        });
+    }
+};
+
+// Open reply modal
+const openReplyModal = (message) => {
+    selectedMessage.value = message;
+    replyText.value = '';
+    showReplyModal.value = true;
+};
+
+// Close reply modal
+const closeReplyModal = () => {
+    showReplyModal.value = false;
+    selectedMessage.value = null;
+    replyText.value = '';
+};
+
+// Submit reply
+const submitReply = () => {
+    if (!replyText.value.trim() || replyText.value.length < 10) {
+        alert(t('admin.contacts.replyMinLength'));
+        return;
+    }
+
+    isSubmitting.value = true;
+    router.put(`/admin/contacts/${selectedMessage.value.id}/reply`, {
+        reply_text: replyText.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeReplyModal();
+        },
+        onFinish: () => {
+            isSubmitting.value = false;
+        },
     });
 };
 
 // Format date
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('lv-LV', {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -63,190 +125,315 @@ const formatDate = (date) => {
     });
 };
 
+// Get user avatar
+const getUserAvatar = (user) => {
+    if (!user?.profile_picture) return null;
+    if (user.profile_picture.startsWith('http')) return user.profile_picture;
+    return `/storage/${user.profile_picture}`;
+};
+
 // Truncate text
-const truncate = (text, length = 100) => {
+const truncateText = (text, length = 100) => {
     if (!text) return '';
-    return text.length > length ? text.substring(0, length) + '...' : text;
+    if (text.length <= length) return text;
+    return text.substring(0, length) + '...';
+};
+
+// Get status info
+const getStatusInfo = (message) => {
+    if (message.is_replied) {
+        return { class: 'replied', icon: 'fas fa-check-double', label: t('admin.contacts.status.replied') };
+    }
+    if (message.is_read) {
+        return { class: 'read', icon: 'fas fa-envelope-open', label: t('admin.contacts.status.read') };
+    }
+    return { class: 'unread', icon: 'fas fa-envelope', label: t('admin.contacts.status.unread') };
 };
 </script>
 
 <template>
-    <Head title="Kontaktu ziņojumi - Admin" />
+    <Head :title="t('admin.contacts.index.title')" />
 
     <AdminLayout>
-        <template #title>Kontaktu ziņojumi</template>
+        <template #title>{{ t('admin.contacts.index.title') }}</template>
 
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-info">
-                <p class="header-subtitle">Pārvaldiet saņemtos kontaktu ziņojumus</p>
-            </div>
-        </div>
-
-        <!-- Stats -->
+        <!-- Stats Cards -->
         <div class="stats-row">
-            <div class="stat-mini unread">
-                <i class="fas fa-envelope"></i>
-                <span class="stat-count">{{ messages.data?.filter(m => !m.is_read).length || 0 }}</span>
-                <span class="stat-label">Neizlasīti</span>
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats?.total || 0 }}</span>
+                    <span class="stat-label">{{ t('admin.contacts.stats.total') }}</span>
+                </div>
             </div>
-            <div class="stat-mini read">
-                <i class="fas fa-envelope-open"></i>
-                <span class="stat-count">{{ messages.data?.filter(m => m.is_read).length || 0 }}</span>
-                <span class="stat-label">Izlasīti</span>
+
+            <div class="stat-card">
+                <div class="stat-icon unread">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats?.unread || 0 }}</span>
+                    <span class="stat-label">{{ t('admin.contacts.stats.unread') }}</span>
+                </div>
             </div>
-            <div class="stat-mini replied">
-                <i class="fas fa-reply"></i>
-                <span class="stat-count">{{ messages.data?.filter(m => m.is_replied).length || 0 }}</span>
-                <span class="stat-label">Atbildēti</span>
+
+            <div class="stat-card">
+                <div class="stat-icon read">
+                    <i class="fas fa-envelope-open"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats?.read || 0 }}</span>
+                    <span class="stat-label">{{ t('admin.contacts.stats.read') }}</span>
+                </div>
             </div>
-            <div class="stat-mini total">
-                <i class="fas fa-inbox"></i>
-                <span class="stat-count">{{ messages.data?.length || 0 }}</span>
-                <span class="stat-label">Kopā</span>
+
+            <div class="stat-card">
+                <div class="stat-icon replied">
+                    <i class="fas fa-reply"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats?.replied || 0 }}</span>
+                    <span class="stat-label">{{ t('admin.contacts.stats.replied') }}</span>
+                </div>
             </div>
         </div>
 
         <!-- Filters -->
         <div class="filters-card">
             <div class="filters-row">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input
-                        v-model="search"
-                        type="text"
-                        placeholder="Meklēt pēc vārda, e-pasta, tēmas..."
-                        class="search-input"
-                    >
+                <!-- Search -->
+                <div class="filter-group search-group">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input
+                            v-model="search"
+                            type="text"
+                            class="search-input"
+                            :placeholder="t('admin.contacts.searchPlaceholder')"
+                        >
+                        <button v-if="search" @click="search = ''" class="clear-search">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <select v-model="readFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visi</option>
-                    <option value="0">Neizlasīti</option>
-                    <option value="1">Izlasīti</option>
-                </select>
+                <!-- Status Filter -->
+                <div class="filter-group">
+                    <select v-model="statusFilter" class="filter-select">
+                        <option value="">{{ t('admin.contacts.allStatuses') }}</option>
+                        <option value="unread">{{ t('admin.contacts.status.unread') }}</option>
+                        <option value="read">{{ t('admin.contacts.status.read') }}</option>
+                        <option value="replied">{{ t('admin.contacts.status.replied') }}</option>
+                    </select>
+                </div>
 
-                <select v-model="repliedFilter" @change="applyFilters" class="filter-select">
-                    <option value="">Visi</option>
-                    <option value="0">Nav atbildēts</option>
-                    <option value="1">Atbildēts</option>
-                </select>
-
-                <button @click="resetFilters" class="btn btn-secondary">
+                <!-- Clear Filters -->
+                <button v-if="hasFilters" @click="clearFilters" class="btn btn-clear">
                     <i class="fas fa-times"></i>
-                    Notīrīt
+                    {{ t('admin.common.clearFilters') }}
                 </button>
             </div>
         </div>
 
-        <!-- Messages Table -->
-        <div class="table-card">
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th width="30"></th>
-                    <th>Sūtītājs</th>
-                    <th>Tēma</th>
-                    <th>Ziņojums</th>
-                    <th>Datums</th>
-                    <th>Statuss</th>
-                    <th>Darbības</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr
+        <!-- Messages List -->
+        <div class="messages-container">
+            <!-- Empty State -->
+            <div v-if="messages.data.length === 0" class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>{{ t('admin.contacts.noMessages') }}</h3>
+                <p>{{ t('admin.contacts.noMessagesDesc') }}</p>
+            </div>
+
+            <!-- Messages List -->
+            <div v-else class="messages-list">
+                <div
                     v-for="message in messages.data"
                     :key="message.id"
-                    :class="{ unread: !message.is_read }"
+                    class="message-card"
+                    :class="{
+                        'unread': !message.is_read,
+                        'replied': message.is_replied
+                    }"
                 >
-                    <td>
-                        <span v-if="!message.is_read" class="unread-dot"></span>
-                    </td>
-                    <td>
+                    <!-- Status Badge -->
+                    <div class="message-status-badge" :class="getStatusInfo(message).class">
+                        <i :class="getStatusInfo(message).icon"></i>
+                        {{ getStatusInfo(message).label }}
+                    </div>
+
+                    <!-- Header -->
+                    <div class="message-header">
                         <div class="sender-info">
-                            <span class="sender-name">{{ message.name }}</span>
-                            <span class="sender-email">{{ message.email }}</span>
-                            <span class="sender-phone">{{ message.country_code }} {{ message.phone }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="subject">{{ message.subject }}</span>
-                    </td>
-                    <td>
-                        <span class="message-preview">{{ truncate(message.message, 80) }}</span>
-                    </td>
-                    <td>
-                        <span class="date">{{ formatDate(message.created_at) }}</span>
-                    </td>
-                    <td>
-                        <div class="status-badges">
-                                <span :class="['mini-badge', message.is_read ? 'read' : 'unread']">
-                                    {{ message.is_read ? 'Izlasīts' : 'Jauns' }}
+                            <div class="sender-avatar">
+                                <img
+                                    v-if="getUserAvatar(message.user)"
+                                    :src="getUserAvatar(message.user)"
+                                    :alt="message.name"
+                                >
+                                <i v-else class="fas fa-user"></i>
+                            </div>
+                            <div class="sender-details">
+                                <span class="sender-name">{{ message.name }}</span>
+                                <span class="sender-email">{{ message.email }}</span>
+                                <span v-if="message.user" class="sender-username">
+                                    <i class="fas fa-user-check"></i> @{{ message.user.username }}
                                 </span>
-                            <span v-if="message.is_replied" class="mini-badge replied">
-                                    Atbildēts
-                                </span>
+                            </div>
                         </div>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <Link :href="`/admin/contacts/${message.id}`" class="btn-icon btn-icon-view" title="Skatīt">
-                                <i class="fas fa-eye"></i>
-                            </Link>
-                            <button
-                                v-if="!message.is_read"
-                                @click="markAsRead(message.id)"
-                                class="btn-icon btn-icon-read"
-                                title="Atzīmēt kā izlasītu"
-                            >
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <a
-                                :href="`mailto:${message.email}?subject=Re: ${message.subject}`"
-                                class="btn-icon btn-icon-reply"
-                                title="Atbildēt"
-                            >
-                                <i class="fas fa-reply"></i>
-                            </a>
+                        <div class="message-meta">
+                            <span class="message-date">{{ formatDate(message.created_at) }}</span>
+                            <span v-if="message.full_phone" class="message-phone">
+                                <i class="fas fa-phone"></i> {{ message.full_phone }}
+                            </span>
                         </div>
-                    </td>
-                </tr>
-                <tr v-if="messages.data?.length === 0">
-                    <td colspan="7" class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>Nav atrasts neviens ziņojums</p>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="message-subject">
+                        <strong>{{ message.subject }}</strong>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="message-preview">
+                        <p>{{ truncateText(message.message, 150) }}</p>
+                    </div>
+
+                    <!-- Replied indicator -->
+                    <div v-if="message.is_replied" class="replied-indicator">
+                        <i class="fas fa-check-double"></i>
+                        {{ t('admin.contacts.repliedAt') }}: {{ formatDate(message.replied_at) }}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="message-actions">
+                        <Link
+                            :href="`/admin/contacts/${message.id}`"
+                            class="btn btn-view"
+                        >
+                            <i class="fas fa-eye"></i>
+                            {{ t('admin.common.view') }}
+                        </Link>
+
+                        <button
+                            v-if="!message.is_replied"
+                            @click="openReplyModal(message)"
+                            class="btn btn-reply"
+                        >
+                            <i class="fas fa-reply"></i>
+                            {{ t('admin.contacts.reply') }}
+                        </button>
+
+                        <button
+                            v-if="!message.is_read"
+                            @click="markAsRead(message.id)"
+                            class="btn btn-mark-read"
+                            :disabled="processingId === message.id"
+                        >
+                            <i :class="processingId === message.id ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
+                            {{ t('admin.contacts.markAsRead') }}
+                        </button>
+
+                        <button
+                            @click="deleteMessage(message.id)"
+                            class="btn btn-delete"
+                            :disabled="processingId === message.id"
+                        >
+                            <i :class="processingId === message.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Pagination -->
-            <div v-if="messages.links && messages.links.length > 3" class="pagination">
-                <Link
-                    v-for="link in messages.links"
-                    :key="link.label"
-                    :href="link.url"
-                    :class="['page-link', { active: link.active, disabled: !link.url }]"
-                    v-html="link.label"
-                />
+            <div v-if="messages.links && messages.links.length > 3" class="pagination-wrapper">
+                <div class="pagination-info">
+                    {{ t('admin.common.showing') }} {{ messages.from }}-{{ messages.to }} {{ t('admin.common.of') }} {{ messages.total }}
+                </div>
+                <div class="pagination">
+                    <template v-for="link in messages.links" :key="link.label">
+                        <Link
+                            v-if="link.url"
+                            :href="link.url"
+                            class="pagination-link"
+                            :class="{ active: link.active }"
+                            v-html="link.label"
+                            preserve-scroll
+                        />
+                        <span v-else class="pagination-link disabled" v-html="link.label" />
+                    </template>
+                </div>
             </div>
         </div>
+
+        <!-- Reply Modal -->
+        <Teleport to="body">
+            <div v-if="showReplyModal" class="modal-overlay" @click.self="closeReplyModal">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3>
+                            <i class="fas fa-reply"></i>
+                            {{ t('admin.contacts.replyTo') }}: {{ selectedMessage?.name }}
+                        </h3>
+                        <button @click="closeReplyModal" class="modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Original Message Info -->
+                        <div class="original-message">
+                            <div class="original-header">
+                                <span class="original-label">{{ t('admin.contacts.originalMessage') }}</span>
+                                <span class="original-date">{{ formatDate(selectedMessage?.created_at) }}</span>
+                            </div>
+                            <div class="original-subject">
+                                <strong>{{ selectedMessage?.subject }}</strong>
+                            </div>
+                            <div class="original-text">
+                                {{ selectedMessage?.message }}
+                            </div>
+                        </div>
+
+                        <!-- Reply Form -->
+                        <div class="reply-form">
+                            <label class="reply-label">
+                                {{ t('admin.contacts.yourReply') }}
+                                <span class="reply-to-email">→ {{ selectedMessage?.email }}</span>
+                            </label>
+                            <textarea
+                                v-model="replyText"
+                                class="reply-textarea"
+                                rows="8"
+                                :placeholder="t('admin.contacts.replyPlaceholder')"
+                            ></textarea>
+                            <div class="reply-hint">
+                                {{ t('admin.contacts.replyHint') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button @click="closeReplyModal" class="btn btn-cancel">
+                            {{ t('admin.common.cancel') }}
+                        </button>
+                        <button
+                            @click="submitReply"
+                            class="btn btn-submit"
+                            :disabled="isSubmitting || replyText.length < 10"
+                        >
+                            <i :class="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+                            {{ isSubmitting ? t('admin.contacts.sending') : t('admin.contacts.sendReply') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AdminLayout>
 </template>
 
 <style scoped>
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.header-subtitle {
-    color: #6b7280;
-    margin: 0;
-}
-
 /* Stats Row */
 .stats-row {
     display: grid;
@@ -255,32 +442,52 @@ const truncate = (text, length = 100) => {
     margin-bottom: 1.5rem;
 }
 
-@media (max-width: 768px) {
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-.stat-mini {
+.stat-card {
     background: white;
     border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
+    padding: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.stat-mini i {
-    font-size: 1.5rem;
+.stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
 }
 
-.stat-mini.unread i { color: #dc2626; }
-.stat-mini.read i { color: #6b7280; }
-.stat-mini.replied i { color: #059669; }
-.stat-mini.total i { color: #6366f1; }
+.stat-icon.total {
+    background: linear-gradient(135deg, #dbeafe, #60a5fa);
+    color: #1e40af;
+}
 
-.stat-count {
+.stat-icon.unread {
+    background: linear-gradient(135deg, #fee2e2, #f87171);
+    color: #991b1b;
+}
+
+.stat-icon.read {
+    background: linear-gradient(135deg, #fef3c7, #fbbf24);
+    color: #92400e;
+}
+
+.stat-icon.replied {
+    background: linear-gradient(135deg, #d1fae5, #34d399);
+    color: #065f46;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
     font-size: 1.5rem;
     font-weight: 700;
     color: #111827;
@@ -290,44 +497,53 @@ const truncate = (text, length = 100) => {
     font-size: 0.75rem;
     color: #6b7280;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* Filters */
 .filters-card {
     background: white;
     border-radius: 0.75rem;
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.25rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .filters-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
-    flex-wrap: wrap;
 }
 
-.search-box {
+.filter-group {
+    flex-shrink: 0;
+}
+
+.search-group {
     flex: 1;
     min-width: 250px;
-    position: relative;
 }
 
-.search-box i {
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrapper > i {
     position: absolute;
     left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
     color: #9ca3af;
+    pointer-events: none;
 }
 
 .search-input {
     width: 100%;
-    padding: 0.625rem 1rem 0.625rem 2.5rem;
-    border: 1px solid #d1d5db;
+    padding: 0.625rem 2.5rem;
+    border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
 }
 
 .search-input:focus {
@@ -336,65 +552,183 @@ const truncate = (text, length = 100) => {
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
-.filter-select {
-    padding: 0.625rem 1rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    background: white;
+.clear-search {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
 }
 
-/* Table */
-.table-card {
+.clear-search:hover {
+    color: #dc2626;
+}
+
+.filter-select {
+    padding: 0.625rem 2rem 0.625rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: white;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #dc2626;
+}
+
+.btn-clear {
+    padding: 0.625rem 1rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 0.5rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-clear:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Messages Container */
+.messages-container {
     background: white;
     border-radius: 0.75rem;
+    padding: 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
 }
 
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
 }
 
-.data-table th,
-.data-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
+.empty-state i {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
 }
 
-.data-table th {
-    background: #f9fafb;
-    font-weight: 600;
+.empty-state h3 {
+    font-size: 1.25rem;
     color: #374151;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
 }
 
-.data-table tr:hover {
+.empty-state p {
+    color: #6b7280;
+}
+
+/* Messages List */
+.messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Message Card */
+.message-card {
     background: #f9fafb;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    position: relative;
+    border-left: 4px solid #e5e7eb;
+    transition: all 0.2s;
 }
 
-.data-table tr.unread {
+.message-card.unread {
+    border-left-color: #dc2626;
     background: #fef2f2;
 }
 
-.data-table tr.unread:hover {
+.message-card.replied {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.message-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Status Badge */
+.message-status-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.message-status-badge.unread {
     background: #fee2e2;
+    color: #991b1b;
 }
 
-/* Unread Dot */
-.unread-dot {
-    display: inline-block;
-    width: 0.5rem;
-    height: 0.5rem;
-    background: #dc2626;
-    border-radius: 50%;
+.message-status-badge.read {
+    background: #fef3c7;
+    color: #92400e;
 }
 
-/* Sender Info */
+.message-status-badge.replied {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Message Header */
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    padding-right: 6rem;
+}
+
 .sender-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.sender-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.sender-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sender-avatar i {
+    color: #9ca3af;
+    font-size: 1.25rem;
+}
+
+.sender-details {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
@@ -403,202 +737,588 @@ const truncate = (text, length = 100) => {
 .sender-name {
     font-weight: 600;
     color: #111827;
+    font-size: 1rem;
 }
 
 .sender-email {
-    font-size: 0.75rem;
-    color: #2563eb;
-}
-
-.sender-phone {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: #6b7280;
 }
 
-/* Subject & Message */
-.subject {
-    font-weight: 500;
-    color: #111827;
-}
-
-.message-preview {
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.date {
-    font-size: 0.875rem;
-    color: #6b7280;
-    white-space: nowrap;
-}
-
-/* Status Badges */
-.status-badges {
+.sender-username {
+    font-size: 0.7rem;
+    color: #10b981;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 0.25rem;
 }
 
-.mini-badge {
-    display: inline-block;
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.625rem;
-    font-weight: 600;
-    text-transform: uppercase;
+.message-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
 }
 
-.mini-badge.unread {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.mini-badge.read {
-    background: #f3f4f6;
+.message-date {
+    font-size: 0.75rem;
     color: #6b7280;
 }
 
-.mini-badge.replied {
+.message-phone {
+    font-size: 0.7rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Subject */
+.message-subject {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: #111827;
+}
+
+/* Preview */
+.message-preview {
+    margin-bottom: 0.75rem;
+}
+
+.message-preview p {
+    font-size: 0.85rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Replied Indicator */
+.replied-indicator {
+    font-size: 0.75rem;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: #ecfdf5;
+    border-radius: 0.375rem;
+}
+
+/* Actions */
+.message-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-view {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.btn-view:hover {
+    background: #bfdbfe;
+}
+
+.btn-reply {
     background: #d1fae5;
     color: #065f46;
 }
 
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 0.5rem;
+.btn-reply:hover {
+    background: #a7f3d0;
 }
 
-.btn-icon {
-    width: 2rem;
-    height: 2rem;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    text-decoration: none;
-}
-
-.btn-icon-view {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.btn-icon-view:hover {
-    background: #2563eb;
-    color: white;
-}
-
-.btn-icon-read {
-    background: #d1fae5;
-    color: #059669;
-}
-
-.btn-icon-read:hover {
-    background: #059669;
-    color: white;
-}
-
-.btn-icon-reply {
+.btn-mark-read {
     background: #fef3c7;
-    color: #d97706;
+    color: #92400e;
 }
 
-.btn-icon-reply:hover {
-    background: #d97706;
-    color: white;
+.btn-mark-read:hover:not(:disabled) {
+    background: #fde68a;
 }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 3rem !important;
-    color: #6b7280;
+.btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 0.5rem 0.625rem;
 }
 
-.empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-}
-
-.empty-state p {
-    margin: 0;
+.btn-delete:hover:not(:disabled) {
+    background: #fecaca;
 }
 
 /* Pagination */
-.pagination {
+.pagination-wrapper {
     display: flex;
-    justify-content: center;
-    gap: 0.25rem;
-    padding: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
 }
 
-.page-link {
+.pagination-info {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.pagination {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.pagination-link {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
     border-radius: 0.375rem;
+    font-size: 0.875rem;
     color: #374151;
     text-decoration: none;
-    font-size: 0.875rem;
     transition: all 0.2s;
 }
 
-.page-link:hover:not(.disabled):not(.active) {
+.pagination-link:hover:not(.disabled):not(.active) {
     background: #f3f4f6;
 }
 
-.page-link.active {
+.pagination-link.active {
     background: #dc2626;
-    border-color: #dc2626;
     color: white;
 }
 
-.page-link.disabled {
-    opacity: 0.5;
+.pagination-link.disabled {
+    color: #d1d5db;
     cursor: not-allowed;
 }
 
-/* Buttons */
-.btn {
-    display: inline-flex;
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
 }
 
-.btn-secondary {
+.modal-container {
+    background: white;
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.modal-header h3 i {
+    color: #dc2626;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.modal-close:hover {
+    color: #dc2626;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Original Message */
+.original-message {
+    background: #f3f4f6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid #9ca3af;
+}
+
+.original-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.original-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.original-date {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.original-subject {
+    font-size: 0.9rem;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.original-text {
+    font-size: 0.85rem;
+    color: #4b5563;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+/* Reply Form */
+.reply-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.reply-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reply-to-email {
+    font-weight: 400;
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.reply-textarea {
+    width: 100%;
+    padding: 0.875rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    resize: vertical;
+    min-height: 150px;
+    font-family: inherit;
+}
+
+.reply-textarea:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.reply-hint {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.btn-cancel {
     background: #f3f4f6;
     color: #374151;
 }
 
-.btn-secondary:hover {
+.btn-cancel:hover {
     background: #e5e7eb;
 }
 
-/* Responsive */
+.btn-submit {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+.btn-submit:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   RESPONSIVE STYLES
+   ======================================== */
+
 @media (max-width: 1024px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .search-group {
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+    }
+
+    .filters-card {
+        padding: 1rem;
+    }
+
     .filters-row {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.75rem;
     }
 
-    .search-box {
-        min-width: 100%;
+    .filter-group {
+        width: 100%;
     }
 
-    .data-table {
-        display: block;
-        overflow-x: auto;
+    .search-group {
+        min-width: unset;
+    }
+
+    .filter-select {
+        width: 100%;
+    }
+
+    .btn-clear {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .messages-container {
+        padding: 1rem;
+    }
+
+    .message-card {
+        padding: 1rem;
+    }
+
+    .message-status-badge {
+        position: relative;
+        top: unset;
+        right: unset;
+        align-self: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .message-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding-right: 0;
+    }
+
+    .message-meta {
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .message-actions {
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        flex: 1;
+        min-width: calc(50% - 0.25rem);
+    }
+
+    .btn-delete {
+        min-width: auto;
+        flex: 0;
+    }
+
+    .pagination-wrapper {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Modal */
+    .modal-container {
+        max-height: 95vh;
+        margin: 0.5rem;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-header h3 {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        padding: 1rem;
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .stat-card {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .stat-icon {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.875rem;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+    }
+
+    .messages-container {
+        padding: 0.75rem;
+    }
+
+    .message-card {
+        padding: 0.875rem;
+    }
+
+    .sender-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .sender-name {
+        font-size: 0.9rem;
+    }
+
+    .sender-email {
+        font-size: 0.75rem;
+    }
+
+    .message-subject {
+        font-size: 0.875rem;
+    }
+
+    .message-preview p {
+        font-size: 0.8rem;
+    }
+
+    .message-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .pagination-link {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .search-input {
+        font-size: 0.8rem;
+    }
+
+    .filter-select {
+        font-size: 0.8rem;
     }
 }
 </style>
