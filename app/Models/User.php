@@ -63,6 +63,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = ['is_administrator', 'is_super_admin'];
+
+    /**
      * RELATIONSHIPS
      */
 
@@ -75,11 +80,40 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's addresses
+     * Get administrator record if exists
+     */
+    public function administrator()
+    {
+        return $this->hasOne(Administrator::class);
+    }
+
+    /**
+     * Get user's addresses - returns empty collection since addresses are in users table
+     * This is for backwards compatibility
      */
     public function addresses()
     {
-        return $this->hasMany(UserAddress::class);
+        // Return empty collection - user address is stored directly in users table
+        // If you create user_addresses table later, change this to:
+        // return $this->hasMany(UserAddress::class);
+        return collect([]);
+    }
+
+    /**
+     * Get user's primary address as object
+     */
+    public function getPrimaryAddressAttribute()
+    {
+        if (!$this->address && !$this->city && !$this->country) {
+            return null;
+        }
+
+        return (object) [
+            'address' => $this->address,
+            'city' => $this->city,
+            'country' => $this->country,
+            'postal_code' => $this->postal_code,
+        ];
     }
 
     /**
@@ -135,11 +169,65 @@ class User extends Authenticatable implements MustVerifyEmail
      */
 
     /**
-     * Check if user is admin
+     * Check if user is admin (has administrator role)
      */
     public function isAdmin(): bool
     {
         return $this->role && $this->role->name === 'administrator';
+    }
+
+    /**
+     * Check if user is an administrator (has administrator record)
+     */
+    public function isAdministrator(): bool
+    {
+        return $this->administrator !== null;
+    }
+
+    /**
+     * Accessor for is_administrator attribute (for frontend)
+     */
+    public function getIsAdministratorAttribute(): bool
+    {
+        return $this->isAdministrator();
+    }
+
+    /**
+     * Check if user is super admin
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->administrator && $this->administrator->is_super_admin;
+    }
+
+    /**
+     * Accessor for is_super_admin attribute (for frontend)
+     */
+    public function getIsSuperAdminAttribute(): bool
+    {
+        return $this->isSuperAdmin();
+    }
+
+    /**
+     * Check if user has a specific admin permission
+     */
+    public function hasAdminPermission(string $permission): bool
+    {
+        if (!$this->administrator) {
+            return false;
+        }
+        return $this->administrator->hasPermission($permission);
+    }
+
+    /**
+     * Check if user has any of the given admin permissions
+     */
+    public function hasAnyAdminPermission(array $permissions): bool
+    {
+        if (!$this->administrator) {
+            return false;
+        }
+        return $this->administrator->hasAnyPermission($permissions);
     }
 
     /**
@@ -188,6 +276,11 @@ class User extends Authenticatable implements MustVerifyEmail
         // Only update if column exists
         if (Schema::hasColumn('users', 'last_login_at')) {
             $this->update(['last_login_at' => now()]);
+        }
+
+        // Also update administrator last login if applicable
+        if ($this->administrator) {
+            $this->administrator->updateLastLogin();
         }
     }
 }

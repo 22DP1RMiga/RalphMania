@@ -7,16 +7,17 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const isAuthenticated = computed(() => !!user.value);
 
+// Check if user is administrator
+const isAdministrator = computed(() => user.value?.is_administrator || false);
+
 // Get user avatar with correct path
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
         return '/img/default-avatar.png';
     }
-    // If profile_picture already starts with /, use it as is
     if (user.value.profile_picture.startsWith('/')) {
         return user.value.profile_picture;
     }
-    // Otherwise add /storage/ prefix
     return `/storage/${user.value.profile_picture}`;
 });
 
@@ -41,6 +42,9 @@ const toggleLocale = () => {
 // Mobile menu
 const isMenuActive = ref(false);
 
+// User dropdown state
+const isUserDropdownOpen = ref(false);
+
 const toggleNav = () => {
     isMenuActive.value = !isMenuActive.value;
 };
@@ -49,8 +53,30 @@ const closeMenu = () => {
     isMenuActive.value = false;
 };
 
+const toggleUserDropdown = () => {
+    isUserDropdownOpen.value = !isUserDropdownOpen.value;
+};
+
+const closeUserDropdown = () => {
+    isUserDropdownOpen.value = false;
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+    const dropdown = document.querySelector('.user-dropdown-container');
+    if (dropdown && !dropdown.contains(event.target)) {
+        closeUserDropdown();
+    }
+};
+
+// Add click listener
+if (typeof window !== 'undefined') {
+    document.addEventListener('click', handleClickOutside);
+}
+
 // Logout function
 const logout = () => {
+    closeUserDropdown();
     router.post('/logout', {}, {
         onSuccess: () => {
             window.location.href = '/';
@@ -59,7 +85,14 @@ const logout = () => {
 };
 
 const goToDashboard = () => {
+    closeUserDropdown();
     router.visit('/dashboard');
+    closeMenu();
+};
+
+const goToAdminPanel = () => {
+    closeUserDropdown();
+    router.visit('/admin/dashboard');
     closeMenu();
 };
 </script>
@@ -117,19 +150,43 @@ const goToDashboard = () => {
 
             <!-- Right: User & Locale (Desktop) -->
             <div class="navbar-right">
-                <!-- Authenticated User -->
-                <div v-if="isAuthenticated" class="navbar-user">
-                    <button @click="goToDashboard" class="user-profile">
+                <!-- Authenticated User with Dropdown -->
+                <div v-if="isAuthenticated" class="user-dropdown-container">
+                    <button @click.stop="toggleUserDropdown" class="user-profile">
                         <img
                             :src="userAvatar"
                             :alt="user.username"
                             class="user-avatar"
                         >
-                        <span class="user-tooltip">{{ user.username }}</span>
+                        <span class="user-name">{{ user.username }}</span>
+                        <i class="fas fa-chevron-down dropdown-arrow" :class="{ 'rotated': isUserDropdownOpen }"></i>
                     </button>
-                    <button @click="logout" class="logout-btn" :title="$t('auth.logout')">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <Transition name="dropdown">
+                        <div v-if="isUserDropdownOpen" class="user-dropdown">
+                            <!-- Admin Panel Link (if administrator) -->
+                            <button v-if="isAdministrator" @click="goToAdminPanel" class="dropdown-item dropdown-item-admin">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>{{ $t('dashboard.sections.profile.admin_title') }}</span>
+                            </button>
+
+                            <!-- Dashboard Link -->
+                            <button @click="goToDashboard" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>{{ $t('dashboard.sections.profile.title') }}</span>
+                            </button>
+
+                            <!-- Divider -->
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Logout -->
+                            <button @click="logout" class="dropdown-item dropdown-item-logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>{{ $t('auth.logout') }}</span>
+                            </button>
+                        </div>
+                    </Transition>
                 </div>
 
                 <!-- Guest Buttons -->
@@ -190,6 +247,12 @@ const goToDashboard = () => {
 
             <!-- Mobile User Section -->
             <li v-if="isAuthenticated" class="menubar-user-section">
+                <!-- Admin Panel (if administrator) -->
+                <button v-if="isAdministrator" @click="goToAdminPanel" class="menubar-admin-btn">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>{{ $t('dashboard.sections.profile.admin_title') }}</span>
+                </button>
+
                 <button @click="goToDashboard" class="menubar-user-btn">
                     <i class="fas fa-user"></i>
                     <span>{{ user.username }}</span>
@@ -339,69 +402,143 @@ const goToDashboard = () => {
     }
 }
 
-/* User Profile */
-.navbar-user {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+/* ========== USER DROPDOWN ========== */
+.user-dropdown-container {
+    position: relative;
 }
 
 .user-profile {
-    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
-}
-
-.user-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    border: 2px solid #dc2626;
-    object-fit: cover;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.user-avatar:hover {
-    transform: scale(1.1);
-}
-
-.user-tooltip {
-    position: absolute;
-    bottom: -2.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #1f2937;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.user-profile:hover .user-tooltip {
-    opacity: 1;
-}
-
-.logout-btn {
-    background: none;
-    border: none;
-    color: #374151;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
     transition: all 0.3s ease;
 }
 
-.logout-btn:hover {
+.user-profile:hover {
+    background-color: #f3f4f6;
+}
+
+.user-avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: 2px solid #dc2626;
+    object-fit: cover;
+}
+
+.user-name {
+    font-weight: 500;
+    color: #374151;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdown-arrow {
+    font-size: 0.75rem;
+    color: #6b7280;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 200px;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    color: #374151;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.dropdown-item i {
+    font-size: 1rem;
+    width: 1.25rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.dropdown-item:hover i {
+    color: #374151;
+}
+
+/* Admin item styling */
+.dropdown-item-admin {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.dropdown-item-admin:hover {
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+}
+
+.dropdown-item-admin i {
+    color: #d97706;
+}
+
+/* Logout item styling */
+.dropdown-item-logout {
     color: #dc2626;
+}
+
+.dropdown-item-logout:hover {
     background-color: #fef2f2;
+}
+
+.dropdown-item-logout i {
+    color: #dc2626;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 0.25rem 0;
+}
+
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+    transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 /* Guest Buttons */
@@ -556,6 +693,30 @@ const goToDashboard = () => {
     gap: 0.5rem;
     padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
+}
+
+.menubar-admin-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: none;
+    color: #92400e;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.menubar-admin-btn:hover {
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+}
+
+.menubar-admin-btn i {
+    font-size: 1.2rem;
+    color: #d97706;
 }
 
 .menubar-user-btn,
