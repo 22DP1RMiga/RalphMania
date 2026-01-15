@@ -20,7 +20,7 @@ class AdminProductController extends Controller
         $query = Product::with('category');
 
         // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('name_lv', 'LIKE', "%{$search}%")
@@ -30,12 +30,12 @@ class AdminProductController extends Controller
         }
 
         // Filter by category
-        if ($request->has('category') && $request->category) {
+        if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
         // Filter by status
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             if ($request->status === 'active') {
                 $query->where('is_active', true);
             } elseif ($request->status === 'inactive') {
@@ -64,12 +64,13 @@ class AdminProductController extends Controller
                 'category' => $product->category ? [
                     'id' => $product->category->id,
                     'name_lv' => $product->category->name_lv,
+                    'name_en' => $product->category->name_en,
                 ] : null,
                 'created_at' => $product->created_at,
             ];
         });
 
-        // Get categories for filter dropdown
+        // Get categories for filter dropdown - include both language names
         $categories = Category::where('is_active', true)
             ->orderBy('name_lv')
             ->get(['id', 'name_lv', 'name_en']);
@@ -201,7 +202,8 @@ class AdminProductController extends Controller
         $product = Product::findOrFail($id);
         $product->update(['is_active' => !$product->is_active]);
 
-        return back()->with('success', 'Produkta statuss mainīts!');
+        $status = $product->is_active ? 'aktivizēts' : 'deaktivizēts';
+        return back()->with('success', "Produkts veiksmīgi {$status}!");
     }
 
     /**

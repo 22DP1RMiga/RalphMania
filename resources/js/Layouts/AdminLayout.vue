@@ -135,6 +135,18 @@ const navItems = computed(() => {
             route: 'admin.users.index',
             url: '/admin/users',
         },
+        {
+            nameKey: 'admin.nav.settings',
+            icon: 'fas fa-gear',
+            route: 'admin.settings.index',
+            url: '/admin/settings',
+        },
+        {
+            nameKey: 'admin.nav.logs',
+            icon: 'fas fa-history',
+            route: 'admin.logs.index',
+            url: '/admin/logs',
+        },
     ];
 
     // Add admin management for super admins only

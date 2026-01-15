@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\AdminCommentController;
 use App\Http\Controllers\Admin\AdminContactController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminAdministratorController;
+use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminActivityLogController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
@@ -257,6 +259,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
 
+    // Settings (requires settings.view permission or super admin)
+    Route::middleware(['can:settings.view'])->group(function () {
+        Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [AdminSettingsController::class, 'store'])->name('settings.store')->middleware('can:settings.edit');
+        Route::post('/settings/test-email', [AdminSettingsController::class, 'testEmail'])->name('settings.test-email')->middleware('can:settings.edit');
+        Route::post('/settings/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('settings.clear-cache')->middleware('can:settings.edit');
+    });
+
+    // Activity Logs (requires logs.view permission or super admin)
+    Route::middleware(['can:logs.view'])->group(function () {
+        Route::get('/logs', [AdminActivityLogController::class, 'index'])->name('logs.index');
+        Route::get('/logs/export', [AdminActivityLogController::class, 'export'])->name('logs.export');
+    });
 });
 
 // ========== AUTH AND ADMIN ROUTES (BREEZE) ==========
