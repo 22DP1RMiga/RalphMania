@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminAdministratorController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminActivityLogController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
@@ -55,6 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 });
 
+// Newsletter subscription (public - can be guest)
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+
 // Shop Pages
 Route::prefix('shop')->group(function () {
     // Shop Home
@@ -71,18 +76,25 @@ Route::prefix('shop')->group(function () {
         return Inertia::render('Shop/Contact');
     })->name('shop.contact');
 
-    // Shop FAQ, Shipping, Returns
+    // FAQ Page
     Route::get('/faq', function () {
         return Inertia::render('Shop/FAQ');
     })->name('shop.faq');
 
+    // Shipping Info
     Route::get('/shipping', function () {
         return Inertia::render('Shop/Shipping');
     })->name('shop.shipping');
 
+    // Returns Policy
     Route::get('/returns', function () {
         return Inertia::render('Shop/Returns');
     })->name('shop.returns');
+
+    // Shop Contact
+    Route::get('/contact', function () {
+        return Inertia::render('Shop/Contact');
+    })->name('shop.contact');
 });
 
 // Content Pages
@@ -103,6 +115,13 @@ Route::middleware('auth')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Newsletter preferences (for logged-in users)
+    Route::prefix('newsletter')->name('newsletter.')->group(function () {
+        Route::get('/status', [NewsletterController::class, 'status'])->name('status');
+        Route::put('/preferences', [NewsletterController::class, 'updatePreferences'])->name('preferences');
+        Route::get('/offers', [NewsletterController::class, 'getOffers'])->name('offers');
+    });
 
     // Profile Management
     Route::prefix('profile')->group(function () {

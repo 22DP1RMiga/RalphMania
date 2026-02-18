@@ -1,13 +1,62 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import axios from 'axios';
 
 const { t } = useI18n();
 const currentYear = new Date().getFullYear();
+const page = usePage();
 
-const subscribe = () => {
-    // Newsletter subscription logic will be implemented later
-    alert(t('footer.subscribe_success'));
+// Newsletter state
+const email = ref('');
+const isLoading = ref(false);
+
+// Toast state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success'); // success, error, info
+
+const showToastNotification = (message, type = 'success') => {
+    toastMessage.value = message;
+    toastType.value = type;
+    showToast.value = true;
+
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        showToast.value = false;
+    }, 4000);
+};
+
+const closeToast = () => {
+    showToast.value = false;
+};
+
+const subscribe = async () => {
+    if (!email.value || !email.value.includes('@')) {
+        showToastNotification(t('newsletter.invalid_email'), 'error');
+        return;
+    }
+
+    isLoading.value = true;
+
+    try {
+        const response = await axios.post('/newsletter/subscribe', {
+            email: email.value
+        });
+
+        if (response.data.success) {
+            showToastNotification(t('newsletter.success'), 'success');
+            email.value = '';
+        } else if (response.data.already_subscribed) {
+            showToastNotification(t('newsletter.already_subscribed'), 'info');
+        }
+    } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        showToastNotification(t('newsletter.error'), 'error');
+    } finally {
+        isLoading.value = false;
+    }
 };
 </script>
 
@@ -33,7 +82,7 @@ const subscribe = () => {
                         <h4 class="footer-links-heading">{{ t('footer.shop') }}</h4>
                         <nav class="footer-nav">
                             <Link href="/shop" class="footer-nav-link">{{ t('footer.all_products') }}</Link>
-                            <Link href="/shop/category/apparel" class="footer-nav-link">{{ t('footer.apparel') }}</Link>
+                            <Link href="/shop/category/clothing" class="footer-nav-link">{{ t('footer.clothing') }}</Link>
                             <Link href="/shop/category/souvenirs" class="footer-nav-link">{{ t('footer.souvenirs') }}</Link>
                             <Link href="/shop/category/gift-cards" class="footer-nav-link">{{ t('footer.gift_cards') }}</Link>
                         </nav>
@@ -46,6 +95,16 @@ const subscribe = () => {
                             <Link href="/shop/shipping" class="footer-nav-link">{{ t('footer.shipping') }}</Link>
                             <Link href="/shop/returns" class="footer-nav-link">{{ t('footer.returns') }}</Link>
                             <Link href="/shop/contact" class="footer-nav-link">{{ t('footer.contact') }}</Link>
+                        </nav>
+                    </div>
+
+                    <div class="footer-links-column">
+                        <h4 class="footer-links-heading">{{ t('footer.content') }}</h4>
+                        <nav class="footer-nav">
+                            <Link href="/content?type=video" class="footer-nav-link">{{ t('footer.videos') }}</Link>
+                            <Link href="/content?type=blog" class="footer-nav-link">{{ t('footer.blogs') }}</Link>
+                            <Link href="/content?type=news" class="footer-nav-link">{{ t('footer.news') }}</Link>
+                            <Link href="/content?type=announcement" class="footer-nav-link">{{ t('footer.announcements') }}</Link>
                         </nav>
                     </div>
 
@@ -69,15 +128,24 @@ const subscribe = () => {
                     <!-- Newsletter Form -->
                     <form class="newsletter-form" @submit.prevent="subscribe">
                         <input
+                            v-model="email"
                             type="email"
                             :placeholder="t('footer.email_placeholder')"
                             class="newsletter-input"
+                            :disabled="isLoading"
                             required
                         >
-                        <button type="submit" class="newsletter-submit">
-                            <i class="fas fa-paper-plane"></i>
+                        <button type="submit" class="newsletter-submit" :disabled="isLoading">
+                            <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-paper-plane"></i>
                         </button>
                     </form>
+
+                    <!-- Subscriber Benefits Badge -->
+                    <div class="subscriber-benefits">
+                        <i class="fas fa-gift"></i>
+                        <span>{{ t('newsletter.benefits_hint') }}</span>
+                    </div>
 
                     <!-- Social Links -->
                     <div class="shop-footer-social">
@@ -110,6 +178,21 @@ const subscribe = () => {
                 <p class="shop-copyright">{{ t('footer.copyright', { year: currentYear }) }}</p>
             </div>
         </div>
+
+        <!-- Toast Notification -->
+        <Transition name="toast">
+            <div v-if="showToast" :class="['toast-notification', `toast-${toastType}`]" @click="closeToast">
+                <div class="toast-icon">
+                    <i v-if="toastType === 'success'" class="fas fa-check-circle"></i>
+                    <i v-else-if="toastType === 'error'" class="fas fa-exclamation-circle"></i>
+                    <i v-else class="fas fa-info-circle"></i>
+                </div>
+                <div class="toast-message">{{ toastMessage }}</div>
+                <button class="toast-close" @click.stop="closeToast">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </Transition>
     </footer>
 </template>
 
@@ -129,7 +212,7 @@ const subscribe = () => {
 /* Footer Content */
 .shop-footer-content {
     display: grid;
-    grid-template-columns: 1.5fr 2fr 1fr;
+    grid-template-columns: 1.2fr 2.5fr 1.3fr;
     gap: 3rem;
     margin-bottom: 2.5rem;
 }
@@ -168,7 +251,7 @@ const subscribe = () => {
 /* Shop Links */
 .shop-footer-links {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 2rem;
 }
 
@@ -219,7 +302,7 @@ const subscribe = () => {
 .newsletter-form {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .newsletter-input {
@@ -243,6 +326,11 @@ const subscribe = () => {
     color: #9ca3af;
 }
 
+.newsletter-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .newsletter-submit {
     padding: 0.75rem 1.25rem;
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
@@ -253,9 +341,36 @@ const subscribe = () => {
     transition: all 0.3s;
 }
 
-.newsletter-submit:hover {
+.newsletter-submit:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.newsletter-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Subscriber Benefits */
+.subscriber-benefits {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.subscriber-benefits i {
+    color: #dc2626;
+    font-size: 0.875rem;
+}
+
+.subscriber-benefits span {
+    color: #fca5a5;
+    font-size: 0.8125rem;
 }
 
 /* Social Links */
@@ -346,20 +461,113 @@ const subscribe = () => {
     font-size: 0.95rem;
 }
 
+/* ========== TOAST NOTIFICATION ========== */
+.toast-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 450px;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    cursor: pointer;
+    border-left: 4px solid;
+}
+
+.toast-success {
+    border-left-color: #10b981;
+    background: linear-gradient(to right, #ecfdf5, white);
+}
+
+.toast-error {
+    border-left-color: #ef4444;
+    background: linear-gradient(to right, #fef2f2, white);
+}
+
+.toast-info {
+    border-left-color: #3b82f6;
+    background: linear-gradient(to right, #eff6ff, white);
+}
+
+.toast-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+    color: #10b981;
+}
+
+.toast-error .toast-icon {
+    color: #ef4444;
+}
+
+.toast-info .toast-icon {
+    color: #3b82f6;
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 16px;
+    padding: 4px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    color: #1f2937;
+}
+
+/* Toast Animation */
+.toast-enter-active,
+.toast-leave-active {
+    transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+    opacity: 0;
+    transform: translateX(100px);
+}
+
+.toast-leave-to {
+    opacity: 0;
+    transform: translateX(100px);
+}
+
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .shop-footer-content {
         grid-template-columns: 1fr;
         gap: 2.5rem;
     }
 
     .shop-footer-links {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
     }
 }
 
 @media (max-width: 768px) {
+    .shop-footer-links {
+        grid-template-columns: 1fr;
+    }
+
     .shop-footer-payment {
         flex-direction: column;
         gap: 1rem;
@@ -376,6 +584,14 @@ const subscribe = () => {
 
     .newsletter-form {
         flex-direction: column;
+    }
+
+    .toast-notification {
+        top: 70px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
     }
 }
 </style>

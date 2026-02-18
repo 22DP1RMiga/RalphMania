@@ -73,6 +73,7 @@ const messages = {
                 reviews: 'Atsauksmes',
                 settings: 'Iestatījumi',
                 back_home: 'Atpakaļ uz sākumlapu',
+                newsletter: 'Abonements',
             },
             stats: {
                 orders: 'Pasūtījumi',
@@ -105,6 +106,10 @@ const messages = {
                 },
                 settings: {
                     title: 'Iestatījumi',
+                },
+                newsletter: {
+                    title: 'Jaunumu abonements',
+                    description: 'Pārvaldiet savu e-pasta abonementu un skatiet ekskluzīvos piedāvājumus.',
                 },
             },
             profile: {
@@ -241,6 +246,207 @@ const messages = {
                 popular: 'Populārākie',
             },
         },
+        shop_faq: {
+            title: 'Biežāk uzdotie jautājumi',
+            subtitle: 'Atbildes uz populārākajiem jautājumiem par mūsu veikalu',
+            all_categories: 'Visi',
+            still_questions: 'Vēl ir jautājumi?',
+            still_questions_text: 'Mūsu komanda labprāt palīdzēs atbildēt uz jebkuriem jautājumiem.',
+            contact_us: 'Sazināties ar mums',
+
+            categories: {
+                orders: 'Pasūtījumi',
+                shipping: 'Piegāde',
+                payment: 'Maksājumi',
+                returns: 'Atgriešana',
+                account: 'Konts',
+            },
+
+            orders: {
+                q1: 'Kā es varu izsekot savam pasūtījumam?',
+                a1: 'Pēc pasūtījuma nosūtīšanas jūs saņemsiet e-pastu ar izsekošanas numuru. Varat arī sekot līdzi pasūtījumam savā kontā sadaļā "Mani pasūtījumi".',
+                q2: 'Vai es varu mainīt savu pasūtījumu pēc tā veikšanas?',
+                a2: 'Izmaiņas pasūtījumā ir iespējamas tikai pirms tā nosūtīšanas. Lūdzu, sazinieties ar mums pēc iespējas ātrāk pa e-pastu vai telefonu.',
+                q3: 'Cik ilgi tiek apstrādāts pasūtījums?',
+                a3: 'Pasūtījumi parasti tiek apstrādāti 1-2 darba dienu laikā. Svētku periodā apstrādes laiks var būt ilgāks.',
+                q4: 'Vai es varu atcelt pasūtījumu?',
+                a4: 'Pasūtījumu var atcelt, kamēr tas nav nosūtīts. Sazinieties ar mums pēc iespējas ātrāk, lai to izdarītu.',
+            },
+
+            shipping: {
+                q1: 'Kādas ir piegādes opcijas?',
+                a1: 'Piedāvājam standarta un ekspress piegādi. Standarta piegāde Latvijā: 1-3 darba dienas, ekspress: nākamā darba diena.',
+                q2: 'Vai jūs piegādājat ārpus Latvijas?',
+                a2: 'Jā! Mēs piegādājam uz visām ES valstīm. Piegādes laiks un izmaksas atšķiras atkarībā no valsts.',
+                q3: 'Vai ir bezmaksas piegāde?',
+                a3: 'Jā, bezmaksas piegāde ir pieejama pasūtījumiem virs noteiktas summas. Latvijā - virs €35, Baltijā - virs €50.',
+            },
+
+            payment: {
+                q1: 'Kādas maksājumu metodes jūs pieņemat?',
+                a1: 'Pieņemam Visa, Mastercard, PayPal, Apple Pay un Google Pay maksājumus. Visi maksājumi tiek apstrādāti droši caur Stripe.',
+                q2: 'Vai mani kartes dati ir droši?',
+                a2: 'Pilnīgi. Mēs nekad neredzam un neglabājam jūsu kartes datus. Visi maksājumi tiek apstrādāti caur PCI DSS sertificētu pakalpojumu.',
+                q3: 'Kad tiek noņemta nauda no mana konta?',
+                a3: 'Nauda tiek noņemta uzreiz pēc pasūtījuma apstiprināšanas. Ja pasūtījums tiek atcelts, nauda tiek atgriezta 5-10 darba dienu laikā.',
+            },
+
+            returns: {
+                q1: 'Kāda ir atgriešanas politika?',
+                a1: 'Piedāvājam 14 dienu atgriešanas garantiju. Preces jābūt neizmantotām, ar visām etiķetēm un oriģinālajā iepakojumā.',
+                q2: 'Kā es varu atgriezt preci?',
+                a2: 'Sazinieties ar mums pa e-pastu, un mēs nosūtīsim jums atgriešanas instrukcijas un adresi.',
+                q3: 'Cik ātri es saņemšu atmaksu?',
+                a3: 'Atmaksa tiek veikta 14 dienu laikā pēc atgrieztās preces saņemšanas un pārbaudes.',
+            },
+
+            account: {
+                q1: 'Kā es varu izveidot kontu?',
+                a1: 'Noklikšķiniet uz "Reģistrēties" lapas augšpusē un aizpildiet reģistrācijas formu ar savu e-pastu un paroli.',
+                q2: 'Es aizmirsu savu paroli. Ko darīt?',
+                a2: 'Noklikšķiniet uz "Aizmirsu paroli" pieteikšanās lapā. Mēs nosūtīsim jums e-pastu ar saiti paroles atjaunošanai.',
+            },
+        },
+
+        shop_shipping: {
+            title: 'Piegādes informācija',
+            subtitle: 'Ātra un droša piegāde visā Eiropā',
+            free_shipping_banner: 'Bezmaksas piegāde pasūtījumiem virs €35 Latvijā!',
+
+            zones_title: 'Piegādes zonas un cenas',
+            zones: {
+                latvia: 'Latvija',
+                baltics: 'Baltijas valstis',
+                europe: 'Pārējā Eiropa',
+            },
+
+            standard: 'Standarta piegāde',
+            express: 'Ekspress piegāde',
+            business_days: 'darba dienas',
+            free_over: 'Bezmaksas virs',
+
+            features_title: 'Mūsu piegādes priekšrocības',
+            features: {
+                packaging: 'Droša iepakošana',
+                packaging_desc: 'Katra prece tiek rūpīgi iepakota, lai nodrošinātu drošu piegādi.',
+                tracking: 'Izsekošana',
+                tracking_desc: 'Sekojiet līdzi savam pasūtījumam reāllaikā ar izsekošanas numuru.',
+                insurance: 'Apdrošināšana',
+                insurance_desc: 'Visi sūtījumi ir apdrošināti pret bojājumiem un pazušanu.',
+                returns: 'Vienkārša atgriešana',
+                returns_desc: '14 dienu atgriešanas garantija visām precēm.',
+            },
+
+            process_title: 'Piegādes process',
+            process: {
+                step1_title: 'Pasūtījuma apstrāde',
+                step1_desc: 'Jūsu pasūtījums tiek apstrādāts 1-2 darba dienu laikā.',
+                step2_title: 'Iepakošana',
+                step2_desc: 'Preces tiek rūpīgi iepakotas un sagatavots sūtīšanai.',
+                step3_title: 'Nosūtīšana',
+                step3_desc: 'Saņemsiet e-pastu ar izsekošanas informāciju.',
+                step4_title: 'Piegāde',
+                step4_desc: 'Jūsu pasūtījums tiek piegādāts uz norādīto adresi.',
+            },
+
+            questions: 'Ir jautājumi par piegādi?',
+            questions_text: 'Mūsu komanda labprāt palīdzēs.',
+            view_faq: 'Skatīt BUJ',
+            contact_us: 'Sazināties',
+        },
+
+        shop_returns: {
+            title: 'Atgriešana un atmaksa',
+            subtitle: 'Vienkārša un ātra atgriešanas process',
+            days: 'dienas',
+            guarantee_title: '14 dienu atgriešanas garantija',
+            guarantee_text: 'Ja neesat apmierināts ar savu pirkumu, varat to atgriezt 14 dienu laikā.',
+
+            process_title: 'Atgriešanas process',
+            steps: {
+                step1_title: 'Sazinieties ar mums',
+                step1_desc: 'Nosūtiet e-pastu uz returns@ralphmania.lv ar pasūtījuma numuru.',
+                step2_title: 'Saņemiet apstiprinājumu',
+                step2_desc: 'Mēs nosūtīsim jums atgriešanas instrukcijas un adresi.',
+                step3_title: 'Nosūtiet preci',
+                step3_desc: 'Droši iepakojiet preci un nosūtiet to uz norādīto adresi.',
+                step4_title: 'Saņemiet atmaksu',
+                step4_desc: 'Pēc preces saņemšanas atmaksa tiks veikta 14 dienu laikā.',
+            },
+
+            conditions_title: 'Atgriešanas nosacījumi',
+            conditions: {
+                period: '14 dienu laikā no saņemšanas',
+                tags: 'Visas etiķetes ir neskartas',
+                unworn: 'Prece nav valkāta vai izmantota',
+                packaging: 'Oriģinālais iepakojums',
+                receipt: 'Pirkuma apliecinājums',
+            },
+
+            non_returnable_title: 'Preces, kuras nevar atgriezt',
+            non_returnable: {
+                gift_cards: 'Dāvanu kartes',
+                personalized: 'Personalizētas preces',
+                sale: 'Izpārdošanas preces (ar 50%+ atlaidi)',
+                opened: 'Atvērtas higiēnas preces',
+            },
+
+            refund_title: 'Atmaksas informācija',
+            refund: {
+                card_title: 'Atmaksa uz karti',
+                card_desc: 'Nauda tiek atgriezta uz to pašu maksājuma metodi, kas izmantota pirkumam.',
+                time_title: 'Apstrādes laiks',
+                time_desc: 'Atmaksa tiek veikta 14 dienu laikā pēc preces saņemšanas.',
+                shipping_title: 'Piegādes izmaksas',
+                shipping_desc: 'Sākotnējās piegādes izmaksas netiek atmaksātas, izņemot bojātu preču gadījumā.',
+            },
+
+            need_help: 'Nepieciešama palīdzība?',
+            need_help_text: 'Mūsu klientu apkalpošanas komanda ir gatava palīdzēt.',
+            contact_us: 'Sazināties ar mums',
+        },
+
+        shop_contact: {
+            title: 'Sazināties ar mums',
+            subtitle: 'Mēs esam šeit, lai palīdzētu!',
+
+            form_title: 'Nosūtiet ziņojumu',
+            name: 'Vārds',
+            name_placeholder: 'Jūsu vārds',
+            email: 'E-pasts',
+            email_placeholder: 'jusu@epasts.lv',
+            phone: 'Telefons',
+            phone_placeholder: '+371 20 000 000',
+            subject: 'Tēma',
+            select_subject: 'Izvēlieties tēmu',
+            order_number: 'Pasūtījuma numurs',
+            order_number_placeholder: 'RM-2025-XXXXX',
+            message: 'Ziņojums',
+            message_placeholder: 'Kā mēs varam jums palīdzēt?',
+            send: 'Nosūtīt ziņojumu',
+            sending: 'Sūta...',
+
+            subjects: {
+                order: 'Jautājums par pasūtījumu',
+                shipping: 'Piegādes jautājums',
+                returns: 'Atgriešana / Atmaksa',
+                product: 'Jautājums par produktu',
+                payment: 'Maksājuma problēma',
+                other: 'Cits jautājums',
+            },
+
+            contact_info: 'Kontaktinformācija',
+            response_time: 'Ātra atbilde',
+            response_time_text: 'Parasti atbildam 24 stundu laikā darba dienās.',
+
+            quick_links: 'Noderīgas saites',
+            faq_link: 'Biežāk uzdotie jautājumi',
+            shipping_link: 'Piegādes informācija',
+            returns_link: 'Atgriešanas politika',
+
+            success: 'Paldies! Jūsu ziņojums ir nosūtīts. Mēs atbildēsim pēc iespējas ātrāk.',
+            error: 'Kļūda nosūtot ziņojumu. Lūdzu, mēģiniet vēlreiz.',
+        },
         content: {
             hero: {
                 title: 'RalphMania Saturs',
@@ -262,6 +468,10 @@ const messages = {
             blogs: 'Raksti',
             video: 'Video',
             blog: 'Raksts',
+            news: 'Ziņas',
+            news_single: 'Ziņa',
+            announcements: 'Paziņojumi',
+            announcement_single: 'Paziņojums',
 
             // Meklēšanai
             search_placeholder: 'Meklēt pēc nosaukuma vai apraksta...',
@@ -270,10 +480,13 @@ const messages = {
             platform: 'Platforma',
             category: 'Kategorija',
             sort_by: 'Kārtot pēc',
-            newest: 'Jaunākie',
-            oldest: 'Vecākie',
-            most_liked: 'Visvairāk patīk',
-            most_viewed: 'Visvairāk skatījumu',
+
+            sort: {
+                newest: 'Jaunākie',
+                oldest: 'Vecākie',
+                most_liked: 'Visvairāk patīk',
+                most_viewed: 'Visvairāk skatījumu',
+            },
 
             // Rezultāti
             results: 'rezultāti',
@@ -319,6 +532,8 @@ const messages = {
             review_submitted: 'Jūsu atsauksme tika iesniegta un gaida apstiprinājumu',
             liked_success: 'Pievienots pie iecienītākajiem!',
             unliked_success: 'Noņemts no iecienītākajiem',
+            read_more: 'Lasīt vairāk',
+            watch: 'Skatīties',
         },
         common: {
             loading: 'Lādē...',
@@ -399,9 +614,12 @@ const messages = {
             follow_us: 'Seko mums',
 
             // Saites
-            video: 'Video',
-            blog: 'Blogs',
-            apparel: 'Apģērbi',
+            content: 'Saturs',
+            videos: 'Video',
+            blogs: 'Emuāri',
+            news: 'Ziņas',
+            announcements: 'Paziņojumi',
+            clothing: 'Apģērbi',
             souvenirs: 'Suvenīri',
             gift_cards: 'Dāvanu kartes',
             all_products: 'Visi produkti',
@@ -421,7 +639,7 @@ const messages = {
             location: 'Rīga, Latvija',
 
             // Biļetens (Newsletter)
-            subscribe_description: 'Uzzini pirmais par jauniem produktiem un akcijām!',
+            subscribe_description: 'Piesakies jaunumiem un saņem ekskluzīvus piedāvājumus!',
             email_placeholder: 'Tavs e-pasts',
             subscribe_success: 'Paldies par abonēšanu!',
 
@@ -674,6 +892,48 @@ const messages = {
             zambia: 'Zambija',
             zimbabwe: 'Zimbabve',
             other: 'Cita'
+        },
+        // informatīvajam izdevumam (newsletter)
+        newsletter: {
+            // Success/Error messages
+            success: 'Paldies par abonēšanu! Jūs saņemsiet ekskluzīvus piedāvājumus un jaunumus.',
+            already_subscribed: 'Šis e-pasts jau ir abonēts.',
+            error: 'Kļūda abonējot. Lūdzu, mēģiniet vēlreiz.',
+            invalid_email: 'Lūdzu, ievadiet derīgu e-pasta adresi.',
+            unsubscribed_success: 'Jūs esat veiksmīgi atteicies no jaunumu saņemšanas.',
+            unsubscribe_failed: 'Neizdevās atteikties. Lūdzu, mēģiniet vēlreiz.',
+            preferences_updated: 'Preferences veiksmīgi saglabātas.',
+
+            // Benefits hint in footer
+            benefits_hint: 'Abonenti saņem ekskluzīvas atlaides!',
+
+            // Dashboard section
+            title: 'Jaunumu abonements',
+            subscribed: 'Abonēts',
+            not_subscribed: 'Nav abonēts',
+            subscribe_now: 'Abonēt tagad',
+            manage_preferences: 'Pārvaldīt preferences',
+
+            // Preferences
+            preferences: {
+                title: 'E-pasta preferences',
+                receive_news: 'Saņemt jaunumus un ziņas',
+                receive_promotions: 'Saņemt piedāvājumus un atlaides',
+                receive_announcements: 'Saņemt svarīgus paziņojumus',
+            },
+
+            // Subscriber offers
+            offers: {
+                title: 'Ekskluzīvi piedāvājumi',
+                subtitle: 'Tikai abonentiem',
+                no_offers: 'Pašlaik nav aktīvu piedāvājumu',
+                code: 'Kods',
+                copy_code: 'Kopēt kodu',
+                copied: 'Nokopēts!',
+                expires: 'Derīgs līdz',
+                min_order: 'Min. pasūtījums',
+                use_at_checkout: 'Izmantojiet pie apmaksas',
+            },
         },
         // privātuma politikai
         privacy: {
@@ -1710,6 +1970,7 @@ const messages = {
                 reviews: 'Reviews',
                 settings: 'Settings',
                 back_home: 'Back to Home',
+                newsletter: 'Subscription',
             },
             stats: {
                 orders: 'Orders',
@@ -1742,6 +2003,10 @@ const messages = {
                 },
                 settings: {
                     title: 'Settings',
+                },
+                newsletter: {
+                    title: 'Newsletter Subscription',
+                    description: 'Manage your email subscription and view exclusive offers.',
                 },
             },
             profile: {
@@ -1878,6 +2143,207 @@ const messages = {
                 popular: 'Most Popular',
             },
         },
+        shop_faq: {
+            title: 'Frequently Asked Questions',
+            subtitle: 'Answers to the most common questions about our store',
+            all_categories: 'All',
+            still_questions: 'Still have questions?',
+            still_questions_text: 'Our team is happy to help answer any questions you may have.',
+            contact_us: 'Contact us',
+
+            categories: {
+                orders: 'Orders',
+                shipping: 'Shipping',
+                payment: 'Payment',
+                returns: 'Returns',
+                account: 'Account',
+            },
+
+            orders: {
+                q1: 'How can I track my order?',
+                a1: 'After your order is shipped, you will receive an email with a tracking number. You can also track your order in your account under "My Orders".',
+                q2: 'Can I change my order after placing it?',
+                a2: 'Changes to your order are only possible before it is shipped. Please contact us as soon as possible by email or phone.',
+                q3: 'How long does order processing take?',
+                a3: 'Orders are usually processed within 1-2 business days. During holiday periods, processing time may be longer.',
+                q4: 'Can I cancel my order?',
+                a4: 'You can cancel your order as long as it has not been shipped. Contact us as soon as possible to do so.',
+            },
+
+            shipping: {
+                q1: 'What are the shipping options?',
+                a1: 'We offer standard and express shipping. Standard shipping in Latvia: 1-3 business days, express: next business day.',
+                q2: 'Do you ship outside Latvia?',
+                a2: 'Yes! We ship to all EU countries. Delivery time and costs vary depending on the country.',
+                q3: 'Is there free shipping?',
+                a3: 'Yes, free shipping is available for orders over a certain amount. Latvia - over €35, Baltics - over €50.',
+            },
+
+            payment: {
+                q1: 'What payment methods do you accept?',
+                a1: 'We accept Visa, Mastercard, PayPal, Apple Pay, and Google Pay payments. All payments are processed securely through Stripe.',
+                q2: 'Is my card data secure?',
+                a2: 'Absolutely. We never see or store your card details. All payments are processed through a PCI DSS certified service.',
+                q3: 'When is the money taken from my account?',
+                a3: 'Money is charged immediately after order confirmation. If the order is cancelled, money is refunded within 5-10 business days.',
+            },
+
+            returns: {
+                q1: 'What is the return policy?',
+                a1: 'We offer a 14-day return guarantee. Items must be unused, with all tags attached and in original packaging.',
+                q2: 'How can I return an item?',
+                a2: 'Contact us by email and we will send you return instructions and address.',
+                q3: 'How quickly will I receive my refund?',
+                a3: 'Refunds are processed within 14 days after receiving and inspecting the returned item.',
+            },
+
+            account: {
+                q1: 'How can I create an account?',
+                a1: 'Click "Register" at the top of the page and fill out the registration form with your email and password.',
+                q2: 'I forgot my password. What should I do?',
+                a2: 'Click "Forgot password" on the login page. We will send you an email with a link to reset your password.',
+            },
+        },
+
+        shop_shipping: {
+            title: 'Shipping Information',
+            subtitle: 'Fast and secure delivery across Europe',
+            free_shipping_banner: 'Free shipping on orders over €35 in Latvia!',
+
+            zones_title: 'Shipping zones and prices',
+            zones: {
+                latvia: 'Latvia',
+                baltics: 'Baltic States',
+                europe: 'Rest of Europe',
+            },
+
+            standard: 'Standard shipping',
+            express: 'Express shipping',
+            business_days: 'business days',
+            free_over: 'Free over',
+
+            features_title: 'Our shipping advantages',
+            features: {
+                packaging: 'Secure packaging',
+                packaging_desc: 'Every item is carefully packaged to ensure safe delivery.',
+                tracking: 'Tracking',
+                tracking_desc: 'Track your order in real-time with a tracking number.',
+                insurance: 'Insurance',
+                insurance_desc: 'All shipments are insured against damage and loss.',
+                returns: 'Easy returns',
+                returns_desc: '14-day return guarantee on all items.',
+            },
+
+            process_title: 'Delivery process',
+            process: {
+                step1_title: 'Order processing',
+                step1_desc: 'Your order is processed within 1-2 business days.',
+                step2_title: 'Packaging',
+                step2_desc: 'Items are carefully packed and prepared for shipping.',
+                step3_title: 'Shipping',
+                step3_desc: 'You will receive an email with tracking information.',
+                step4_title: 'Delivery',
+                step4_desc: 'Your order is delivered to the specified address.',
+            },
+
+            questions: 'Questions about shipping?',
+            questions_text: 'Our team is happy to help.',
+            view_faq: 'View FAQ',
+            contact_us: 'Contact us',
+        },
+
+        shop_returns: {
+            title: 'Returns & Refunds',
+            subtitle: 'Simple and fast return process',
+            days: 'days',
+            guarantee_title: '14-day return guarantee',
+            guarantee_text: 'If you are not satisfied with your purchase, you can return it within 14 days.',
+
+            process_title: 'Return process',
+            steps: {
+                step1_title: 'Contact us',
+                step1_desc: 'Send an email to returns@ralphmania.lv with your order number.',
+                step2_title: 'Receive confirmation',
+                step2_desc: 'We will send you return instructions and address.',
+                step3_title: 'Ship the item',
+                step3_desc: 'Pack the item securely and send it to the specified address.',
+                step4_title: 'Receive refund',
+                step4_desc: 'After receiving the item, refund will be processed within 14 days.',
+            },
+
+            conditions_title: 'Return conditions',
+            conditions: {
+                period: 'Within 14 days of receipt',
+                tags: 'All tags are intact',
+                unworn: 'Item is unworn or unused',
+                packaging: 'Original packaging',
+                receipt: 'Proof of purchase',
+            },
+
+            non_returnable_title: 'Non-returnable items',
+            non_returnable: {
+                gift_cards: 'Gift cards',
+                personalized: 'Personalized items',
+                sale: 'Sale items (50%+ discount)',
+                opened: 'Opened hygiene products',
+            },
+
+            refund_title: 'Refund information',
+            refund: {
+                card_title: 'Refund to card',
+                card_desc: 'Money is refunded to the same payment method used for the purchase.',
+                time_title: 'Processing time',
+                time_desc: 'Refunds are processed within 14 days after receiving the item.',
+                shipping_title: 'Shipping costs',
+                shipping_desc: 'Original shipping costs are not refunded, except in case of damaged items.',
+            },
+
+            need_help: 'Need help?',
+            need_help_text: 'Our customer service team is ready to assist.',
+            contact_us: 'Contact us',
+        },
+
+        shop_contact: {
+            title: 'Contact Us',
+            subtitle: 'We are here to help!',
+
+            form_title: 'Send a message',
+            name: 'Name',
+            name_placeholder: 'Your name',
+            email: 'Email',
+            email_placeholder: 'your@email.com',
+            phone: 'Phone',
+            phone_placeholder: '+371 20 000 000',
+            subject: 'Subject',
+            select_subject: 'Select a subject',
+            order_number: 'Order number',
+            order_number_placeholder: 'RM-2025-XXXXX',
+            message: 'Message',
+            message_placeholder: 'How can we help you?',
+            send: 'Send message',
+            sending: 'Sending...',
+
+            subjects: {
+                order: 'Question about order',
+                shipping: 'Shipping question',
+                returns: 'Return / Refund',
+                product: 'Product question',
+                payment: 'Payment issue',
+                other: 'Other question',
+            },
+
+            contact_info: 'Contact Information',
+            response_time: 'Fast response',
+            response_time_text: 'We usually respond within 24 hours on business days.',
+
+            quick_links: 'Useful links',
+            faq_link: 'Frequently Asked Questions',
+            shipping_link: 'Shipping Information',
+            returns_link: 'Return Policy',
+
+            success: 'Thank you! Your message has been sent. We will respond as soon as possible.',
+            error: 'Error sending message. Please try again.',
+        },
         content: {
             hero: {
                 title: 'RalphMania Content',
@@ -1899,6 +2365,10 @@ const messages = {
             blogs: 'Blogs',
             video: 'Video',
             blog: 'Blog',
+            news: 'News',
+            news_single: 'News',
+            announcements: 'Announcements',
+            announcement_single: 'Announcement',
 
             // Meklēšanai
             search_placeholder: 'Search by name or description...',
@@ -1907,10 +2377,13 @@ const messages = {
             platform: 'Platform',
             category: 'Category',
             sort_by: 'Sort by',
-            newest: 'Newest',
-            oldest: 'Oldest',
-            most_liked: 'Most liked',
-            most_viewed: 'Most viewed',
+
+            sort: {
+                newest: 'Newest',
+                oldest: 'Oldest',
+                most_liked: 'Most liked',
+                most_viewed: 'Most viewed',
+            },
 
             // Rezultāti
             results: 'results',
@@ -1956,6 +2429,8 @@ const messages = {
             review_submitted: 'Your review has been submitted and is awaiting approval',
             liked_success: 'Added to favorites!',
             unliked_success: 'Removed from favorites',
+            read_more: 'Read more',
+            watch: 'Watch',
         },
         common: {
             loading: 'Loading...',
@@ -2036,9 +2511,12 @@ const messages = {
             follow_us: 'Follow Us',
 
             // Saites
-            video: 'Videos',
-            blog: 'Blog',
-            apparel: 'Apparel',
+            content: 'Content',
+            videos: 'Videos',
+            blogs: 'Blogs',
+            news: 'News',
+            announcements: 'Announcements',
+            clothing: 'Clothing',
             souvenirs: 'Souvenirs',
             gift_cards: 'Gift Cards',
             all_products: 'All Products',
@@ -2312,6 +2790,48 @@ const messages = {
             zambia: 'Zambia',
             zimbabwe: 'Zimbabwe',
             other: 'Other'
+        },
+        // informatīvajam izdevumam (newsletter)
+        newsletter: {
+            // Success/Error messages
+            success: 'Thank you for subscribing! You will receive exclusive offers and updates.',
+            already_subscribed: 'This email is already subscribed.',
+            error: 'Error subscribing. Please try again.',
+            invalid_email: 'Please enter a valid email address.',
+            unsubscribed_success: 'You have successfully unsubscribed from our newsletter.',
+            unsubscribe_failed: 'Failed to unsubscribe. Please try again.',
+            preferences_updated: 'Preferences saved successfully.',
+
+            // Benefits hint in footer
+            benefits_hint: 'Subscribers get exclusive discounts!',
+
+            // Dashboard section
+            title: 'Newsletter Subscription',
+            subscribed: 'Subscribed',
+            not_subscribed: 'Not subscribed',
+            subscribe_now: 'Subscribe now',
+            manage_preferences: 'Manage preferences',
+
+            // Preferences
+            preferences: {
+                title: 'Email Preferences',
+                receive_news: 'Receive news and updates',
+                receive_promotions: 'Receive offers and discounts',
+                receive_announcements: 'Receive important announcements',
+            },
+
+            // Subscriber offers
+            offers: {
+                title: 'Exclusive Offers',
+                subtitle: 'Subscribers only',
+                no_offers: 'No active offers at the moment',
+                code: 'Code',
+                copy_code: 'Copy code',
+                copied: 'Copied!',
+                expires: 'Valid until',
+                min_order: 'Min. order',
+                use_at_checkout: 'Use at checkout',
+            },
         },
         // privātuma politikai
         privacy: {
