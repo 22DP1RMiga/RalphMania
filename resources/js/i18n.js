@@ -675,6 +675,229 @@ const messages = {
             zimbabwe: 'Zimbabve',
             other: 'Cita'
         },
+        // privātuma politikai
+        privacy: {
+            title: 'Privātuma politika',
+            last_updated: 'Pēdējoreiz atjaunināts',
+
+            introduction: {
+                title: 'Ievads',
+                text: 'RalphMania ("mēs", "mūsu") apņemas aizsargāt jūsu privātumu. Šī privātuma politika izskaidro, kā mēs vācam, izmantojam un aizsargājam jūsu personisko informāciju, kad jūs izmantojat mūsu tīmekļa vietni un pakalpojumus.'
+            },
+
+            data_collection: {
+                title: 'Datu vākšana',
+                intro: 'Mēs vācam šādus datus:',
+                personal_data: {
+                    title: 'Personiskie dati',
+                    name: 'Vārds un uzvārds',
+                    email: 'E-pasta adrese',
+                    phone: 'Telefona numurs',
+                    address: 'Piegādes adrese (valsts, pilsēta, adrese, pasta indekss)',
+                    birth_date: 'Dzimšanas datums (neobligāti)'
+                },
+                technical_data: {
+                    title: 'Tehniskie dati',
+                    ip: 'IP adrese',
+                    browser: 'Pārlūkprogrammas tips un versija',
+                    device: 'Ierīces informācija',
+                    cookies: 'Sīkdatņu dati'
+                }
+            },
+
+            data_usage: {
+                title: 'Datu izmantošana',
+                intro: 'Mēs izmantojam jūsu datus šādiem mērķiem:',
+                account: 'Konta izveidei un pārvaldīšanai',
+                orders: 'Pasūtījumu apstrādei un piegādei',
+                communication: 'Saziņai par pasūtījumiem un jaunumiem',
+                improvement: 'Pakalpojumu uzlabošanai',
+                security: 'Drošības nodrošināšanai un krāpšanas novēršanai'
+            },
+
+            data_sharing: {
+                title: 'Datu nodošana trešajām pusēm',
+                intro: 'Mēs varam nodot jūsu datus:',
+                payment: 'Maksājumu apstrādes pakalpojumu sniedzējiem (Stripe) drošai maksājumu veikšanai',
+                delivery: 'Piegādes dienestiem pasūtījumu piegādei',
+                legal: 'Valsts iestādēm, ja to pieprasa likums',
+                no_sell: 'Mēs nekad nepārdodam jūsu personiskos datus trešajām pusēm mārketinga nolūkiem.'
+            },
+
+            data_security: {
+                title: 'Datu drošība',
+                text: 'Mēs izmantojam mūsdienīgus drošības pasākumus jūsu datu aizsardzībai:',
+                encryption: 'Paroļu šifrēšana ar bcrypt algoritmu',
+                ssl: 'SSL/TLS šifrēts savienojums visām datu pārraidēm',
+                access: 'Ierobežota piekļuve personiskajiem datiem tikai pilnvarotiem darbiniekiem',
+                backup: 'Regulāras datu rezerves kopijas'
+            },
+
+            cookies: {
+                title: 'Sīkdatnes',
+                text: 'Mēs izmantojam sīkdatnes, lai uzlabotu jūsu pieredzi:',
+                essential: 'Nepieciešamās sīkdatnes - sesijas pārvaldībai un autentifikācijai',
+                functional: 'Funkcionālās sīkdatnes - valodas un preferenču saglabāšanai',
+                analytics: 'Analītikas sīkdatnes - apmeklējuma statistikas apkopošanai'
+            },
+
+            user_rights: {
+                title: 'Jūsu tiesības',
+                intro: 'Saskaņā ar VDAR jums ir šādas tiesības:',
+                access: 'Piekļuves tiesības - pieprasīt informāciju par jūsu datiem',
+                rectification: 'Labošanas tiesības - labot neprecīzus datus',
+                erasure: 'Dzēšanas tiesības - pieprasīt datu dzēšanu',
+                portability: 'Pārnesamības tiesības - saņemt savus datus strukturētā formātā',
+                objection: 'Iebilduma tiesības - iebilst pret datu apstrādi'
+            },
+
+            data_retention: {
+                title: 'Datu glabāšanas ilgums',
+                text: 'Mēs glabājam jūsu datus tik ilgi, cik nepieciešams pakalpojumu sniegšanai. Konta dati tiek glabāti līdz konta dzēšanai. Pasūtījumu dati tiek glabāti 5 gadus saskaņā ar grāmatvedības prasībām.'
+            },
+
+            children: {
+                title: 'Bērnu privātums',
+                text: 'Mūsu pakalpojumi nav paredzēti personām, kas jaunākas par 13 gadiem. Mēs apzināti nevācam datus no bērniem bez vecāku piekrišanas.'
+            },
+
+            changes: {
+                title: 'Izmaiņas privātuma politikā',
+                text: 'Mēs varam periodiski atjaunināt šo privātuma politiku. Par būtiskām izmaiņām mēs informēsim jūs e-pastā vai ar paziņojumu mūsu vietnē.'
+            },
+
+            contact: {
+                title: 'Kontaktinformācija',
+                text: 'Ja jums ir jautājumi par šo privātuma politiku vai vēlaties izmantot savas tiesības, sazinieties ar mums:',
+                email_label: 'E-pasts',
+                address_label: 'Adrese'
+            }
+        },
+        // lietošanas noteikumiem
+        terms: {
+            title: 'Lietošanas noteikumi',
+            last_updated: 'Pēdējoreiz atjaunināts',
+
+            introduction: {
+                title: 'Ievads',
+                text: 'Laipni lūgti RalphMania! Šie lietošanas noteikumi regulē jūsu piekļuvi un mūsu tīmekļa vietnes, pakalpojumu un produktu izmantošanu. Izmantojot mūsu platformu, jūs piekrītat šiem noteikumiem.'
+            },
+
+            definitions: {
+                title: 'Definīcijas',
+                platform: 'Platforma',
+                platform_desc: 'RalphMania tīmekļa vietne un visi saistītie pakalpojumi',
+                user: 'Lietotājs',
+                user_desc: 'Jebkura persona, kas piekļūst vai izmanto platformu',
+                content: 'Saturs',
+                content_desc: 'Video, emuāri, attēli un citi materiāli, kas publicēti platformā',
+                products: 'Produkti',
+                products_desc: 'Preces, kas pieejamas iegādei mūsu veikalā',
+                administrator: 'Administrators',
+                administrator_desc: 'RalphMania pārstāvis ar pārvaldības tiesībām'
+            },
+
+            account: {
+                title: 'Konta reģistrācija',
+                intro: 'Reģistrējoties platformā, jūs piekrītat:',
+                accurate_info: 'Sniegt patiesu un precīzu informāciju',
+                password_security: 'Uzturēt savu paroli drošu un konfidenciālu',
+                one_account: 'Izmantot tikai vienu kontu uz personu',
+                age_requirement: 'Būt vismaz 13 gadus vecam (vai ar vecāku atļauju)',
+                responsibility: 'Uzņemties pilnu atbildību par darbībām savā kontā'
+            },
+
+            conduct: {
+                title: 'Lietotāju uzvedības noteikumi',
+                intro: 'Izmantojot platformu, jūs apņematies:',
+                no_illegal: 'Neveikt nelikumīgas darbības',
+                no_harmful: 'Nepublicēt kaitīgu vai aizskarošu saturu',
+                no_spam: 'Nesūtīt surogātpastu vai nevēlamus ziņojumus',
+                no_impersonation: 'Neuzdoties par citām personām',
+                no_hacking: 'Nemēģināt piekļūt sistēmām bez atļaujas',
+                respect_others: 'Cienīt citus lietotājus un viņu viedokļus'
+            },
+
+            content_guidelines: {
+                title: 'Satura vadlīnijas',
+                intro: 'Publicējot komentārus vai atsauksmes:',
+                no_offensive: 'Aizliegts aizskarošs, naidīgs vai diskriminējošs saturs',
+                no_copyright: 'Aizliegts publicēt saturu, kas pārkāpj autortiesības',
+                no_false_info: 'Aizliegta nepatiesa vai maldinoša informācija',
+                moderation: 'Saturs var tikt moderēts vai dzēsts bez iepriekšēja brīdinājuma'
+            },
+
+            shop: {
+                title: 'Veikala noteikumi',
+                orders: {
+                    title: 'Pasūtījumi',
+                    text: 'Veicot pasūtījumu, jūs apņematies iegādāties izvēlētos produktus par norādīto cenu. Pasūtījums tiek uzskatīts par apstiprinātu pēc maksājuma saņemšanas.'
+                },
+                pricing: {
+                    title: 'Cenas',
+                    text: 'Visas cenas ir norādītas eiro (EUR) un ietver PVN. Mēs paturam tiesības mainīt cenas bez iepriekšēja brīdinājuma, bet tas neietekmē jau veiktos pasūtījumus.'
+                },
+                payment: {
+                    title: 'Maksājumi',
+                    text: 'Mēs pieņemam maksājumus ar kredītkartēm/debetkartēm caur Stripe maksājumu sistēmu. Maksājumu dati tiek apstrādāti droši saskaņā ar PCI DSS standartiem.'
+                },
+                delivery: {
+                    title: 'Piegāde',
+                    text: 'Piegādes laiks un izmaksas ir atkarīgas no izvēlētā piegādes veida un galamērķa. Detalizēta informācija tiek sniegta pasūtījuma noformēšanas laikā.'
+                }
+            },
+
+            returns: {
+                title: 'Atgriešana un atmaksa',
+                intro: 'Mēs piedāvājam atgriešanas iespēju saskaņā ar šādiem nosacījumiem:',
+                period: 'Preces var atgriezt 14 dienu laikā no saņemšanas brīža',
+                condition: 'Precēm jābūt neizmantotām un oriģinālajā iepakojumā',
+                process: 'Atgriešanai sazinieties ar mums pa e-pastu pirms preču nosūtīšanas',
+                refund_time: 'Atmaksa tiek veikta 14 dienu laikā pēc preces saņemšanas atpakaļ'
+            },
+
+            intellectual_property: {
+                title: 'Intelektuālais īpašums',
+                text: 'Viss platformas saturs ir RalphMania īpašums vai tiek izmantots ar atļauju:',
+                logo: 'RalphMania logotips un zīmols ir reģistrētas preču zīmes',
+                content: 'Video, attēli un teksti ir aizsargāti ar autortiesībām',
+                design: 'Vietnes dizains un struktūra ir mūsu intelektuālais īpašums'
+            },
+
+            liability: {
+                title: 'Atbildības ierobežojumi',
+                text: 'RalphMania nav atbildīga par:',
+                availability: 'Īslaicīgiem pakalpojumu pārtraukumiem vai tehniskām problēmām',
+                accuracy: 'Trešo pušu satura precizitāti',
+                third_party: 'Ārējo vietņu saturu, uz kurām mēs atsaucamies',
+                damages: 'Netiešiem zaudējumiem, kas radušies platformas izmantošanas rezultātā'
+            },
+
+            termination: {
+                title: 'Konta slēgšana',
+                text: 'Par konta slēgšanu:',
+                user_right: 'Jūs varat jebkurā laikā slēgt savu kontu, sazinoties ar mums',
+                admin_right: 'Mēs varam slēgt vai apturēt kontus, kas pārkāpj šos noteikumus',
+                consequences: 'Pēc konta slēgšanas jūs zaudējat piekļuvi visiem konta datiem un vēsturei'
+            },
+
+            changes: {
+                title: 'Noteikumu izmaiņas',
+                text: 'Mēs varam periodiski atjaunināt šos noteikumus. Par būtiskām izmaiņām mēs informēsim jūs e-pastā vai ar paziņojumu platformā. Turpinot izmantot platformu pēc izmaiņām, jūs piekrītat jaunajiem noteikumiem.'
+            },
+
+            governing_law: {
+                title: 'Piemērojamie tiesību akti',
+                text: 'Šie noteikumi tiek regulēti saskaņā ar Latvijas Republikas likumiem. Jebkuri strīdi tiks risināti Latvijas tiesās.'
+            },
+
+            contact: {
+                title: 'Kontaktinformācija',
+                text: 'Ja jums ir jautājumi par šiem noteikumiem, sazinieties ar mums:',
+                email_label: 'E-pasts',
+                address_label: 'Adrese'
+            }
+        },
         // administratoriem
         admin: {
             dashboard: {
@@ -2089,6 +2312,229 @@ const messages = {
             zambia: 'Zambia',
             zimbabwe: 'Zimbabwe',
             other: 'Other'
+        },
+        // privātuma politikai
+        privacy: {
+            title: 'Privacy Policy',
+            last_updated: 'Last updated',
+
+            introduction: {
+                title: 'Introduction',
+                text: 'RalphMania ("we", "our") is committed to protecting your privacy. This privacy policy explains how we collect, use, and protect your personal information when you use our website and services.'
+            },
+
+            data_collection: {
+                title: 'Data Collection',
+                intro: 'We collect the following data:',
+                personal_data: {
+                    title: 'Personal Data',
+                    name: 'First and last name',
+                    email: 'Email address',
+                    phone: 'Phone number',
+                    address: 'Delivery address (country, city, address, postal code)',
+                    birth_date: 'Date of birth (optional)'
+                },
+                technical_data: {
+                    title: 'Technical Data',
+                    ip: 'IP address',
+                    browser: 'Browser type and version',
+                    device: 'Device information',
+                    cookies: 'Cookie data'
+                }
+            },
+
+            data_usage: {
+                title: 'Data Usage',
+                intro: 'We use your data for the following purposes:',
+                account: 'Account creation and management',
+                orders: 'Order processing and delivery',
+                communication: 'Communication about orders and updates',
+                improvement: 'Service improvement',
+                security: 'Security and fraud prevention'
+            },
+
+            data_sharing: {
+                title: 'Data Sharing with Third Parties',
+                intro: 'We may share your data with:',
+                payment: 'Payment processors (Stripe) for secure payment processing',
+                delivery: 'Delivery services for order fulfillment',
+                legal: 'Government authorities if required by law',
+                no_sell: 'We never sell your personal data to third parties for marketing purposes.'
+            },
+
+            data_security: {
+                title: 'Data Security',
+                text: 'We use modern security measures to protect your data:',
+                encryption: 'Password encryption with bcrypt algorithm',
+                ssl: 'SSL/TLS encrypted connection for all data transfers',
+                access: 'Limited access to personal data only for authorized personnel',
+                backup: 'Regular data backups'
+            },
+
+            cookies: {
+                title: 'Cookies',
+                text: 'We use cookies to improve your experience:',
+                essential: 'Essential cookies - for session management and authentication',
+                functional: 'Functional cookies - for saving language and preferences',
+                analytics: 'Analytics cookies - for collecting visitor statistics'
+            },
+
+            user_rights: {
+                title: 'Your Rights',
+                intro: 'Under GDPR you have the following rights:',
+                access: 'Right of access - request information about your data',
+                rectification: 'Right to rectification - correct inaccurate data',
+                erasure: 'Right to erasure - request data deletion',
+                portability: 'Right to data portability - receive your data in a structured format',
+                objection: 'Right to object - object to data processing'
+            },
+
+            data_retention: {
+                title: 'Data Retention Period',
+                text: 'We retain your data as long as necessary to provide services. Account data is stored until account deletion. Order data is retained for 5 years in accordance with accounting requirements.'
+            },
+
+            children: {
+                title: 'Children\'s Privacy',
+                text: 'Our services are not intended for persons under 13 years of age. We do not knowingly collect data from children without parental consent.'
+            },
+
+            changes: {
+                title: 'Changes to Privacy Policy',
+                text: 'We may periodically update this privacy policy. We will notify you of significant changes by email or by posting a notice on our website.'
+            },
+
+            contact: {
+                title: 'Contact Information',
+                text: 'If you have questions about this privacy policy or wish to exercise your rights, please contact us:',
+                email_label: 'Email',
+                address_label: 'Address'
+            }
+        },
+        // lietošanas noteikumiem
+        terms: {
+            title: 'Terms of Use',
+            last_updated: 'Last updated',
+
+            introduction: {
+                title: 'Introduction',
+                text: 'Welcome to RalphMania! These terms of use govern your access to and use of our website, services, and products. By using our platform, you agree to these terms.'
+            },
+
+            definitions: {
+                title: 'Definitions',
+                platform: 'Platform',
+                platform_desc: 'RalphMania website and all related services',
+                user: 'User',
+                user_desc: 'Any person who accesses or uses the platform',
+                content: 'Content',
+                content_desc: 'Videos, blogs, images, and other materials published on the platform',
+                products: 'Products',
+                products_desc: 'Goods available for purchase in our shop',
+                administrator: 'Administrator',
+                administrator_desc: 'RalphMania representative with management rights'
+            },
+
+            account: {
+                title: 'Account Registration',
+                intro: 'By registering on the platform, you agree to:',
+                accurate_info: 'Provide true and accurate information',
+                password_security: 'Keep your password secure and confidential',
+                one_account: 'Use only one account per person',
+                age_requirement: 'Be at least 13 years old (or with parental permission)',
+                responsibility: 'Take full responsibility for activities on your account'
+            },
+
+            conduct: {
+                title: 'User Conduct Rules',
+                intro: 'When using the platform, you agree to:',
+                no_illegal: 'Not engage in illegal activities',
+                no_harmful: 'Not publish harmful or offensive content',
+                no_spam: 'Not send spam or unwanted messages',
+                no_impersonation: 'Not impersonate other persons',
+                no_hacking: 'Not attempt to access systems without permission',
+                respect_others: 'Respect other users and their opinions'
+            },
+
+            content_guidelines: {
+                title: 'Content Guidelines',
+                intro: 'When posting comments or reviews:',
+                no_offensive: 'Offensive, hateful, or discriminatory content is prohibited',
+                no_copyright: 'Content that infringes copyright is prohibited',
+                no_false_info: 'False or misleading information is prohibited',
+                moderation: 'Content may be moderated or removed without prior notice'
+            },
+
+            shop: {
+                title: 'Shop Terms',
+                orders: {
+                    title: 'Orders',
+                    text: 'By placing an order, you agree to purchase the selected products at the stated price. An order is considered confirmed after payment is received.'
+                },
+                pricing: {
+                    title: 'Pricing',
+                    text: 'All prices are in euros (EUR) and include VAT. We reserve the right to change prices without prior notice, but this does not affect orders already placed.'
+                },
+                payment: {
+                    title: 'Payments',
+                    text: 'We accept payments by credit/debit cards through the Stripe payment system. Payment data is processed securely in accordance with PCI DSS standards.'
+                },
+                delivery: {
+                    title: 'Delivery',
+                    text: 'Delivery time and costs depend on the selected delivery method and destination. Detailed information is provided during checkout.'
+                }
+            },
+
+            returns: {
+                title: 'Returns and Refunds',
+                intro: 'We offer returns subject to the following conditions:',
+                period: 'Products can be returned within 14 days of receipt',
+                condition: 'Products must be unused and in original packaging',
+                process: 'Contact us by email before returning products',
+                refund_time: 'Refunds are processed within 14 days of receiving the returned product'
+            },
+
+            intellectual_property: {
+                title: 'Intellectual Property',
+                text: 'All platform content is the property of RalphMania or used with permission:',
+                logo: 'The RalphMania logo and brand are registered trademarks',
+                content: 'Videos, images, and texts are protected by copyright',
+                design: 'Website design and structure are our intellectual property'
+            },
+
+            liability: {
+                title: 'Limitation of Liability',
+                text: 'RalphMania is not responsible for:',
+                availability: 'Temporary service interruptions or technical issues',
+                accuracy: 'Accuracy of third-party content',
+                third_party: 'Content of external websites we link to',
+                damages: 'Indirect damages resulting from platform use'
+            },
+
+            termination: {
+                title: 'Account Termination',
+                text: 'Regarding account termination:',
+                user_right: 'You can close your account at any time by contacting us',
+                admin_right: 'We may close or suspend accounts that violate these terms',
+                consequences: 'After account closure, you lose access to all account data and history'
+            },
+
+            changes: {
+                title: 'Changes to Terms',
+                text: 'We may periodically update these terms. We will notify you of significant changes by email or by posting a notice on the platform. Continued use of the platform after changes constitutes acceptance of the new terms.'
+            },
+
+            governing_law: {
+                title: 'Governing Law',
+                text: 'These terms are governed by the laws of the Republic of Latvia. Any disputes will be resolved in Latvian courts.'
+            },
+
+            contact: {
+                title: 'Contact Information',
+                text: 'If you have questions about these terms, please contact us:',
+                email_label: 'Email',
+                address_label: 'Address'
+            }
         },
         // administratoriem
         admin: {
