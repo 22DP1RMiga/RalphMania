@@ -274,5 +274,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 });
 
+// Privacy Policy Page
+Route::get('/privacy', function () {
+    return Inertia::render('Privacy');
+})->name('privacy');
+
+// Terms of Use Page
+Route::get('/terms', function () {
+    return Inertia::render('Terms');
+})->name('terms');
+
 // ========== AUTH AND ADMIN ROUTES (BREEZE) ==========
 require __DIR__.'/auth.php';
