@@ -411,6 +411,8 @@ const messages = {
             subtitle: 'Mēs esam šeit, lai palīdzētu!',
 
             form_title: 'Nosūtiet ziņojumu',
+            youAreLoggedInAs: 'Jūs esat pieteicies kā',
+
             name: 'Vārds',
             name_placeholder: 'Jūsu vārds',
             email: 'E-pasts',
@@ -423,6 +425,10 @@ const messages = {
             order_number_placeholder: 'RM-2025-XXXXX',
             message: 'Ziņojums',
             message_placeholder: 'Kā mēs varam jums palīdzēt?',
+            worktime: 'Darba laiks',
+            working_hours: 'P-Pk: 9:00 - 18:00',
+            address: 'Adrese',
+            riga_latvia: 'Rīga, Latvija',
             send: 'Nosūtīt ziņojumu',
             sending: 'Sūta...',
 
@@ -460,14 +466,14 @@ const messages = {
             views: 'Skatījumi',
             latest: 'Jaunākais',
             title: 'Saturs',
-            subtitle: 'Video un raksti no visa izveidotā RoltonsLV satura',
+            subtitle: 'Video, emuāri, ziņas un paziņojumi no visa izveidotā RoltonsLV satura',
 
             // Filtri
             all: 'Viss',
             videos: 'Video',
-            blogs: 'Raksti',
+            blogs: 'Emuāri',
             video: 'Video',
-            blog: 'Raksts',
+            blog: 'Emuārs',
             news: 'Ziņas',
             news_single: 'Ziņa',
             announcements: 'Paziņojumi',
@@ -2308,6 +2314,8 @@ const messages = {
             subtitle: 'We are here to help!',
 
             form_title: 'Send a message',
+            youAreLoggedInAs: 'You are logged in as',
+
             name: 'Name',
             name_placeholder: 'Your name',
             email: 'Email',
@@ -2320,6 +2328,10 @@ const messages = {
             order_number_placeholder: 'RM-2025-XXXXX',
             message: 'Message',
             message_placeholder: 'How can we help you?',
+            worktime: 'Working Hours',
+            working_hours: 'Mon-Fri: 9:00 A.M. - 6:00 P.M.',
+            address: 'Address',
+            riga_latvia: 'Riga, Latvia',
             send: 'Send message',
             sending: 'Sending...',
 
@@ -2357,7 +2369,7 @@ const messages = {
             views: 'Views',
             latest: 'Latest',
             title: 'Content',
-            subtitle: 'Videos and blogs from all made RoltonsLV content',
+            subtitle: 'Videos, blogs, news and announcements from all made RoltonsLV content',
 
             // Filtri
             all: 'All',

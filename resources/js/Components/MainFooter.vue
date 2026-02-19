@@ -77,7 +77,7 @@ const currentYear = new Date().getFullYear();
                     <div class="footer-contact">
                         <div class="contact-item">
                             <i class="fas fa-envelope"></i>
-                            <a href="mailto:info@ralphmania.lv" class="contact-link">info@ralphmania.lv</a>
+                            <a href="mailto:ralphmania.roltonslv@gmail.com" class="contact-link">ralphmania.roltonslv@gmail.com</a>
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-phone"></i>

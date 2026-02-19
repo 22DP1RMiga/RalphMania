@@ -1,187 +1,185 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { useI18n } from 'vue-i18n';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-defineOptions({
-    layout: ShopLayout
-});
-
 // Return steps
 const returnSteps = [
-    { number: 1, icon: 'fas fa-envelope', titleKey: 'shop_returns.steps.step1_title', descKey: 'shop_returns.steps.step1_desc' },
-    { number: 2, icon: 'fas fa-check-circle', titleKey: 'shop_returns.steps.step2_title', descKey: 'shop_returns.steps.step2_desc' },
-    { number: 3, icon: 'fas fa-box', titleKey: 'shop_returns.steps.step3_title', descKey: 'shop_returns.steps.step3_desc' },
-    { number: 4, icon: 'fas fa-undo', titleKey: 'shop_returns.steps.step4_title', descKey: 'shop_returns.steps.step4_desc' },
+    { number: 1, icon: 'fas fa-envelope', title: 'Sazinieties ar mums', desc: 'Nosūtiet e-pastu uz returns@ralphmania.lv ar pasūtījuma numuru.' },
+    { number: 2, icon: 'fas fa-check-circle', title: 'Saņemiet apstiprinājumu', desc: 'Mēs nosūtīsim jums atgriešanas instrukcijas un adresi.' },
+    { number: 3, icon: 'fas fa-box', title: 'Nosūtiet preci', desc: 'Droši iepakojiet preci un nosūtiet to uz norādīto adresi.' },
+    { number: 4, icon: 'fas fa-undo', title: 'Saņemiet atmaksu', desc: 'Pēc preces saņemšanas atmaksa tiks veikta 14 dienu laikā.' },
 ];
 
 // Return conditions
 const conditions = [
-    { icon: 'fas fa-calendar-check', textKey: 'shop_returns.conditions.period' },
-    { icon: 'fas fa-tag', textKey: 'shop_returns.conditions.tags' },
-    { icon: 'fas fa-tshirt', textKey: 'shop_returns.conditions.unworn' },
-    { icon: 'fas fa-box-open', textKey: 'shop_returns.conditions.packaging' },
-    { icon: 'fas fa-receipt', textKey: 'shop_returns.conditions.receipt' },
+    { icon: 'fas fa-calendar-check', text: '14 dienu laikā no saņemšanas' },
+    { icon: 'fas fa-tag', text: 'Visas etiķetes ir neskartas' },
+    { icon: 'fas fa-tshirt', text: 'Prece nav valkāta vai izmantota' },
+    { icon: 'fas fa-box-open', text: 'Oriģinālais iepakojums' },
+    { icon: 'fas fa-receipt', text: 'Pirkuma apliecinājums' },
 ];
 
 // Non-returnable items
 const nonReturnable = [
-    { icon: 'fas fa-gift-card', textKey: 'shop_returns.non_returnable.gift_cards' },
-    { icon: 'fas fa-tshirt', textKey: 'shop_returns.non_returnable.personalized' },
-    { icon: 'fas fa-percent', textKey: 'shop_returns.non_returnable.sale' },
-    { icon: 'fas fa-box-open', textKey: 'shop_returns.non_returnable.opened' },
+    { icon: 'fas fa-gift', text: 'Dāvanu kartes' },
+    { icon: 'fas fa-tshirt', text: 'Personalizētas preces' },
+    { icon: 'fas fa-percent', text: 'Izpārdošanas preces (ar 50%+ atlaidi)' },
+    { icon: 'fas fa-box-open', text: 'Atvērtas higiēnas preces' },
 ];
 </script>
 
 <template>
-    <Head :title="t('shop_returns.title')" />
+    <ShopLayout>
+        <Head title="Atgriešana un atmaksa" />
 
-    <div class="returns-page">
-        <!-- Hero Section -->
-        <div class="returns-hero">
-            <div class="hero-content">
-                <div class="hero-icon">
-                    <i class="fas fa-undo"></i>
+        <div class="returns-page">
+            <!-- Hero Section -->
+            <div class="returns-hero">
+                <div class="hero-content">
+                    <div class="hero-icon">
+                        <i class="fas fa-undo"></i>
+                    </div>
+                    <h1 class="hero-title">Atgriešana un atmaksa</h1>
+                    <p class="hero-subtitle">Vienkārša un ātra atgriešanas process</p>
                 </div>
-                <h1 class="hero-title">{{ t('shop_returns.title') }}</h1>
-                <p class="hero-subtitle">{{ t('shop_returns.subtitle') }}</p>
+            </div>
+
+            <div class="returns-container">
+                <!-- Guarantee Banner -->
+                <div class="guarantee-banner">
+                    <div class="guarantee-badge">
+                        <span class="days">14</span>
+                        <span class="label">dienas</span>
+                    </div>
+                    <div class="guarantee-content">
+                        <h3>14 dienu atgriešanas garantija</h3>
+                        <p>Ja neesat apmierināts ar savu pirkumu, varat to atgriezt 14 dienu laikā.</p>
+                    </div>
+                </div>
+
+                <!-- Return Process -->
+                <section class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-route"></i>
+                        Atgriešanas process
+                    </h2>
+
+                    <div class="steps-grid">
+                        <div v-for="step in returnSteps" :key="step.number" class="step-card">
+                            <div class="step-header">
+                                <div class="step-number">{{ step.number }}</div>
+                                <div class="step-icon">
+                                    <i :class="step.icon"></i>
+                                </div>
+                            </div>
+                            <h3 class="step-title">{{ step.title }}</h3>
+                            <p class="step-desc">{{ step.desc }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Return Conditions -->
+                <section class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-clipboard-check"></i>
+                        Atgriešanas nosacījumi
+                    </h2>
+
+                    <div class="conditions-card">
+                        <div class="conditions-list">
+                            <div v-for="condition in conditions" :key="condition.text" class="condition-item">
+                                <div class="condition-icon success">
+                                    <i :class="condition.icon"></i>
+                                </div>
+                                <span>{{ condition.text }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Non-Returnable Items -->
+                <section class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-times-circle"></i>
+                        Preces, kuras nevar atgriezt
+                    </h2>
+
+                    <div class="non-returnable-card">
+                        <div class="non-returnable-list">
+                            <div v-for="item in nonReturnable" :key="item.text" class="non-returnable-item">
+                                <div class="condition-icon danger">
+                                    <i :class="item.icon"></i>
+                                </div>
+                                <span>{{ item.text }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Refund Info -->
+                <section class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Atmaksas informācija
+                    </h2>
+
+                    <div class="refund-card">
+                        <div class="refund-grid">
+                            <div class="refund-item">
+                                <div class="refund-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <div class="refund-content">
+                                    <h4>Atmaksa uz karti</h4>
+                                    <p>Nauda tiek atgriezta uz to pašu maksājuma metodi, kas izmantota pirkumam.</p>
+                                </div>
+                            </div>
+                            <div class="refund-item">
+                                <div class="refund-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="refund-content">
+                                    <h4>Apstrādes laiks</h4>
+                                    <p>Atmaksa tiek veikta 14 dienu laikā pēc preces saņemšanas.</p>
+                                </div>
+                            </div>
+                            <div class="refund-item">
+                                <div class="refund-icon">
+                                    <i class="fas fa-shipping-fast"></i>
+                                </div>
+                                <div class="refund-content">
+                                    <h4>Piegādes izmaksas</h4>
+                                    <p>Sākotnējās piegādes izmaksas netiek atmaksātas, izņemot bojātu preču gadījumā.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Contact CTA -->
+                <div class="contact-cta">
+                    <div class="cta-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Nepieciešama palīdzība?</h3>
+                    <p>Mūsu klientu apkalpošanas komanda ir gatava palīdzēt.</p>
+                    <div class="cta-actions">
+                        <Link href="/shop/contact" class="btn-primary">
+                            <i class="fas fa-envelope"></i>
+                            Sazināties ar mums
+                        </Link>
+                        <a href="mailto:ralphmania.roltonslv@gmail.com" class="btn-secondary">
+                            <i class="fas fa-at"></i>
+                            ralphmania.roltonslv@gmail.com
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="returns-container">
-            <!-- Guarantee Banner -->
-            <div class="guarantee-banner">
-                <div class="guarantee-badge">
-                    <span class="days">14</span>
-                    <span class="label">{{ t('shop_returns.days') }}</span>
-                </div>
-                <div class="guarantee-content">
-                    <h3>{{ t('shop_returns.guarantee_title') }}</h3>
-                    <p>{{ t('shop_returns.guarantee_text') }}</p>
-                </div>
-            </div>
-
-            <!-- Return Process -->
-            <section class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-route"></i>
-                    {{ t('shop_returns.process_title') }}
-                </h2>
-
-                <div class="steps-grid">
-                    <div v-for="step in returnSteps" :key="step.number" class="step-card">
-                        <div class="step-header">
-                            <div class="step-number">{{ step.number }}</div>
-                            <div class="step-icon">
-                                <i :class="step.icon"></i>
-                            </div>
-                        </div>
-                        <h3 class="step-title">{{ t(step.titleKey) }}</h3>
-                        <p class="step-desc">{{ t(step.descKey) }}</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Return Conditions -->
-            <section class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-clipboard-check"></i>
-                    {{ t('shop_returns.conditions_title') }}
-                </h2>
-
-                <div class="conditions-card">
-                    <div class="conditions-list">
-                        <div v-for="condition in conditions" :key="condition.textKey" class="condition-item">
-                            <div class="condition-icon success">
-                                <i :class="condition.icon"></i>
-                            </div>
-                            <span>{{ t(condition.textKey) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Non-Returnable Items -->
-            <section class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-times-circle"></i>
-                    {{ t('shop_returns.non_returnable_title') }}
-                </h2>
-
-                <div class="non-returnable-card">
-                    <div class="non-returnable-list">
-                        <div v-for="item in nonReturnable" :key="item.textKey" class="non-returnable-item">
-                            <div class="condition-icon danger">
-                                <i :class="item.icon"></i>
-                            </div>
-                            <span>{{ t(item.textKey) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Refund Info -->
-            <section class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-money-bill-wave"></i>
-                    {{ t('shop_returns.refund_title') }}
-                </h2>
-
-                <div class="refund-card">
-                    <div class="refund-grid">
-                        <div class="refund-item">
-                            <div class="refund-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <div class="refund-content">
-                                <h4>{{ t('shop_returns.refund.card_title') }}</h4>
-                                <p>{{ t('shop_returns.refund.card_desc') }}</p>
-                            </div>
-                        </div>
-                        <div class="refund-item">
-                            <div class="refund-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="refund-content">
-                                <h4>{{ t('shop_returns.refund.time_title') }}</h4>
-                                <p>{{ t('shop_returns.refund.time_desc') }}</p>
-                            </div>
-                        </div>
-                        <div class="refund-item">
-                            <div class="refund-icon">
-                                <i class="fas fa-shipping-fast"></i>
-                            </div>
-                            <div class="refund-content">
-                                <h4>{{ t('shop_returns.refund.shipping_title') }}</h4>
-                                <p>{{ t('shop_returns.refund.shipping_desc') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Contact CTA -->
-            <div class="contact-cta">
-                <div class="cta-icon">
-                    <i class="fas fa-headset"></i>
-                </div>
-                <h3>{{ t('shop_returns.need_help') }}</h3>
-                <p>{{ t('shop_returns.need_help_text') }}</p>
-                <div class="cta-actions">
-                    <Link href="/shop/contact" class="btn-primary">
-                        <i class="fas fa-envelope"></i>
-                        {{ t('shop_returns.contact_us') }}
-                    </Link>
-                    <a href="mailto:returns@ralphmania.lv" class="btn-secondary">
-                        <i class="fas fa-at"></i>
-                        returns@ralphmania.lv
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    </ShopLayout>
 </template>
 
 <style scoped>
@@ -190,7 +188,6 @@ const nonReturnable = [
     background: #f8fafc;
 }
 
-/* Hero */
 .returns-hero {
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     padding: 4rem 2rem;
@@ -221,14 +218,12 @@ const nonReturnable = [
     opacity: 0.9;
 }
 
-/* Container */
 .returns-container {
     max-width: 900px;
     margin: 0 auto;
     padding: 2rem;
 }
 
-/* Guarantee Banner */
 .guarantee-banner {
     display: flex;
     align-items: center;
@@ -278,7 +273,6 @@ const nonReturnable = [
     font-size: 0.95rem;
 }
 
-/* Sections */
 .section {
     margin-bottom: 2.5rem;
 }
@@ -297,7 +291,6 @@ const nonReturnable = [
     color: #dc2626;
 }
 
-/* Steps Grid */
 .steps-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -365,7 +358,6 @@ const nonReturnable = [
     line-height: 1.5;
 }
 
-/* Conditions Card */
 .conditions-card,
 .non-returnable-card {
     background: white;
@@ -418,7 +410,6 @@ const nonReturnable = [
     color: #374151;
 }
 
-/* Refund Card */
 .refund-card {
     background: white;
     border-radius: 1rem;
@@ -464,7 +455,6 @@ const nonReturnable = [
     margin: 0;
 }
 
-/* Contact CTA */
 .contact-cta {
     background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     border-radius: 1rem;
@@ -535,7 +525,6 @@ const nonReturnable = [
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .returns-hero {
         padding: 3rem 1.5rem;

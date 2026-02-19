@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import { useI18n } from 'vue-i18n';
+import axios from 'axios';
 
 const { t, locale } = useI18n();
 
@@ -12,24 +13,15 @@ const props = defineProps({
 });
 
 // State
-const activeType = ref(props.filters?.type || null);
+const activeType = ref(props.filters.type || null);
 const activePlatform = ref(null);
 const activeCategory = ref(null);
 const sortBy = ref('newest');
 const searchQuery = ref('');
 const searchResults = ref([]);
 const isSearching = ref(false);
-const displayedItems = ref(6);
-const allContent = ref(props.content?.data || []);
-
-// Content type configuration with icons and colors
-const contentTypes = [
-    { value: null, icon: 'fas fa-th', labelKey: 'content.all' },
-    { value: 'video', icon: 'fas fa-play-circle', labelKey: 'content.videos', color: '#dc2626' },
-    { value: 'blog', icon: 'fas fa-newspaper', labelKey: 'content.blogs', color: '#3b82f6' },
-    { value: 'news', icon: 'fas fa-bullhorn', labelKey: 'content.news', color: '#10b981' },
-    { value: 'announcement', icon: 'fas fa-bell', labelKey: 'content.announcements', color: '#f59e0b' },
-];
+const displayedItems = ref(3);
+const allContent = ref(props.content.data || []);
 
 // Available platforms & categories (dynamic from data)
 const platforms = computed(() => {
@@ -51,7 +43,7 @@ const filteredContent = computed(() => {
         filtered = filtered.filter(item => item.type === activeType.value);
     }
 
-    // Filter by platform (only for videos)
+    // Filter by platform
     if (activePlatform.value) {
         filtered = filtered.filter(item => item.video_platform === activePlatform.value);
     }
@@ -92,21 +84,17 @@ const hasMore = computed(() => {
 // Methods
 const setType = (type) => {
     activeType.value = type;
-    // Reset platform filter when not on video type
-    if (type !== 'video') {
-        activePlatform.value = null;
-    }
-    displayedItems.value = 6;
+    displayedItems.value = 3;
 };
 
 const setPlatform = (platform) => {
     activePlatform.value = activePlatform.value === platform ? null : platform;
-    displayedItems.value = 6;
+    displayedItems.value = 3;
 };
 
 const setCategory = (category) => {
     activeCategory.value = activeCategory.value === category ? null : category;
-    displayedItems.value = 6;
+    displayedItems.value = 3;
 };
 
 const loadMore = () => {
@@ -122,11 +110,6 @@ const getDescription = (item) => {
 };
 
 const getThumbnail = (item) => {
-    // For news/announcements, use featured_image
-    if (item.type === 'news' || item.type === 'announcement') {
-        return item.featured_image || '/img/default-news.jpg';
-    }
-
     if (item.thumbnail && !item.thumbnail.includes('img.thumbnails')) {
         return item.thumbnail;
     }
@@ -142,44 +125,10 @@ const getThumbnail = (item) => {
     return '/img/default-content.jpg';
 };
 
-const getTypeConfig = (type) => {
-    return contentTypes.find(t => t.value === type) || contentTypes[0];
-};
-
-const getTypeIcon = (type) => {
-    const config = getTypeConfig(type);
-    return config.icon;
-};
-
-const getTypeColor = (type) => {
-    const config = getTypeConfig(type);
-    return config.color || '#dc2626';
-};
-
-const getTypeLabel = (type) => {
-    switch(type) {
-        case 'video': return t('content.video');
-        case 'blog': return t('content.blog');
-        case 'news': return t('content.news_single');
-        case 'announcement': return t('content.announcement_single');
-        default: return type;
-    }
-};
-
 const formatViews = (count) => {
     if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
     if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
     return count;
-};
-
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-    }).format(date);
 };
 
 const openSource = (item) => {
@@ -232,14 +181,7 @@ watch(searchQuery, handleSearch);
 
 // Reset displayed items when filters change
 watch([activeType, activePlatform, activeCategory, sortBy], () => {
-    displayedItems.value = 6;
-});
-
-// Set initial type from URL params
-onMounted(() => {
-    if (props.filters?.type) {
-        activeType.value = props.filters.type;
-    }
+    displayedItems.value = 3;
 });
 </script>
 
@@ -282,9 +224,9 @@ onMounted(() => {
                             <div class="result-info">
                                 <div class="result-title">{{ getTitle(result) }}</div>
                                 <div class="result-meta">
-                                    <span class="result-type" :style="{ color: getTypeColor(result.type) }">
-                                        <i :class="getTypeIcon(result.type)"></i>
-                                        {{ getTypeLabel(result.type) }}
+                                    <span class="result-type">
+                                        <i :class="result.type === 'video' ? 'fas fa-play-circle' : 'fas fa-newspaper'"></i>
+                                        {{ result.type === 'video' ? t('content.video') : t('content.blog') }}
                                     </span>
                                     <span v-if="result.category" class="result-category">{{ result.category }}</span>
                                 </div>
@@ -296,22 +238,60 @@ onMounted(() => {
 
             <!-- Main Filter Tabs -->
             <div class="content-filters">
+                <!-- ALL-->
                 <button
-                    v-for="typeConfig in contentTypes"
-                    :key="typeConfig.value"
-                    @click="setType(typeConfig.value)"
+                    @click="setType(null)"
                     class="filter-tab"
-                    :class="{ 'filter-tab-active': activeType === typeConfig.value }"
-                    :style="activeType === typeConfig.value && typeConfig.color ? { '--tab-color': typeConfig.color } : {}"
+                    :class="{ 'filter-tab-active': activeType === null }"
                 >
-                    <i :class="typeConfig.icon"></i>
-                    <span>{{ t(typeConfig.labelKey) }}</span>
+                    <i class="fas fa-th"></i>
+                    <span>{{ t('content.all') }}</span>
+                </button>
+
+                <!-- VIDEOS-->
+                <button
+                    @click="setType('video')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'video' }"
+                >
+                    <i class="fas fa-play-circle"></i>
+                    <span>{{ t('content.videos') }}</span>
+                </button>
+
+                <!-- BLOGS-->
+                <button
+                    @click="setType('blog')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'blog' }"
+                >
+                    <i class="fas fa-newspaper"></i>
+                    <span>{{ t('content.blogs') }}</span>
+                </button>
+
+                <!-- NEWS-->
+                <button
+                    @click="setType('news')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'news' }"
+                >
+                    <i class="fas fa-bullhorn"></i>
+                    <span>{{ t('content.news') }}</span>
+                </button>
+
+                <!-- ANNOUNCEMENTS-->
+                <button
+                    @click="setType('announcement')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'announcement' }"
+                >
+                    <i class="fas fa-bell"></i>
+                    <span>{{ t('content.announcements') }}</span>
                 </button>
             </div>
 
             <!-- Advanced Filters -->
             <div class="advanced-filters">
-                <!-- Platform Filter (only for videos) -->
+                <!-- Platform Filter -->
                 <div v-if="platforms.length > 0 && (activeType === 'video' || !activeType)" class="filter-group">
                     <label class="filter-label">
                         <i class="fas fa-video"></i>
@@ -358,15 +338,15 @@ onMounted(() => {
                     <select v-model="sortBy" class="filter-select">
                         <option value="newest">{{ t('content.sort.newest') }}</option>
                         <option value="oldest">{{ t('content.sort.oldest') }}</option>
-                        <option value="most_viewed">{{ t('content.sort.most_viewed') }}</option>
                         <option value="most_liked">{{ t('content.sort.most_liked') }}</option>
+                        <option value="most_viewed">{{ t('content.sort.most_viewed') }}</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Results Info -->
+            <!-- Results Count -->
             <div class="results-info">
-                {{ t('content.showing') }} {{ displayedContent.length }} {{ t('content.of') }} {{ filteredContent.length }} {{ t('content.results') }}
+                <span>{{ filteredContent.length }} {{ t('content.results') }}</span>
             </div>
 
             <!-- Content Grid -->
@@ -375,37 +355,30 @@ onMounted(() => {
                     v-for="item in displayedContent"
                     :key="item.id"
                     class="content-card"
-                    :class="`content-card-${item.type}`"
                 >
+                    <!-- Thumbnail -->
                     <Link :href="`/content/${item.slug}`" class="content-thumbnail">
                         <img :src="getThumbnail(item)" :alt="getTitle(item)">
 
-                        <!-- Type Badge -->
-                        <div
-                            class="type-badge"
-                            :style="{ background: getTypeColor(item.type) }"
-                        >
-                            <i :class="getTypeIcon(item.type)"></i>
+                        <!-- Video Badge -->
+                        <div v-if="item.type === 'video'" class="video-badge">
+                            <i class="fas fa-play"></i>
                         </div>
 
                         <!-- Category Badge -->
                         <div v-if="item.category" class="category-badge">
                             {{ item.category }}
                         </div>
-
-                        <!-- Featured Badge -->
-                        <div v-if="item.is_featured" class="featured-badge">
-                            <i class="fas fa-star"></i>
-                        </div>
                     </Link>
 
+                    <!-- Content Info -->
                     <div class="content-info">
                         <Link :href="`/content/${item.slug}`" class="content-name">
                             {{ getTitle(item) }}
                         </Link>
-
                         <p class="content-description">{{ getDescription(item) }}</p>
 
+                        <!-- Meta -->
                         <div class="content-meta">
                             <span class="meta-item">
                                 <i class="fas fa-eye"></i>
@@ -417,22 +390,26 @@ onMounted(() => {
                             </span>
                             <span class="meta-item">
                                 <i class="fas fa-calendar"></i>
-                                {{ formatDate(item.published_at) }}
+                                {{ new Date(item.published_at).toLocaleDateString(locale === 'lv' ? 'lv-LV' : 'en-US') }}
                             </span>
                         </div>
 
+                        <!-- Actions -->
                         <div class="content-actions">
-                            <Link :href="`/content/${item.slug}`" class="btn-action btn-primary">
-                                <i class="fas fa-arrow-right"></i>
+                            <Link
+                                :href="`/content/${item.slug}`"
+                                class="btn-action btn-primary"
+                            >
+                                <i class="fas fa-eye"></i>
                                 {{ t('content.view') }}
                             </Link>
                             <button
                                 v-if="item.video_url"
-                                @click.prevent="openSource(item)"
+                                @click="openSource(item)"
                                 class="btn-action btn-secondary"
                             >
-                                <i class="fas fa-external-link-alt"></i>
-                                {{ t('content.watch') }}
+                                <i class="fab" :class="`fa-${item.video_platform?.toLowerCase()}`"></i>
+                                {{ t('content.watch_on') }} {{ item.video_platform }}
                             </button>
                         </div>
                     </div>
@@ -446,14 +423,14 @@ onMounted(() => {
                 <p>{{ t('content.no_content_description') }}</p>
             </div>
 
-            <!-- Load More -->
+            <!-- Load More Button -->
             <div v-if="hasMore" class="load-more-section">
                 <button @click="loadMore" class="btn-load-more">
-                    <i class="fas fa-plus"></i>
+                    <i class="fas fa-plus-circle"></i>
                     {{ t('content.load_more') }}
                 </button>
                 <p class="load-more-info">
-                    {{ t('content.showing') }} {{ displayedContent.length }} {{ t('content.of') }} {{ filteredContent.length }}
+                    {{ t('content.showing') }} {{ displayedItems }} {{ t('content.of') }} {{ filteredContent.length }}
                 </p>
             </div>
         </div>
@@ -470,101 +447,101 @@ onMounted(() => {
 /* Header */
 .content-header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
 }
 
 .content-title {
     font-size: 2.5rem;
     font-weight: 800;
     color: #111827;
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.5rem 0;
 }
 
 .content-subtitle {
     font-size: 1.125rem;
     color: #6b7280;
+    margin: 0;
 }
 
-/* Search Section */
+/* Search */
 .search-section {
-    position: relative;
     max-width: 600px;
     margin: 0 auto 2rem;
+    position: relative;
 }
 
 .search-bar {
+    position: relative;
     display: flex;
     align-items: center;
-    background: white;
-    border: 2px solid #e5e7eb;
-    border-radius: 1rem;
-    padding: 0 1.25rem;
-    transition: all 0.2s;
-}
-
-.search-bar:focus-within {
-    border-color: #dc2626;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
 }
 
 .search-icon {
+    position: absolute;
+    left: 1.25rem;
     color: #9ca3af;
     font-size: 1.125rem;
 }
 
 .search-input {
-    flex: 1;
-    padding: 1rem;
-    border: none;
-    background: transparent;
+    width: 100%;
+    padding: 1rem 3.5rem 1rem 3.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 9999px;
     font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
     outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .search-clear {
-    background: none;
+    position: absolute;
+    right: 1.25rem;
+    width: 2rem;
+    height: 2rem;
+    background: #f3f4f6;
     border: none;
-    color: #9ca3af;
+    border-radius: 50%;
+    color: #6b7280;
     cursor: pointer;
-    padding: 0.5rem;
-    transition: color 0.2s;
+    transition: all 0.2s;
 }
 
 .search-clear:hover {
-    color: #dc2626;
+    background: #dc2626;
+    color: white;
 }
 
 /* Search Dropdown */
 .search-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 0.5rem);
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid #e5e7eb;
     border-radius: 1rem;
-    margin-top: 0.5rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
 }
 
 .search-result {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 1rem;
-    width: 100%;
-    padding: 1rem;
-    background: none;
+    padding: 0.875rem 1.25rem;
+    background: white;
     border: none;
     border-bottom: 1px solid #f3f4f6;
-    cursor: pointer;
     text-align: left;
-    transition: background 0.2s;
-}
-
-.search-result:last-child {
-    border-bottom: none;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .search-result:hover {
@@ -572,46 +549,43 @@ onMounted(() => {
 }
 
 .result-thumb {
-    width: 60px;
-    height: 40px;
-    border-radius: 0.375rem;
+    width: 80px;
+    height: 45px;
+    border-radius: 0.5rem;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .result-info {
     flex: 1;
+    min-width: 0;
 }
 
 .result-title {
     font-weight: 600;
     color: #111827;
-    font-size: 0.95rem;
-    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .result-meta {
     display: flex;
-    align-items: center;
     gap: 0.75rem;
+    margin-top: 0.25rem;
     font-size: 0.8125rem;
-}
-
-.result-type {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-weight: 500;
-}
-
-.result-category {
     color: #6b7280;
 }
 
-/* Filter Tabs */
+.result-type i {
+    color: #dc2626;
+}
+
+/* Filters */
 .content-filters {
     display: flex;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 1rem;
     margin-bottom: 2rem;
     flex-wrap: wrap;
 }
@@ -624,43 +598,40 @@ onMounted(() => {
     background: white;
     border: 2px solid #e5e7eb;
     border-radius: 0.75rem;
-    font-weight: 600;
-    font-size: 0.95rem;
     color: #6b7280;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .filter-tab:hover {
-    border-color: #d1d5db;
-    color: #374151;
+    border-color: #dc2626;
+    color: #dc2626;
+    transform: translateY(-2px);
 }
 
 .filter-tab-active {
-    background: linear-gradient(135deg, var(--tab-color, #dc2626) 0%, color-mix(in srgb, var(--tab-color, #dc2626) 80%, black) 100%);
-    border-color: var(--tab-color, #dc2626);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #dc2626;
     color: white;
-}
-
-.filter-tab i {
-    font-size: 1rem;
 }
 
 /* Advanced Filters */
 .advanced-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    background: #f9fafb;
+    background: white;
     padding: 1.5rem;
     border-radius: 1rem;
     margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
 }
 
 .filter-label {
@@ -668,8 +639,8 @@ onMounted(() => {
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
-    font-size: 0.875rem;
     color: #374151;
+    margin-bottom: 0.75rem;
 }
 
 .filter-label i {
@@ -684,8 +655,8 @@ onMounted(() => {
 
 .filter-chip {
     padding: 0.5rem 1rem;
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: #f3f4f6;
+    border: 2px solid transparent;
     border-radius: 0.5rem;
     color: #6b7280;
     font-weight: 500;
@@ -706,13 +677,14 @@ onMounted(() => {
 }
 
 .filter-select {
+    width: 100%;
+    max-width: 300px;
     padding: 0.625rem 1rem;
     border: 2px solid #e5e7eb;
     border-radius: 0.5rem;
     font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s;
-    min-width: 180px;
 }
 
 .filter-select:focus {
@@ -731,7 +703,7 @@ onMounted(() => {
 /* Content Grid */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 2rem;
     margin-bottom: 3rem;
 }
@@ -748,24 +720,7 @@ onMounted(() => {
 
 .content-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-}
-
-/* Card type-specific hover colors */
-.content-card-video:hover {
-    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.2);
-}
-
-.content-card-blog:hover {
-    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
-}
-
-.content-card-news:hover {
-    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.2);
-}
-
-.content-card-announcement:hover {
-    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.2);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.2);
 }
 
 .content-thumbnail {
@@ -790,19 +745,19 @@ onMounted(() => {
     transform: scale(1.05);
 }
 
-.type-badge {
+.video-badge {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3rem;
+    height: 3rem;
+    background: rgba(220, 38, 38, 0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-size: 1.25rem;
 }
 
 .category-badge {
@@ -810,27 +765,11 @@ onMounted(() => {
     bottom: 1rem;
     right: 1rem;
     padding: 0.375rem 0.75rem;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.7);
     color: white;
     border-radius: 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
-}
-
-.featured-badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 2rem;
-    height: 2rem;
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.75rem;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
 }
 
 .content-info {
@@ -850,7 +789,6 @@ onMounted(() => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-decoration: none;
     transition: color 0.2s;
 }
 
@@ -907,7 +845,6 @@ onMounted(() => {
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.2s;
-    text-decoration: none;
 }
 
 .btn-primary {
@@ -1021,7 +958,7 @@ onMounted(() => {
     }
 
     .filter-select {
-        width: 100%;
+        max-width: 100%;
     }
 
     .content-actions {
