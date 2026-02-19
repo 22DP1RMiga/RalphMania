@@ -48,15 +48,26 @@ const currentYear = new Date().getFullYear();
                     </nav>
                 </div>
 
-                <!-- Categories Column -->
+                <!-- Content Column (UPDATED) -->
                 <div class="footer-column">
-                    <h3 class="footer-heading">{{ t('footer.categories') }}</h3>
+                    <h3 class="footer-heading">{{ t('footer.content') }}</h3>
                     <nav class="footer-links">
-                        <Link href="/content?type=video" class="footer-link">{{ t('footer.video') }}</Link>
-                        <Link href="/content?type=blog" class="footer-link">{{ t('footer.blog') }}</Link>
-                        <Link href="/shop/category/apparel" class="footer-link">{{ t('footer.apparel') }}</Link>
-                        <Link href="/shop/category/souvenirs" class="footer-link">{{ t('footer.souvenirs') }}</Link>
-                        <Link href="/shop/category/gift-cards" class="footer-link">{{ t('footer.gift_cards') }}</Link>
+                        <Link href="/content?type=video" class="footer-link">
+                            <i class="fas fa-play-circle footer-link-icon"></i>
+                            {{ t('footer.videos') }}
+                        </Link>
+                        <Link href="/content?type=blog" class="footer-link">
+                            <i class="fas fa-newspaper footer-link-icon"></i>
+                            {{ t('footer.blogs') }}
+                        </Link>
+                        <Link href="/content?type=news" class="footer-link">
+                            <i class="fas fa-bullhorn footer-link-icon"></i>
+                            {{ t('footer.news') }}
+                        </Link>
+                        <Link href="/content?type=announcement" class="footer-link">
+                            <i class="fas fa-bell footer-link-icon"></i>
+                            {{ t('footer.announcements') }}
+                        </Link>
                     </nav>
                 </div>
 
@@ -66,7 +77,7 @@ const currentYear = new Date().getFullYear();
                     <div class="footer-contact">
                         <div class="contact-item">
                             <i class="fas fa-envelope"></i>
-                            <a href="mailto:info@ralphmania.lv" class="contact-link">info@ralphmania.lv</a>
+                            <a href="mailto:ralphmania.roltonslv@gmail.com" class="contact-link">ralphmania.roltonslv@gmail.com</a>
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-phone"></i>
@@ -111,7 +122,7 @@ const currentYear = new Date().getFullYear();
 /* Footer Top */
 .footer-top {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 3rem;
     margin-bottom: 3rem;
 }
@@ -204,6 +215,9 @@ const currentYear = new Date().getFullYear();
 }
 
 .footer-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     color: #9ca3af;
     transition: all 0.2s;
     text-decoration: none;
@@ -212,6 +226,17 @@ const currentYear = new Date().getFullYear();
 .footer-link:hover {
     color: #dc2626;
     padding-left: 0.5rem;
+}
+
+.footer-link-icon {
+    width: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.footer-link:hover .footer-link-icon {
+    color: #dc2626;
 }
 
 /* Contact Info */
@@ -288,10 +313,6 @@ const currentYear = new Date().getFullYear();
     .footer-bottom {
         flex-direction: column;
         text-align: center;
-    }
-
-    .footer-social {
-        justify-content: center;
     }
 }
 </style>

@@ -238,6 +238,7 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
 
             <!-- Main Filter Tabs -->
             <div class="content-filters">
+                <!-- ALL-->
                 <button
                     @click="setType(null)"
                     class="filter-tab"
@@ -246,6 +247,8 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     <i class="fas fa-th"></i>
                     <span>{{ t('content.all') }}</span>
                 </button>
+
+                <!-- VIDEOS-->
                 <button
                     @click="setType('video')"
                     class="filter-tab"
@@ -254,6 +257,8 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     <i class="fas fa-play-circle"></i>
                     <span>{{ t('content.videos') }}</span>
                 </button>
+
+                <!-- BLOGS-->
                 <button
                     @click="setType('blog')"
                     class="filter-tab"
@@ -261,6 +266,26 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                 >
                     <i class="fas fa-newspaper"></i>
                     <span>{{ t('content.blogs') }}</span>
+                </button>
+
+                <!-- NEWS-->
+                <button
+                    @click="setType('news')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'news' }"
+                >
+                    <i class="fas fa-bullhorn"></i>
+                    <span>{{ t('content.news') }}</span>
+                </button>
+
+                <!-- ANNOUNCEMENTS-->
+                <button
+                    @click="setType('announcement')"
+                    class="filter-tab"
+                    :class="{ 'filter-tab-active': activeType === 'announcement' }"
+                >
+                    <i class="fas fa-bell"></i>
+                    <span>{{ t('content.announcements') }}</span>
                 </button>
             </div>
 
@@ -311,10 +336,10 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                         {{ t('content.sort_by') }}
                     </label>
                     <select v-model="sortBy" class="filter-select">
-                        <option value="newest">{{ t('content.newest') }}</option>
-                        <option value="oldest">{{ t('content.oldest') }}</option>
-                        <option value="most_liked">{{ t('content.most_liked') }}</option>
-                        <option value="most_viewed">{{ t('content.most_viewed') }}</option>
+                        <option value="newest">{{ t('content.sort.newest') }}</option>
+                        <option value="oldest">{{ t('content.sort.oldest') }}</option>
+                        <option value="most_liked">{{ t('content.sort.most_liked') }}</option>
+                        <option value="most_viewed">{{ t('content.sort.most_viewed') }}</option>
                     </select>
                 </div>
             </div>
