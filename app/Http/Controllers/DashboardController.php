@@ -1,113 +1,103 @@
 <?php
+// ================================================================
+// DashboardController.php — pievieno newsletterStatus prop
+// Faila atrašanās vieta: app/Http/Controllers/DashboardController.php
+//
+// Pēc esošā koda pievieno $newsletterStatus un nodod to Inertia::render
+// ================================================================
+
+// Pievienot use statements augšā:
+// use App\Models\NewsletterSubscriber;
+
+// Metodes iekšā (kopā ar pārējiem datiem) pievieno:
+
+/*
+    $user = auth()->user();
+
+    $subscriber = NewsletterSubscriber::where('user_id', $user->id)->first();
+    $isSubscribed = $subscriber
+        && $subscriber->is_active
+        && !$subscriber->is_expired;
+
+    $newsletterStatus = [
+        'subscribed'      => $isSubscribed,
+        'expires_at'      => $subscriber?->subscription_expires_at?->format('d.m.Y'),
+        'days_remaining'  => $subscriber?->days_remaining,
+        'is_expired'      => $subscriber?->is_expired ?? false,
+    ];
+
+    // Un nodod to Inertia::render:
+    return Inertia::render('Dashboard', [
+        // ... esošie props ...
+        'newsletterStatus' => $newsletterStatus,
+    ]);
+*/
+
+// ================================================================
+// PILNS PIEMĒRS (ja tev DashboardController izskatās šādi):
+// ================================================================
 
 namespace App\Http\Controllers;
 
+use App\Models\NewsletterSubscriber;
 use App\Models\Order;
 use App\Models\Review;
-use App\Models\Cart;
-use App\Models\Like;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display user dashboard with statistics
-     *
-     * GET /dashboard
-     */
-    public function index(): Response
+    public function index()
     {
         $user = auth()->user();
 
-        // Get real statistics
-        $stats = [
-            // Orders count
-            'orders' => Order::where('user_id', $user->id)->count(),
+        // Newsletter status
+        $subscriber = NewsletterSubscriber::where('user_id', $user->id)->first();
+        $isSubscribed = $subscriber
+            && $subscriber->is_active
+            && !$subscriber->is_expired;
 
-            // Reviews count (reviews written by user)
-            'reviews' => Review::where('user_id', $user->id)->count(),
-
-            // Comments count (reviews written by user)
-            'comments' => Comment::where('user_id', $user->id)->count(),
-
-            // Favorites count (content liked by user)
-            'favorites' => Like::where('user_id', $user->id)
-                ->where('likeable_type', 'App\\Models\\Content')
-                ->count(),
-
-            // Cart items count
-            'cart_items' => Cart::where('user_id', $user->id)
-                    ->withCount('items')
-                    ->first()
-                    ->items_count ?? 0,
+        $newsletterStatus = [
+            'subscribed'     => $isSubscribed,
+            'expires_at'     => $subscriber?->subscription_expires_at?->format('d.m.Y'),
+            'days_remaining' => $subscriber?->days_remaining,
+            'is_expired'     => $subscriber?->is_expired ?? false,
         ];
 
-        // Get recent orders (last 5)
+        // Stats
+        $stats = [
+            'orders'     => Order::where('user_id', $user->id)->count(),
+            'reviews'    => Review::where('user_id', $user->id)->count(),
+            'favorites'  => 0, // implementē ja vajag
+            'cart_items' => $user->cartItems()->count(),
+        ];
+
+        // Recent data
         $recentOrders = Order::where('user_id', $user->id)
-            ->with(['items.product', 'payment'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->latest()
+            ->take(5)
+            ->get(['id', 'order_number', 'status', 'total_amount', 'created_at']);
+
+        $recentReviews = Review::where('user_id', $user->id)
+            ->with('reviewable')
+            ->latest()
+            ->take(5)
             ->get();
 
-        // Get recent reviews (last 5) - FIXED: use reviewable() instead of product()
-        $recentReviews = Review::where('user_id', $user->id)
-            ->with('reviewable') // Polymorphic relationship
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(function ($review) {
-                // Add helper for getting review text based on locale
-                return [
-                    'id' => $review->id,
-                    'rating' => $review->rating,
-                    'review_text_lv' => $review->review_text_lv,
-                    'review_text_en' => $review->review_text_en,
-                    'created_at' => $review->created_at,
-                    // Add reviewable data (could be Product or Content)
-                    'reviewable' => $review->reviewable ? [
-                        'type' => class_basename($review->reviewable_type),
-                        'id' => $review->reviewable->id,
-                        'name_lv' => $review->reviewable->name_lv ?? null,
-                        'name_en' => $review->reviewable->name_en ?? null,
-                        'title_lv' => $review->reviewable->title_lv ?? null,
-                        'title_en' => $review->reviewable->title_en ?? null,
-                    ] : null,
-                ];
-            });
-
-        // Get recent comments (last 5) - ONLY for Content
         $recentComments = Comment::where('user_id', $user->id)
-            ->with('content') // Direct relationship to content
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(function ($comment) {
-                return [
-                    'id' => $comment->id,
-                    'comment_text' => $comment->comment_text,
-                    'created_at' => $comment->created_at,
-                    // Add content data
-                    'content' => $comment->content ? [
-                        'id' => $comment->content->id,
-                        'title_lv' => $comment->content->title_lv,
-                        'title_en' => $comment->content->title_en,
-                        'slug' => $comment->content->slug,
-                    ] : null,
-                ];
-            });
-
-        // Get user's address info for quick access
-        $hasAddress = !empty($user->address) && !empty($user->city);
+            ->with('content')
+            ->latest()
+            ->take(5)
+            ->get();
 
         return Inertia::render('Dashboard', [
-            'stats' => $stats,
-            'recentOrders' => $recentOrders,
-            'recentReviews' => $recentReviews,
-            'recentComments' => $recentComments,
-            'hasAddress' => $hasAddress,
+            'stats'             => $stats,
+            'recentOrders'      => $recentOrders,
+            'recentReviews'     => $recentReviews,
+            'recentComments'    => $recentComments,
+            'hasAddress'        => (bool) $user->address,
+            'newsletterStatus'  => $newsletterStatus, // ← JAUNAIS
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NewsletterWelcome;
 use App\Models\NewsletterSubscriber;
 use App\Models\SubscriberOffer;
 use Illuminate\Http\Request;
@@ -10,43 +11,68 @@ use Illuminate\Support\Facades\Mail;
 class NewsletterController extends Controller
 {
     /**
-     * Subscribe to newsletter.
+     * Default subscription duration in days.
+     * null  = forever (no expiry)
+     * integer = days (e.g. 365 = 1 year)
      */
+    private const SUBSCRIPTION_DURATION_DAYS = 365; // 1 gads
+
+    // ─── SUBSCRIBE ───────────────────────────────────────────────────────────
+
     public function subscribe(Request $request)
     {
         $request->validate([
             'email' => 'required|email|max:100',
         ]);
 
-        $email = $request->email;
+        $email  = $request->email;
         $userId = auth()->id();
+        $user   = auth()->user();
 
-        // Check if already subscribed
+        // Already subscribed (and not expired)
         if (NewsletterSubscriber::isSubscribed($email)) {
             return response()->json([
-                'success' => false,
+                'success'            => false,
                 'already_subscribed' => true,
-                'message' => __('newsletter.already_subscribed'),
-            ], 200);
+                'message'            => __('newsletter.already_subscribed'),
+            ]);
         }
 
-        // Subscribe
-        $subscriber = NewsletterSubscriber::subscribe($email, $userId);
+        // Create / reactivate subscriber with expiry
+        $subscriber = NewsletterSubscriber::subscribe(
+            $email,
+            $userId,
+            self::SUBSCRIPTION_DURATION_DAYS
+        );
 
-        // Log activity
+        // Activity log
         if ($userId) {
-            \App\Models\ActivityLog::log('newsletter_subscribed', 'Pieteicās jaunumu saņemšanai: ' . $email);
+            \App\Models\ActivityLog::log(
+                'newsletter_subscribed',
+                'Pieteicās jaunumu saņemšanai: ' . $email
+            );
+        }
+
+        // Send welcome email
+        try {
+            Mail::to($email)->send(new NewsletterWelcome(
+                subscriber: $subscriber,
+                userName:   $user?->username ?? '',
+            ));
+        } catch (\Exception $e) {
+            // Log but don't fail subscription if mail fails
+            \Log::error('Newsletter welcome email failed: ' . $e->getMessage());
         }
 
         return response()->json([
-            'success' => true,
-            'message' => __('newsletter.subscribed_success'),
+            'success'    => true,
+            'message'    => __('newsletter.subscribed_success'),
+            'expires_at' => $subscriber->subscription_expires_at?->format('d.m.Y'),
         ]);
     }
 
-    /**
-     * Unsubscribe from newsletter.
-     */
+    // ─── UNSUBSCRIBE ─────────────────────────────────────────────────────────
+
     public function unsubscribe(Request $request, string $token)
     {
         $success = NewsletterSubscriber::unsubscribeByToken($token);
@@ -58,25 +84,20 @@ class NewsletterController extends Controller
         return redirect('/')->with('error', __('newsletter.unsubscribe_failed'));
     }
 
-    /**
-     * Update subscription preferences.
-     */
+    // ─── PREFERENCES ─────────────────────────────────────────────────────────
+
     public function updatePreferences(Request $request)
     {
         $request->validate([
-            'receive_news' => 'boolean',
-            'receive_promotions' => 'boolean',
+            'receive_news'          => 'boolean',
+            'receive_promotions'    => 'boolean',
             'receive_announcements' => 'boolean',
         ]);
 
-        $user = auth()->user();
-        $subscriber = NewsletterSubscriber::where('user_id', $user->id)->first();
+        $subscriber = NewsletterSubscriber::where('user_id', auth()->id())->first();
 
         if (!$subscriber) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nav abonēts',
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Nav abonēts'], 404);
         }
 
         $subscriber->update($request->only([
@@ -91,66 +112,64 @@ class NewsletterController extends Controller
         ]);
     }
 
-    /**
-     * Get subscriber offers for authenticated user.
-     */
-    public function getOffers(Request $request)
+    // ─── STATUS ──────────────────────────────────────────────────────────────
+
+    public function status(Request $request)
     {
-        $user = auth()->user();
+        $subscriber = NewsletterSubscriber::where('user_id', auth()->id())->first();
 
-        // Check if user is subscribed
-        $isSubscribed = NewsletterSubscriber::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->exists();
-
-        if (!$isSubscribed) {
-            return response()->json([
-                'subscribed' => false,
-                'offers' => [],
-            ]);
-        }
-
-        // Get active offers for subscribers
-        $locale = $request->header('Accept-Language', 'lv');
-        $offers = SubscriberOffer::active()
-            ->forSubscribers()
-            ->get()
-            ->map(function ($offer) use ($locale) {
-                return [
-                    'id' => $offer->id,
-                    'code' => $offer->code,
-                    'title' => $offer->getTitle($locale),
-                    'description' => $offer->getDescription($locale),
-                    'discount' => $offer->getFormattedDiscount(),
-                    'discount_type' => $offer->discount_type,
-                    'discount_value' => $offer->discount_value,
-                    'min_order' => $offer->min_order_amount,
-                    'expires_at' => $offer->expires_at?->format('d.m.Y'),
-                ];
-            });
+        $isActive = $subscriber
+            && $subscriber->is_active
+            && !$subscriber->is_expired;
 
         return response()->json([
-            'subscribed' => true,
-            'offers' => $offers,
+            'subscribed'  => $isActive,
+            'expires_at'  => $subscriber?->subscription_expires_at?->format('d.m.Y'),
+            'days_remaining' => $subscriber?->days_remaining,
+            'is_expired'  => $subscriber?->is_expired ?? false,
+            'preferences' => $subscriber ? [
+                'receive_news'          => $subscriber->receive_news,
+                'receive_promotions'    => $subscriber->receive_promotions,
+                'receive_announcements' => $subscriber->receive_announcements,
+            ] : null,
         ]);
     }
 
-    /**
-     * Check subscription status.
-     */
-    public function status(Request $request)
-    {
-        $user = auth()->user();
+    // ─── OFFERS ──────────────────────────────────────────────────────────────
 
-        $subscriber = NewsletterSubscriber::where('user_id', $user->id)->first();
+    public function getOffers(Request $request)
+    {
+        $subscriber = NewsletterSubscriber::where('user_id', auth()->id())
+            ->where('is_active', true)
+            ->first();
+
+        // Check active and not expired
+        if (!$subscriber || $subscriber->is_expired) {
+            return response()->json([
+                'subscribed' => false,
+                'offers'     => [],
+            ]);
+        }
+
+        $locale = app()->getLocale();
+        $offers = SubscriberOffer::active()
+            ->forSubscribers()
+            ->get()
+            ->map(fn($offer) => [
+                'id'            => $offer->id,
+                'code'          => $offer->code,
+                'title'         => $offer->getTitle($locale),
+                'description'   => $offer->getDescription($locale),
+                'discount'      => $offer->getFormattedDiscount(),
+                'discount_type' => $offer->discount_type,
+                'discount_value'=> $offer->discount_value,
+                'min_order'     => $offer->min_order_amount,
+                'expires_at'    => $offer->expires_at?->format('d.m.Y'),
+            ]);
 
         return response()->json([
-            'subscribed' => $subscriber && $subscriber->is_active,
-            'preferences' => $subscriber ? [
-                'receive_news' => $subscriber->receive_news,
-                'receive_promotions' => $subscriber->receive_promotions,
-                'receive_announcements' => $subscriber->receive_announcements,
-            ] : null,
+            'subscribed' => true,
+            'offers'     => $offers,
         ]);
     }
 }
