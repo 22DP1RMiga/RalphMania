@@ -25,18 +25,21 @@ class Product extends Model
         'low_stock_threshold',
         'is_active',
         'is_featured',
+        'has_sizes',   // ← JAUNS: vai produktam ir XS–XXL izmēru izvēlne
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'compare_price' => 'decimal:2',
-        'is_active' => 'boolean',
-        'is_featured' => 'boolean',
-        'stock_quantity' => 'integer',
+        'price'               => 'decimal:2',
+        'compare_price'       => 'decimal:2',
+        'is_active'           => 'boolean',
+        'is_featured'         => 'boolean',
+        'has_sizes'           => 'boolean',
+        'stock_quantity'      => 'integer',
         'low_stock_threshold' => 'integer',
     ];
 
-    // Relationships
+    // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -57,7 +60,8 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    // Helper methods
+    // ─── HELPERS ─────────────────────────────────────────────────────────────
+
     public function isInStock(): bool
     {
         return $this->stock_quantity > 0;
@@ -68,14 +72,15 @@ class Product extends Model
         return $this->stock_quantity <= $this->low_stock_threshold;
     }
 
-    public function discount()
+    public function discount(): int
     {
         if (!$this->compare_price) return 0;
         return round((1 - $this->price / $this->compare_price) * 100);
     }
 
-    // Accessors
-    public function getDiscountPercentageAttribute()
+    // ─── ACCESSORS ───────────────────────────────────────────────────────────
+
+    public function getDiscountPercentageAttribute(): int
     {
         return $this->discount();
     }

@@ -23,6 +23,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Foundation\Application;
@@ -161,6 +162,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/count', [CartController::class, 'count'])->name('count');
         Route::get('/data', [CartController::class, 'get'])->name('get');
     });
+
+    // Kuponi
+    Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
 
     // Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');

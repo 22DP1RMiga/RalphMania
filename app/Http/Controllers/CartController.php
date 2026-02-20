@@ -23,25 +23,27 @@ class CartController extends Controller
 
         return Inertia::render('Cart/Index', [
             'cart' => [
-                'id' => $cart->id,
-                'total_items' => $cart->total_items,
+                'id'           => $cart->id,
+                'total_items'  => $cart->total_items,
                 'total_amount' => $cart->total_amount,
             ],
             'items' => $cart->items->map(function ($item) {
                 return [
-                    'id' => $item->id,
+                    'id'         => $item->id,
                     'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->total,
-                    'product' => [
-                        'id' => $item->product->id,
-                        'name_lv' => $item->product->name_lv,
-                        'name_en' => $item->product->name_en,
-                        'slug' => $item->product->slug,
-                        'price' => $item->product->price,
-                        'image' => $item->product->image,
+                    'quantity'   => $item->quantity,
+                    'size'       => $item->size,    // ← PIEVIENOTS
+                    'price'      => $item->price,
+                    'total'      => $item->total,
+                    'product'    => [
+                        'id'             => $item->product->id,
+                        'name_lv'        => $item->product->name_lv,
+                        'name_en'        => $item->product->name_en,
+                        'slug'           => $item->product->slug,
+                        'price'          => $item->product->price,
+                        'image'          => $item->product->image,
                         'stock_quantity' => $item->product->stock_quantity,
+                        'has_sizes'      => (bool) $item->product->has_sizes, // ← PIEVIENOTS
                     ],
                 ];
             }),
@@ -55,65 +57,71 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity'   => 'required|integer|min:1',
+            'size'       => 'nullable|string|in:XS,S,M,L,XL,XXL',  // ← PIEVIENOTS
         ]);
 
-        // Get product
         $product = Product::findOrFail($validated['product_id']);
 
-        // Check stock
+        // Ja produktam ir izmēri un izmērs nav norādīts — atgriež kļūdu
+        if ($product->has_sizes && empty($validated['size'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lūdzu izvēlies izmēru / Please select a size',
+            ], 422);
+        }
+
+        // Krājuma pārbaude
         if ($product->stock_quantity < $validated['quantity']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Insufficient stock / Nepietiekams daudzums noliktavā'
+                'message' => 'Insufficient stock / Nepietiekams daudzums noliktavā',
             ], 400);
         }
 
-        // Get or create cart
         $cart = Cart::getCurrentCart();
 
-        // Check if item already exists in cart
+        // Meklē esošu grozu rindu pēc product_id UN size
+        // (S un L ir DIVAS atsevišķas rindas — nevis viena)
         $cartItem = $cart->items()
             ->where('product_id', $validated['product_id'])
+            ->where('size', $validated['size'] ?? null)  // ← PIEVIENOTS: size jāatbilst
             ->first();
 
         if ($cartItem) {
-            // Update quantity
+            // Palielina daudzumu
             $newQuantity = $cartItem->quantity + $validated['quantity'];
 
-            // Check stock again
             if ($product->stock_quantity < $newQuantity) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot add more items. Stock limit reached / Nevar pievienot vairāk. Sasniegts noliktavas limits'
+                    'message' => 'Cannot add more items. Stock limit reached / Nevar pievienot vairāk. Sasniegts noliktavas limits',
                 ], 400);
             }
 
-            $cartItem->update([
-                'quantity' => $newQuantity,
-            ]);
+            $cartItem->update(['quantity' => $newQuantity]);
         } else {
-            // Create new cart item
+            // Izveido jaunu grozu rindu
             CartItem::create([
-                'cart_id' => $cart->id,
-                'user_id' => auth()->id(),
+                'cart_id'    => $cart->id,
+                'user_id'    => auth()->id(),
                 'session_id' => session()->getId(),
                 'product_id' => $validated['product_id'],
-                'price' => $product->price,
-                'quantity' => $validated['quantity'],
+                'price'      => $product->price,
+                'quantity'   => $validated['quantity'],
+                'size'       => $validated['size'] ?? null,  // ← PIEVIENOTS
             ]);
         }
 
-        // Reload cart with items
         $cart->load('items');
 
         return response()->json([
             'success' => true,
             'message' => 'Product added to cart / Produkts pievienots grozam',
-            'cart' => [
-                'total_items' => $cart->total_items,
+            'cart'    => [
+                'total_items'  => $cart->total_items,
                 'total_amount' => $cart->total_amount,
-            ]
+            ],
         ]);
     }
 
@@ -126,42 +134,37 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Check if item belongs to current user's cart
         $cart = Cart::getCurrentCart();
         if ($cartItem->cart_id !== $cart->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized / Nav autorizēts'
+                'message' => 'Unauthorized / Nav autorizēts',
             ], 403);
         }
 
-        // Check stock
         if ($cartItem->product->stock_quantity < $validated['quantity']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Insufficient stock / Nepietiekams daudzums'
+                'message' => 'Insufficient stock / Nepietiekams daudzums',
             ], 400);
         }
 
-        $cartItem->update([
-            'quantity' => $validated['quantity'],
-        ]);
+        $cartItem->update(['quantity' => $validated['quantity']]);
 
-        // Reload cart
         $cart->load('items');
 
         return response()->json([
             'success' => true,
             'message' => 'Quantity updated / Daudzums atjaunināts',
-            'item' => [
-                'id' => $cartItem->id,
+            'item'    => [
+                'id'       => $cartItem->id,
                 'quantity' => $cartItem->quantity,
-                'total' => $cartItem->total,
+                'total'    => $cartItem->total,
             ],
-            'cart' => [
-                'total_items' => $cart->total_items,
+            'cart'    => [
+                'total_items'  => $cart->total_items,
                 'total_amount' => $cart->total_amount,
-            ]
+            ],
         ]);
     }
 
@@ -170,27 +173,25 @@ class CartController extends Controller
      */
     public function remove(CartItem $cartItem): JsonResponse
     {
-        // Check if item belongs to current user's cart
         $cart = Cart::getCurrentCart();
         if ($cartItem->cart_id !== $cart->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized / Nav autorizēts'
+                'message' => 'Unauthorized / Nav autorizēts',
             ], 403);
         }
 
         $cartItem->delete();
 
-        // Reload cart
         $cart->load('items');
 
         return response()->json([
             'success' => true,
             'message' => 'Item removed / Produkts izņemts',
-            'cart' => [
-                'total_items' => $cart->total_items,
+            'cart'    => [
+                'total_items'  => $cart->total_items,
                 'total_amount' => $cart->total_amount,
-            ]
+            ],
         ]);
     }
 
@@ -205,10 +206,10 @@ class CartController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cart cleared / Grozs iztīrīts',
-            'cart' => [
-                'total_items' => 0,
+            'cart'    => [
+                'total_items'  => 0,
                 'total_amount' => 0,
-            ]
+            ],
         ]);
     }
 
@@ -233,25 +234,26 @@ class CartController extends Controller
         $cart->load(['items.product']);
 
         return response()->json([
-            'cart' => [
-                'id' => $cart->id,
-                'total_items' => $cart->total_items,
+            'cart'  => [
+                'id'           => $cart->id,
+                'total_items'  => $cart->total_items,
                 'total_amount' => $cart->total_amount,
             ],
             'items' => $cart->items->map(function ($item) {
                 return [
-                    'id' => $item->id,
+                    'id'         => $item->id,
                     'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->total,
-                    'product' => [
-                        'id' => $item->product->id,
+                    'quantity'   => $item->quantity,
+                    'size'       => $item->size,    // ← PIEVIENOTS
+                    'price'      => $item->price,
+                    'total'      => $item->total,
+                    'product'    => [
+                        'id'      => $item->product->id,
                         'name_lv' => $item->product->name_lv,
                         'name_en' => $item->product->name_en,
-                        'slug' => $item->product->slug,
-                        'price' => $item->product->price,
-                        'image' => $item->product->image,
+                        'slug'    => $item->product->slug,
+                        'price'   => $item->product->price,
+                        'image'   => $item->product->image,
                     ],
                 ];
             }),
