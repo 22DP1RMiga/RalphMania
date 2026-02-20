@@ -3,6 +3,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import SubscriberOffers from '@/Components/SubscriberOffers.vue';
+import axios from 'axios';
 
 const props = defineProps({
     auth: Object,
@@ -11,6 +13,7 @@ const props = defineProps({
     recentReviews: Array,       // Last 5 reviews
     recentComments: Array,      // Last 5 comments
     hasAddress: Boolean,        // User has address filled
+    newsletterStatus: Object,   // Real newsletter stats from backend
 });
 
 // Get user avatar with correct path
@@ -249,6 +252,16 @@ const savePrivacySettings = async () => {
                     </button>
 
                     <button
+                        @click="setActiveSection('newsletter')"
+                        class="sidebar-link"
+                        :class="{ active: activeSection === 'newsletter' }"
+                    >
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ currentLocale === 'lv' ? 'Jaunumi' : 'Newsletter' }}</span>
+                        <span v-if="props.newsletterStatus?.subscribed" class="nav-badge nav-badge-green">✓</span>
+                    </button>
+
+                    <button
                         @click="setActiveSection('settings')"
                         class="sidebar-link"
                         :class="{ active: activeSection === 'settings' }"
@@ -278,7 +291,7 @@ const savePrivacySettings = async () => {
                                     <i class="fas fa-shopping-bag"></i>
                                     {{ $t('dashboard.sections.overview.recent_orders') }}
                                 </h3>
-                                <Link href="/dashboard/orders" class="card-link">
+                                <Link href="/orders" class="card-link">
                                     {{ $t('common.view_all') }}
                                 </Link>
                             </div>
@@ -632,6 +645,74 @@ const savePrivacySettings = async () => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Newsletter section -->
+                <div v-if="activeSection === 'newsletter'" class="section-content">
+                    <h2 class="section-title">
+                        {{ currentLocale === 'lv' ? 'Jaunumu abonēšana' : 'Newsletter Subscription' }}
+                    </h2>
+
+                    <!-- Status Card -->
+                    <div
+                        class="nl-status-card"
+                        :class="props.newsletterStatus?.subscribed ? 'nl-status-active' : 'nl-status-inactive'"
+                    >
+                        <div class="nl-status-icon">
+                            <i :class="props.newsletterStatus?.subscribed
+                ? 'fas fa-envelope-open-text'
+                : 'fas fa-envelope'">
+                            </i>
+                        </div>
+                        <div class="nl-status-body">
+                            <h3 class="nl-status-title">
+                                {{ props.newsletterStatus?.subscribed
+                                ? (currentLocale === 'lv' ? '🎉 Tu esi aktīvs abonents!' : '🎉 You are an active subscriber!')
+                                : (currentLocale === 'lv' ? 'Tu neesi abonējis jaunumus' : 'You are not subscribed')
+                                }}
+                            </h3>
+
+                            <!-- Expiry details -->
+                            <template v-if="props.newsletterStatus?.subscribed">
+                                <div
+                                    v-if="props.newsletterStatus?.days_remaining !== null"
+                                    class="nl-expiry-row"
+                                    :class="{
+                        'nl-expiry-warning': props.newsletterStatus.days_remaining <= 30,
+                        'nl-expiry-ok': props.newsletterStatus.days_remaining > 30
+                    }"
+                                >
+                                    <i class="fas fa-clock"></i>
+                                    <span v-if="props.newsletterStatus.days_remaining <= 7" class="nl-expiry-urgent">
+                        ⚠️ {{ currentLocale === 'lv'
+                                        ? `Abonēšana beidzas pēc ${props.newsletterStatus.days_remaining} dienām!`
+                                        : `Subscription expires in ${props.newsletterStatus.days_remaining} days!`
+                                        }}
+                    </span>
+                                    <span v-else-if="props.newsletterStatus.days_remaining <= 30">
+                        {{ currentLocale === 'lv'
+                                        ? `Beidzas drīz — ${props.newsletterStatus.days_remaining} dienas (${props.newsletterStatus.expires_at})`
+                                        : `Expiring soon — ${props.newsletterStatus.days_remaining} days (${props.newsletterStatus.expires_at})`
+                                        }}
+                    </span>
+                                    <span v-else>
+                        {{ currentLocale === 'lv'
+                                        ? `Derīgs līdz: ${props.newsletterStatus.expires_at}`
+                                        : `Valid until: ${props.newsletterStatus.expires_at}`
+                                        }}
+                    </span>
+                                </div>
+                                <div v-else class="nl-expiry-row nl-expiry-ok">
+                                    <i class="fas fa-infinity"></i>
+                                    <span>{{ currentLocale === 'lv' ? 'Abonēšana bez termiņa' : 'No expiry date' }}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- SubscriberOffers component -->
+                    <SubscriberOffers :userEmail="user.email" />
+                </div>
+
             </main>
         </div>
     </div>

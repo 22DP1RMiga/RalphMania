@@ -269,9 +269,16 @@ const cancelOrder = async () => {
                                 <span class="total-label">
                                     {{ locale === 'lv' ? 'Kopā:' : 'Total:' }}
                                 </span>
-                                <span class="total-amount">
-                                    {{ formatPrice(order.total_amount) }}€
-                                </span>
+                                <div class="total-stack">
+                                    <span v-if="parseFloat(order.discount_amount) > 0" class="total-discount">
+                                        <i class="fas fa-tag"></i>
+                                        <span class="coupon-badge-sm">{{ order.coupon_code }}</span>
+                                        -{{ formatPrice(order.discount_amount) }}€
+                                    </span>
+                                    <span class="total-amount">
+                                        {{ formatPrice(order.total_amount) }}€
+                                    </span>
+                                </div>
                             </div>
                             <div class="order-actions">
                                 <Link
@@ -546,6 +553,39 @@ const cancelOrder = async () => {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.total-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.total-discount {
+    font-size: 12px;
+    color: #059669;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.total-discount i {
+    font-size: 11px;
+}
+
+.coupon-badge-sm {
+    display: inline-block;
+    padding: 0 6px;
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #065f46;
+    font-family: monospace;
+    letter-spacing: 0.05em;
 }
 
 .total-label {

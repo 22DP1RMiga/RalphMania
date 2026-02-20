@@ -24,7 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
 
     // Content
-    Route::get('/content', [ContentController::class, 'apiIndex']); // ✅ Changed to apiIndex
+    Route::get('/content', [ContentController::class, 'apiIndex']);
     Route::get('/content/featured', [ContentController::class, 'featured']);
     Route::get('/content/{slug}', [ContentController::class, 'show']);
     Route::get('/content/type/{type}', [ContentController::class, 'byType']);

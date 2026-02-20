@@ -299,6 +299,7 @@ const downloadInvoice = () => {
                                         <h3 class="item-name">{{ item.product_name }}</h3>
                                         <div class="item-meta">
                                             <span class="item-price">{{ formatPrice(item.price) }}€ × {{ item.quantity }}</span>
+                                            <span v-if="item.size" class="item-size-badge">{{ item.size }}</span>
                                         </div>
                                     </div>
                                     <div class="item-total">
@@ -378,6 +379,15 @@ const downloadInvoice = () => {
                             <div class="summary-row">
                                 <span>{{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
                                 <span>{{ formatPrice(order.shipping_cost) }}€</span>
+                            </div>
+
+                            <div v-if="parseFloat(order.discount_amount) > 0" class="summary-row discount-row">
+                                <span>
+                                    <i class="fas fa-tag"></i>
+                                    {{ locale === 'lv' ? 'Atlaide' : 'Discount' }}
+                                    <span v-if="order.coupon_code" class="coupon-badge">{{ order.coupon_code }}</span>
+                                </span>
+                                <span class="discount-amount">-{{ formatPrice(order.discount_amount) }}€</span>
                             </div>
 
                             <div class="summary-divider"></div>
@@ -618,6 +628,49 @@ const downloadInvoice = () => {
 .item-meta {
     font-size: 14px;
     color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.item-size-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.discount-row {
+    color: #059669;
+}
+
+.discount-row i {
+    font-size: 12px;
+    margin-right: 2px;
+}
+
+.coupon-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #065f46;
+    font-family: monospace;
+    letter-spacing: 0.05em;
+    margin-left: 4px;
+}
+
+.discount-amount {
+    color: #059669;
+    font-weight: 600;
 }
 
 .item-total {

@@ -554,6 +554,7 @@ const messages = {
             cancel: 'Atcelt',
             sending: 'Sūta...',
             deleting: 'Dzēš...',
+            discount: 'Atlaide',
         },
         sections: {
             featured_content: 'Jaunākais Saturs',
@@ -901,44 +902,43 @@ const messages = {
         },
         // informatīvajam izdevumam (newsletter)
         newsletter: {
-            // Success/Error messages
-            success: 'Paldies par abonēšanu! Jūs saņemsiet ekskluzīvus piedāvājumus un jaunumus.',
-            already_subscribed: 'Šis e-pasts jau ir abonēts.',
-            error: 'Kļūda abonējot. Lūdzu, mēģiniet vēlreiz.',
-            invalid_email: 'Lūdzu, ievadiet derīgu e-pasta adresi.',
-            unsubscribed_success: 'Jūs esat veiksmīgi atteicies no jaunumu saņemšanas.',
-            unsubscribe_failed: 'Neizdevās atteikties. Lūdzu, mēģiniet vēlreiz.',
-            preferences_updated: 'Preferences veiksmīgi saglabātas.',
-
-            // Benefits hint in footer
-            benefits_hint: 'Abonenti saņem ekskluzīvas atlaides!',
-
-            // Dashboard section
-            title: 'Jaunumu abonements',
+            title: 'Jaunumu abonēšana',
             subscribed: 'Abonēts',
             not_subscribed: 'Nav abonēts',
             subscribe_now: 'Abonēt tagad',
+            already_subscribed: 'Šis e-pasts jau ir abonēts',
+            subscribed_success: 'Veiksmīgi abonēts! Pārbaudi savu e-pastu.',
+            unsubscribed_success: 'Veiksmīgi atteikts no jaunumiem.',
+            unsubscribe_failed: 'Neizdevās atteikties. Lūdzu mēģini vēlreiz.',
+            preferences_updated: 'Preferences saglabātas!',
+            invalid_email: 'Lūdzu ievadi derīgu e-pasta adresi.',
+            success: 'Paldies! Tu tagad saņemsi mūsu jaunumus.',
+            error: 'Kļūda. Lūdzu mēģini vēlreiz.',
+            benefits_hint: 'Abonentiem — ekskluzīvas atlaides un piedāvājumi!',
             manage_preferences: 'Pārvaldīt preferences',
+            view_offers: 'Skatīt piedāvājumus',
 
-            // Preferences
+            // Expiry
+            subscription_expired: 'Abonēšana ir beigusies',
+            expires_soon: 'Beidzas pēc {days} dienām',
+            expires_at: 'Derīgs līdz: {date}',
+
             preferences: {
-                title: 'E-pasta preferences',
-                receive_news: 'Saņemt jaunumus un ziņas',
-                receive_promotions: 'Saņemt piedāvājumus un atlaides',
-                receive_announcements: 'Saņemt svarīgus paziņojumus',
+                title: 'Paziņojumu preferences',
+                receive_news: 'Saņemt jaunumus',
+                receive_promotions: 'Saņemt akcijas un atlaides',
+                receive_announcements: 'Saņemt paziņojumus',
             },
 
-            // Subscriber offers
             offers: {
-                title: 'Ekskluzīvi piedāvājumi',
-                subtitle: 'Tikai abonentiem',
-                no_offers: 'Pašlaik nav aktīvu piedāvājumu',
-                code: 'Kods',
-                copy_code: 'Kopēt kodu',
-                copied: 'Nokopēts!',
-                expires: 'Derīgs līdz',
+                title: 'Tavi ekskluzīvie piedāvājumi',
+                subtitle: 'TIKAI ABONENTIEM',
+                no_offers: 'Pašlaik nav aktīvu piedāvājumu. Pārbaudīsi vēlāk!',
                 min_order: 'Min. pasūtījums',
-                use_at_checkout: 'Izmantojiet pie apmaksas',
+                expires: 'Derīgs līdz',
+                code: 'Kods',
+                copy_code: 'Kopēt',
+                copied: 'Nokopēts!',
             },
         },
         // privātuma politikai
@@ -2457,6 +2457,7 @@ const messages = {
             cancel: 'Cancel',
             sending: 'Sending...',
             deleting: 'Deleting...',
+            discount: 'Discount',
         },
         sections: {
             featured_content: 'Latest Content',
@@ -2805,44 +2806,43 @@ const messages = {
         },
         // informatīvajam izdevumam (newsletter)
         newsletter: {
-            // Success/Error messages
-            success: 'Thank you for subscribing! You will receive exclusive offers and updates.',
-            already_subscribed: 'This email is already subscribed.',
-            error: 'Error subscribing. Please try again.',
-            invalid_email: 'Please enter a valid email address.',
-            unsubscribed_success: 'You have successfully unsubscribed from our newsletter.',
-            unsubscribe_failed: 'Failed to unsubscribe. Please try again.',
-            preferences_updated: 'Preferences saved successfully.',
-
-            // Benefits hint in footer
-            benefits_hint: 'Subscribers get exclusive discounts!',
-
-            // Dashboard section
             title: 'Newsletter Subscription',
             subscribed: 'Subscribed',
             not_subscribed: 'Not subscribed',
             subscribe_now: 'Subscribe now',
+            already_subscribed: 'This email is already subscribed',
+            subscribed_success: 'Successfully subscribed! Check your email.',
+            unsubscribed_success: 'Successfully unsubscribed.',
+            unsubscribe_failed: 'Failed to unsubscribe. Please try again.',
+            preferences_updated: 'Preferences saved!',
+            invalid_email: 'Please enter a valid email address.',
+            success: 'Thank you! You will now receive our newsletter.',
+            error: 'Error. Please try again.',
+            benefits_hint: 'Subscribers get exclusive discounts and offers!',
             manage_preferences: 'Manage preferences',
+            view_offers: 'View offers',
 
-            // Preferences
+            // Expiry
+            subscription_expired: 'Subscription has expired',
+            expires_soon: 'Expires in {days} days',
+            expires_at: 'Valid until: {date}',
+
             preferences: {
-                title: 'Email Preferences',
-                receive_news: 'Receive news and updates',
-                receive_promotions: 'Receive offers and discounts',
-                receive_announcements: 'Receive important announcements',
+                title: 'Notification preferences',
+                receive_news: 'Receive news',
+                receive_promotions: 'Receive promotions and discounts',
+                receive_announcements: 'Receive announcements',
             },
 
-            // Subscriber offers
             offers: {
-                title: 'Exclusive Offers',
-                subtitle: 'Subscribers only',
-                no_offers: 'No active offers at the moment',
-                code: 'Code',
-                copy_code: 'Copy code',
-                copied: 'Copied!',
-                expires: 'Valid until',
+                title: 'Your exclusive offers',
+                subtitle: 'SUBSCRIBERS ONLY',
+                no_offers: 'No active offers at the moment. Check back later!',
                 min_order: 'Min. order',
-                use_at_checkout: 'Use at checkout',
+                expires: 'Valid until',
+                code: 'Code',
+                copy_code: 'Copy',
+                copied: 'Copied!',
             },
         },
         // privātuma politikai

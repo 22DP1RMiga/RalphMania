@@ -186,6 +186,28 @@
             color: #dc2626;
         }
 
+        .discount-row .totals-label {
+            color: #059669;
+        }
+
+        .discount-value {
+            color: #059669;
+        }
+
+        .coupon-badge {
+            display: inline-block;
+            padding: 1px 7px;
+            background: #d1fae5;
+            border: 1px solid #6ee7b7;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #065f46;
+            font-family: monospace;
+            letter-spacing: 0.05em;
+            margin: 0 3px;
+        }
+
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -309,6 +331,7 @@
             <tr>
                 <th>Nr.</th>
                 <th>Produkts</th>
+                <th class="text-center">Izmērs</th>
                 <th class="text-center">Daudzums</th>
                 <th class="text-right">Cena</th>
                 <th class="text-right">Kopā</th>
@@ -319,6 +342,7 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>{{ $item->product_name }}</td>
+                    <td class="text-center">{{ $item->size ?? '—' }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
                     <td class="text-right">{{ number_format($item->price, 2) }} EUR</td>
                     <td class="text-right">{{ number_format($item->total, 2) }} EUR</td>
@@ -338,6 +362,18 @@
             <div class="totals-label">Piegāde:</div>
             <div class="totals-value">{{ number_format($order->shipping_cost, 2) }} EUR</div>
         </div>
+        @if($order->discount_amount > 0)
+            <div class="totals-row discount-row">
+                <div class="totals-label">
+                    Atlaide
+                    @if($order->coupon_code)
+                        <span class="coupon-badge">{{ $order->coupon_code }}</span>
+                    @endif
+                    :
+                </div>
+                <div class="totals-value discount-value">-{{ number_format($order->discount_amount, 2) }} EUR</div>
+            </div>
+        @endif
         <div class="totals-row">
             <div class="totals-label">PVN (21%):</div>
             <div class="totals-value">{{ number_format($order->total_amount * 0.21, 2) }} EUR</div>
