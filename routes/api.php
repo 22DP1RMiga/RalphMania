@@ -10,7 +10,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
-use App\Http\Controllers\CouponController;
 
 // Public API routes
 Route::prefix('v1')->group(function () {
@@ -25,7 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
 
     // Content
-    Route::get('/content', [ContentController::class, 'apiIndex']); // ✅ Changed to apiIndex
+    Route::get('/content', [ContentController::class, 'apiIndex']);
     Route::get('/content/featured', [ContentController::class, 'featured']);
     Route::get('/content/{slug}', [ContentController::class, 'show']);
     Route::get('/content/type/{type}', [ContentController::class, 'byType']);
@@ -60,10 +59,6 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::put('/orders/{id}/cancel', [OrderController::class, 'cancel']);
-
-    // Coupons
-    Route::post('/coupons/validate', [CouponController::class, 'validate'])
-        ->name('coupons.validate');
 
     // Reviews (protected write)
     Route::post('/reviews', [ReviewController::class, 'store']);

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Cart;
 use App\Models\Payment;
+use App\Models\SubscriberOffer;
+use App\Models\NewsletterSubscriber;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,7 @@ class OrderController extends Controller
             'delivery_postal_code' => 'nullable|string|max:20',
             'payment_method'       => 'required|in:card,bank_transfer,cash_on_delivery',
             'notes'                => 'nullable|string|max:500',
-            'coupon_code'          => 'nullable|string|max:64',  // ← JAUNS
+            'coupon_code'          => 'nullable|string|max:64',
         ];
 
         if ($request->payment_method === 'card') {
@@ -105,50 +106,62 @@ class OrderController extends Controller
 
         // ─── KUPONA APSTRĀDE ─────────────────────────────────────────────────
         $discountAmount = 0;
-        $coupon         = null;
         $couponCode     = null;
+        $offer          = null;
 
         if (!empty($validated['coupon_code'])) {
-            $couponCode = strtoupper(trim($validated['coupon_code']));
+            $code = strtoupper(trim($validated['coupon_code']));
 
-            $coupon = Coupon::where('is_active', true)
-                ->where('code', $couponCode)
-                ->where(function ($q) {
-                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
-                })
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
-                })
+            $offer = SubscriberOffer::active()
+                ->where('code', $code)
                 ->first();
 
-            if ($coupon) {
-                // Validē servera pusē (drošībai, pat ja frontend jau validēja)
-                $validation = $coupon->validate($user->id, $subtotal);
+            if ($offer) {
+                // Pārbauda minimālo summu
+                $meetsMinimum = !$offer->min_order_amount
+                    || $subtotal >= $offer->min_order_amount;
 
-                if ($validation['valid']) {
-                    $discountAmount = $validation['discount'];
-                    \Log::info('Coupon applied', [
+                // Pārbauda abonēšanu (ja kupons tikai abonentiem)
+                $meetsSubscription = true;
+                if ($offer->subscribers_only) {
+                    $meetsSubscription = NewsletterSubscriber::where('user_id', $user->id)
+                        ->where('is_active', true)
+                        ->where('is_verified', true)
+                        ->where(function ($q) {
+                            $q->whereNull('subscription_expires_at')
+                                ->orWhere('subscription_expires_at', '>=', now());
+                        })
+                        ->exists();
+                }
+
+                if ($meetsMinimum && $meetsSubscription) {
+                    // Aprēķina atlaidi
+                    if ($offer->discount_type === 'percentage') {
+                        $discountAmount = round($subtotal * ($offer->discount_value / 100), 2);
+                    } else {
+                        $discountAmount = min((float) $offer->discount_value, $subtotal);
+                    }
+                    $couponCode = $offer->code;
+
+                    \Log::info('Coupon applied at order creation', [
                         'code'     => $couponCode,
                         'discount' => $discountAmount,
                     ]);
                 } else {
-                    // Kupons nav derīgs — turpina pasūtījumu BEZ atlaides
-                    // (nevis atgriežam kļūdu — lietotājs var būt iesūtījis veco kodu)
-                    \Log::warning('Coupon validation failed on order store', [
-                        'code'    => $couponCode,
-                        'reason'  => $validation['message'],
+                    // Kupons neder — turpina bez atlaides
+                    \Log::warning('Coupon conditions not met at order creation', [
+                        'code'               => $code,
+                        'meets_minimum'      => $meetsMinimum,
+                        'meets_subscription' => $meetsSubscription,
                     ]);
-                    $coupon     = null;
-                    $couponCode = null;
+                    $offer = null;
                 }
             } else {
-                \Log::warning('Coupon not found: ' . $couponCode);
-                $couponCode = null;
+                \Log::warning('Coupon not found at order creation: ' . $code);
             }
         }
 
         // ─── GALĪGĀ SUMMA ────────────────────────────────────────────────────
-        // subtotal + piegāde - atlaide (min 0)
         $totalAmount = max(0, $subtotal + $shippingCost - $discountAmount);
 
         \Log::info('Order totals:', [
@@ -174,8 +187,8 @@ class OrderController extends Controller
                 'delivery_postal_code' => $validated['delivery_postal_code'] ?? null,
                 'subtotal'             => $subtotal,
                 'shipping_cost'        => $shippingCost,
-                'discount_amount'      => $discountAmount,   // ← JAUNS
-                'coupon_code'          => $couponCode,        // ← JAUNS
+                'discount_amount'      => $discountAmount,
+                'coupon_code'          => $couponCode,
                 'total_amount'         => $totalAmount,
                 'status'               => 'pending',
                 'notes'                => $validated['notes'] ?? null,
@@ -190,37 +203,32 @@ class OrderController extends Controller
                 'order_number' => $order->order_number,
             ]);
 
-            // ─── PASŪTĪJUMA RINDAS (AR IZMĒRU) ──────────────────────────────
+            // ─── PASŪTĪJUMA RINDAS ───────────────────────────────────────────
             foreach ($cart->items as $item) {
-                $itemData = [
+                $order->items()->create([
                     'product_id'   => $item->product_id,
-                    'product_name' => mb_substr($item->product->name_lv, 0, 50), // VARCHAR(50) limits
+                    'product_name' => mb_substr($item->product->name_lv, 0, 50),
                     'quantity'     => $item->quantity,
                     'price'        => $item->product->price,
-                    'size'         => $item->size ?? null,  // ← JAUNS: izmērs no groza
-                ];
-
-                \Log::info('Creating order item:', $itemData);
-                $order->items()->create($itemData);
+                    'size'         => $item->size ?? null,
+                ]);
             }
 
             // ─── MAKSĀJUMA IERAKSTS ──────────────────────────────────────────
             $cardData = [];
             if ($validated['payment_method'] === 'card' && isset($validated['card_number'])) {
                 $cardNumber = str_replace(' ', '', $validated['card_number']);
-                $last4      = substr($cardNumber, -4);
-                $brand      = $this->detectCardBrand($cardNumber);
                 [$month, $year] = explode('/', $validated['card_expiry']);
 
                 $cardData = [
-                    'card_last4'     => $last4,
-                    'card_brand'     => $brand,
+                    'card_last4'     => substr($cardNumber, -4),
+                    'card_brand'     => $this->detectCardBrand($cardNumber),
                     'card_exp_month' => $month,
                     'card_exp_year'  => '20' . $year,
                 ];
             }
 
-            $payment = Payment::create(array_merge([
+            Payment::create(array_merge([
                 'order_id'       => $order->id,
                 'payment_method' => $validated['payment_method'],
                 'amount'         => $totalAmount,
@@ -228,24 +236,20 @@ class OrderController extends Controller
                 'status'         => 'pending',
             ], $cardData));
 
-            \Log::info('Payment created:', ['payment_id' => $payment->id]);
+            // ─── KUPONA STATISTIKAS ATJAUNINĀŠANA ────────────────────────────
+            // used_count++ tiek pie subscriber_offers tabulā
+            if ($offer && $discountAmount > 0) {
+                $offer->incrementUsage();
 
-            // ─── KUPONA ATZĪMĒŠANA KĀ IZLIETOTS ─────────────────────────────
-            // Tiek izsaukts PĒC pasūtījuma izveides, lai order_id ir pieejams
-            if ($coupon && $discountAmount > 0) {
-                $coupon->markUsed($user->id, $order->id, $discountAmount);
-
-                \Log::info('Coupon marked as used', [
-                    'coupon_code'    => $coupon->code,
-                    'order_id'       => $order->id,
-                    'discount'       => $discountAmount,
-                    'reusable_after' => now()->addDays($coupon->cooldown_days)->toDateString(),
+                \Log::info('Coupon usage incremented', [
+                    'code'      => $offer->code,
+                    'new_count' => $offer->used_count,
+                    'order_id'  => $order->id,
                 ]);
             }
 
             // ─── GROZA IZTĪRĪŠANA ────────────────────────────────────────────
-            $deletedItems = $cart->items()->delete();
-            \Log::info('Cart cleared:', ['deleted_items' => $deletedItems]);
+            $cart->items()->delete();
 
             DB::commit();
 
@@ -263,7 +267,6 @@ class OrderController extends Controller
                     'error'    => $e->getMessage(),
                     'order_id' => $order->id,
                 ]);
-                // E-pasta kļūda neaptur pasūtījumu
             }
 
             return redirect()->route('orders.show', $order->id)
@@ -304,15 +307,11 @@ class OrderController extends Controller
 
     private function detectCardBrand(string $cardNumber): string
     {
-        $cardNumber = str_replace(' ', '', $cardNumber);
-        $first1     = substr($cardNumber, 0, 1);
-        $first2     = substr($cardNumber, 0, 2);
-
-        if ($first1 === '4') return 'Visa';
-        if (in_array($first2, ['51','52','53','54','55'])) return 'Mastercard';
-        if (in_array($first2, ['34','37'])) return 'American Express';
-        if (in_array($first2, ['60','64','65'])) return 'Discover';
-
+        $n = str_replace(' ', '', $cardNumber);
+        if (str_starts_with($n, '4')) return 'Visa';
+        if (in_array(substr($n, 0, 2), ['51','52','53','54','55'])) return 'Mastercard';
+        if (in_array(substr($n, 0, 2), ['34','37'])) return 'American Express';
+        if (in_array(substr($n, 0, 2), ['60','64','65'])) return 'Discover';
         return 'Unknown';
     }
 
@@ -357,11 +356,7 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error cancelling order',
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error cancelling order'], 500);
         }
     }
 
@@ -373,9 +368,7 @@ class OrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('Admin/Orders/Index', [
-            'orders' => $orders,
-        ]);
+        return Inertia::render('Admin/Orders/Index', ['orders' => $orders]);
     }
 
     public function adminShow($id): Response
@@ -383,9 +376,7 @@ class OrderController extends Controller
         $order = Order::with(['user', 'items.product', 'payment', 'courierAssignments.courier'])
             ->findOrFail($id);
 
-        return Inertia::render('Admin/Orders/Show', [
-            'order' => $order,
-        ]);
+        return Inertia::render('Admin/Orders/Show', ['order' => $order]);
     }
 
     public function updateStatus(Request $request, $id): JsonResponse
@@ -395,17 +386,12 @@ class OrderController extends Controller
         ]);
 
         $order = Order::findOrFail($id);
-
         $order->update([
             'status'       => $validated['status'],
             'shipped_at'   => $validated['status'] === 'shipped'   ? now() : $order->shipped_at,
             'delivered_at' => $validated['status'] === 'delivered' ? now() : $order->delivered_at,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order status updated',
-            'order'   => $order,
-        ]);
+        return response()->json(['success' => true, 'message' => 'Order status updated', 'order' => $order]);
     }
 }
