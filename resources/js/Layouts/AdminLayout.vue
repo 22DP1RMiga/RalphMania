@@ -136,6 +136,12 @@ const navItems = computed(() => {
             url: '/admin/users',
         },
         {
+            nameKey: 'admin.nav.couriers',
+            icon: 'fas fa-truck',
+            route: 'admin.couriers.index',
+            url: '/admin/couriers',
+        },
+        {
             nameKey: 'admin.nav.settings',
             icon: 'fas fa-gear',
             route: 'admin.settings.index',

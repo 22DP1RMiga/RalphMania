@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'super-admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
+            'courier' => \App\Http\Middleware\CourierMiddleware::class,
             'can' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
