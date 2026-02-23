@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CourierAssignment extends Model
 {
+    /**
+     * courier_assignments tabula neietver created_at/updated_at kolonnas.
+     * Bez šī iestatījuma Eloquent mēģina ierakstīt šos laukus un 500 kļūda rodas.
+     */
+    public $timestamps = false;
+
     protected $fillable = [
         'courier_id',
         'order_id',
@@ -41,7 +47,7 @@ class CourierAssignment extends Model
 
     public function getDaysActiveAttribute(): int
     {
-        $start = $this->assigned_at ?? $this->created_at;
+        $start = $this->assigned_at ?? now();
         return (int) now()->diffInDays($start);
     }
 }

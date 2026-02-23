@@ -117,7 +117,7 @@ class AdminCourierController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        $courier = Courier::findOrFail($id);
+        $courier = Courier::with('user')->findOrFail($id);
 
         $validated = $request->validate([
             'full_name'     => 'required|string|max:100',
@@ -125,9 +125,28 @@ class AdminCourierController extends Controller
             'vehicle_type'  => 'nullable|string|max:50',
             'delivery_area' => 'nullable|string|max:100',
             'hired_at'      => 'nullable|date',
+            'username'      => 'nullable|string|max:50|unique:users,username,' . ($courier->user_id ?? 0),
         ]);
 
-        $courier->update($validated);
+        DB::beginTransaction();
+        try {
+            $courier->update([
+                'full_name'     => $validated['full_name'],
+                'phone'         => $validated['phone'],
+                'vehicle_type'  => $validated['vehicle_type'] ?? null,
+                'delivery_area' => $validated['delivery_area'] ?? null,
+                'hired_at'      => $validated['hired_at'] ?? null,
+            ]);
+
+            if ($courier->user && !empty($validated['username'])) {
+                $courier->user->update(['username' => $validated['username']]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Kļūda saglabājot: ' . $e->getMessage()], 500);
+        }
 
         return response()->json(['success' => true, 'message' => 'Kurjers atjaunināts!']);
     }

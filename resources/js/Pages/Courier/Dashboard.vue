@@ -80,6 +80,33 @@ const quickUpdateStatus = async (assignment) => {
 const currentDate = new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
 }).format(new Date());
+
+// ─── PROFILE EDIT ─────────────────────────────────────────────────────────────
+const showEditProfile = ref(false);
+const isSavingProfile = ref(false);
+const profileForm = ref({
+    full_name:     props.courier.full_name || '',
+    phone:         props.courier.phone || '',
+    vehicle_type:  props.courier.vehicle_type || '',
+    delivery_area: props.courier.delivery_area || '',
+    username:      props.courier.user?.username || '',
+});
+
+const saveProfile = async () => {
+    isSavingProfile.value = true;
+    try {
+        const { data } = await axios.put('/courier/profile', profileForm.value);
+        showToast(data.message || 'Profils atjaunināts!', 'success');
+        showEditProfile.value = false;
+        setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+        const errors = err.response?.data?.errors;
+        const msg = errors ? Object.values(errors)[0][0] : (err.response?.data?.message || 'Kļūda saglabājot.');
+        showToast(msg, 'error');
+    } finally {
+        isSavingProfile.value = false;
+    }
+};
 </script>
 
 <template>
@@ -99,10 +126,16 @@ const currentDate = new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'e
                     </h1>
                     <p class="header-subtitle">{{ currentDate }}</p>
                 </div>
-                <div class="courier-badge">
-                    <i class="fas fa-id-badge"></i>
-                    {{ courier.full_name }}
-                    <span class="area-tag" v-if="courier.delivery_area">{{ courier.delivery_area }}</span>
+                <div class="header-right">
+                    <div class="courier-badge">
+                        <i class="fas fa-id-badge"></i>
+                        {{ courier.full_name }}
+                        <span class="area-tag" v-if="courier.delivery_area">{{ courier.delivery_area }}</span>
+                    </div>
+                    <button @click="showEditProfile = true" class="btn-edit-profile">
+                        <i class="fas fa-edit"></i>
+                        {{ locale === 'lv' ? 'Rediģēt profilu' : 'Edit Profile' }}
+                    </button>
                 </div>
             </div>
 
@@ -259,6 +292,48 @@ const currentDate = new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'e
                 </div>
             </div>
         </div>
+
+        <!-- ─── EDIT PROFILE MODAL ─── -->
+        <div v-if="showEditProfile" class="modal-overlay" @click.self="showEditProfile = false">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> {{ locale === 'lv' ? 'Rediģēt profilu' : 'Edit Profile' }}</h3>
+                    <button @click="showEditProfile = false" class="close-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Lietotājvārds *' : 'Username *' }}</label>
+                        <input v-model="profileForm.username" type="text" class="form-input" placeholder="username" />
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Pilns vārds *' : 'Full Name *' }}</label>
+                        <input v-model="profileForm.full_name" type="text" class="form-input" />
+                    </div>
+                    <div class="form-grid2">
+                        <div class="form-row">
+                            <label class="form-label">{{ locale === 'lv' ? 'Tālrunis *' : 'Phone *' }}</label>
+                            <input v-model="profileForm.phone" type="text" class="form-input" placeholder="+371 2000 0000" />
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">{{ locale === 'lv' ? 'Transportlīdzeklis' : 'Vehicle' }}</label>
+                            <input v-model="profileForm.vehicle_type" type="text" class="form-input" :placeholder="locale === 'lv' ? 'Auto, Velosipēds...' : 'Car, Bicycle...'" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Piegādes rajons' : 'Delivery Area' }}</label>
+                        <input v-model="profileForm.delivery_area" type="text" class="form-input" :placeholder="locale === 'lv' ? 'Rīgas centrs, Purvciems...' : 'City center, Suburbs...'" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="showEditProfile = false" class="btn btn-outline">{{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}</button>
+                    <button @click="saveProfile" :disabled="isSavingProfile || !profileForm.full_name || !profileForm.phone" class="btn btn-primary">
+                        <i v-if="isSavingProfile" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-save"></i>
+                        {{ locale === 'lv' ? 'Saglabāt' : 'Save' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>
 
@@ -313,6 +388,120 @@ const currentDate = new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'e
     border-radius: 20px;
     font-weight: 500;
 }
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.btn-edit-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-edit-profile:hover {
+    background: #f9fafb;
+    border-color: #dc2626;
+    color: #dc2626;
+}
+.btn-edit-profile i { color: #dc2626; }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-header h3 i { color: #dc2626; }
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #9ca3af;
+    padding: 4px;
+    line-height: 1;
+}
+.close-btn:hover { color: #374151; }
+.modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+.form-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.form-input:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220,38,38,0.1);
+}
+.form-grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.form-row { display: flex; flex-direction: column; }
 
 /* Stats */
 .stats-grid {
@@ -503,12 +692,33 @@ const currentDate = new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'e
 @media (max-width: 1024px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 640px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 768px) {
+    .courier-dashboard { padding: 16px 12px; }
+    .dashboard-header { flex-direction: column; align-items: stretch; gap: 12px; }
+    .header-right { align-items: flex-start; flex-direction: row; justify-content: space-between; flex-wrap: wrap; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-icon { width: 40px; height: 40px; font-size: 18px; }
+    .stat-value { font-size: 22px; }
+    .section { padding: 16px; }
     .orders-grid { grid-template-columns: 1fr; }
-    .dashboard-header { flex-direction: column; }
-    .table-header, .table-row { grid-template-columns: 1fr 1fr; }
+    .table-header, .table-row { grid-template-columns: 1fr 1fr; gap: 8px; }
     .table-header span:nth-child(3),
     .table-row span:nth-child(3) { display: none; }
+    .form-grid2 { grid-template-columns: 1fr; }
+    .modal { margin: 0 8px; }
+    .modal-body { padding: 16px; }
+    .modal-footer { padding: 12px 16px; flex-wrap: wrap; }
+    .modal-footer .btn { flex: 1; justify-content: center; }
+}
+@media (max-width: 480px) {
+    .header-title { font-size: 22px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-value { font-size: 20px; }
+    .order-card-footer { flex-direction: column; }
+    .order-card-footer .btn { width: 100%; justify-content: center; }
+    .table-header, .table-row { grid-template-columns: 2fr 1fr; }
+    .table-header span:nth-child(4),
+    .table-row span:nth-child(4) { display: none; }
 }
 </style>

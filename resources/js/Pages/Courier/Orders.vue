@@ -84,64 +84,89 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
                 </button>
             </div>
 
-            <!-- Table -->
+            <!-- Table (desktop) -->
             <div class="orders-table-wrap">
                 <div v-if="assignments.data.length === 0" class="empty-state">
                     <i class="fas fa-box-open"></i>
                     <p>{{ locale === 'lv' ? 'Nav atrasts neviens pasūtījums' : 'No orders found' }}</p>
                 </div>
 
-                <table v-else class="orders-table">
-                    <thead>
-                    <tr>
-                        <th>{{ locale === 'lv' ? 'Pasūtījums' : 'Order' }}</th>
-                        <th>{{ locale === 'lv' ? 'Klients' : 'Customer' }}</th>
-                        <th>{{ locale === 'lv' ? 'Piegādes adrese' : 'Delivery Address' }}</th>
-                        <th>{{ locale === 'lv' ? 'Statuss' : 'Status' }}</th>
-                        <th>{{ locale === 'lv' ? 'Piešķirts' : 'Assigned' }}</th>
-                        <th>{{ locale === 'lv' ? 'Pabeigts' : 'Completed' }}</th>
-                        <th>{{ locale === 'lv' ? 'Summa' : 'Amount' }}</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="a in assignments.data" :key="a.id">
-                        <td>
-                            <span class="order-num">{{ a.order?.order_number }}</span>
-                        </td>
-                        <td>
-                            <div>{{ a.order?.customer_name }}</div>
-                            <div class="secondary">{{ a.order?.customer_phone }}</div>
-                        </td>
-                        <td>
-                            <div>{{ a.order?.delivery_address }}</div>
-                            <div class="secondary">{{ a.order?.delivery_city }}, {{ a.order?.delivery_country }}</div>
-                        </td>
-                        <td>
-                                <span
-                                    class="status-badge"
-                                    :style="{ background: getStatus(a.order?.status).bg, color: getStatus(a.order?.status).color }"
-                                >
+                <template v-else>
+                    <!-- Desktop table -->
+                    <table class="orders-table">
+                        <thead>
+                        <tr>
+                            <th>{{ locale === 'lv' ? 'Pasūtījums' : 'Order' }}</th>
+                            <th>{{ locale === 'lv' ? 'Klients' : 'Customer' }}</th>
+                            <th>{{ locale === 'lv' ? 'Piegādes adrese' : 'Delivery Address' }}</th>
+                            <th>{{ locale === 'lv' ? 'Statuss' : 'Status' }}</th>
+                            <th>{{ locale === 'lv' ? 'Piešķirts' : 'Assigned' }}</th>
+                            <th>{{ locale === 'lv' ? 'Pabeigts' : 'Completed' }}</th>
+                            <th>{{ locale === 'lv' ? 'Summa' : 'Amount' }}</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="a in assignments.data" :key="a.id">
+                            <td><span class="order-num">{{ a.order?.order_number }}</span></td>
+                            <td>
+                                <div>{{ a.order?.customer_name }}</div>
+                                <div class="secondary">{{ a.order?.customer_phone }}</div>
+                            </td>
+                            <td>
+                                <div>{{ a.order?.delivery_address }}</div>
+                                <div class="secondary">{{ a.order?.delivery_city }}, {{ a.order?.delivery_country }}</div>
+                            </td>
+                            <td>
+                                <span class="status-badge" :style="{ background: getStatus(a.order?.status).bg, color: getStatus(a.order?.status).color }">
                                     {{ getStatusLabel(a.order?.status) }}
                                 </span>
-                        </td>
-                        <td class="secondary">{{ formatDate(a.assigned_at) }}</td>
-                        <td>
+                            </td>
+                            <td class="secondary">{{ formatDate(a.assigned_at) }}</td>
+                            <td>
                                 <span v-if="a.completed_at" class="completed-check">
                                     <i class="fas fa-check-circle"></i>
                                     {{ formatDate(a.completed_at) }}
                                 </span>
-                            <span v-else class="secondary">—</span>
-                        </td>
-                        <td class="amount">{{ formatPrice(a.order?.total_amount) }}€</td>
-                        <td>
-                            <Link :href="`/courier/orders/${a.order?.id}`" class="btn btn-sm">
-                                <i class="fas fa-eye"></i>
-                            </Link>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                                <span v-else class="secondary">—</span>
+                            </td>
+                            <td class="amount">{{ formatPrice(a.order?.total_amount) }}€</td>
+                            <td>
+                                <Link :href="`/courier/orders/${a.order?.id}`" class="btn btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </Link>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Mobile cards -->
+                    <div class="mobile-cards">
+                        <div v-for="a in assignments.data" :key="'m'+a.id" class="mobile-card">
+                            <div class="mobile-card-head">
+                                <span class="order-num">{{ a.order?.order_number }}</span>
+                                <span class="status-badge" :style="{ background: getStatus(a.order?.status).bg, color: getStatus(a.order?.status).color }">
+                                    {{ getStatusLabel(a.order?.status) }}
+                                </span>
+                            </div>
+                            <div class="mobile-card-body">
+                                <div class="mc-row"><i class="fas fa-user"></i> {{ a.order?.customer_name }}</div>
+                                <div class="mc-row"><i class="fas fa-phone"></i> {{ a.order?.customer_phone }}</div>
+                                <div class="mc-row"><i class="fas fa-map-marker-alt"></i> {{ a.order?.delivery_address }}, {{ a.order?.delivery_city }}</div>
+                                <div class="mc-row mc-meta">
+                                    <span><i class="fas fa-calendar-plus"></i> {{ formatDate(a.assigned_at) }}</span>
+                                    <span class="amount">{{ formatPrice(a.order?.total_amount) }}€</span>
+                                </div>
+                            </div>
+                            <div class="mobile-card-foot">
+                                <Link :href="`/courier/orders/${a.order?.id}`" class="btn btn-primary" style="width:100%;justify-content:center;">
+                                    <i class="fas fa-eye"></i>
+                                    {{ locale === 'lv' ? 'Skatīt detaļas' : 'View Details' }}
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
                 <!-- Pagination -->
                 <div class="pagination" v-if="assignments.links?.length > 3">
@@ -191,18 +216,43 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
 .btn-primary:hover { background: #b91c1c; }
 .btn-outline { background: white; color: #374151; border: 1px solid #d1d5db; }
 .btn-outline:hover { background: #f3f4f6; }
-.btn-sm { padding: 6px 10px; }
+.btn-sm { padding: 6px 10px; border: 1px solid #e5e7eb; background: white; color: #6b7280; border-radius: 6px; }
 .btn-sm:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
 .empty-state { text-align: center; padding: 60px; color: #9ca3af; }
 .empty-state i { font-size: 40px; display: block; margin-bottom: 12px; }
 
-.pagination { display: flex; gap: 4px; padding: 16px; justify-content: center; border-top: 1px solid #e5e7eb; }
+.pagination { display: flex; gap: 4px; padding: 16px; justify-content: center; border-top: 1px solid #e5e7eb; flex-wrap: wrap; }
 .page-btn { padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid #e5e7eb; text-decoration: none; color: #374151; }
 .page-btn.active { background: #dc2626; color: white; border-color: #dc2626; }
 .page-btn.disabled { opacity: 0.4; cursor: default; }
 
+/* Mobile cards — hidden on desktop */
+.mobile-cards { display: none; }
+.mobile-card { border-bottom: 1px solid #f3f4f6; padding: 14px 16px; }
+.mobile-card:last-child { border-bottom: none; }
+.mobile-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.mobile-card-body { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.mc-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; }
+.mc-row i { width: 14px; color: #9ca3af; flex-shrink: 0; }
+.mc-meta { display: flex; justify-content: space-between; color: #6b7280; font-size: 12px; margin-top: 4px; }
+.mc-meta .amount { font-size: 14px; font-weight: 700; }
+.mobile-card-foot { }
+
+/* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
+    .courier-orders { padding: 16px 12px; }
+    .page-title { font-size: 20px; }
+    .search-input { min-width: 0; }
+
+    /* Hide table, show cards */
     .orders-table { display: none; }
+    .mobile-cards { display: block; }
+}
+
+@media (max-width: 480px) {
+    .filters-bar { flex-direction: column; }
+    .search-input, .filter-select { width: 100%; }
+    .filters-bar .btn { width: 100%; justify-content: center; }
 }
 </style>

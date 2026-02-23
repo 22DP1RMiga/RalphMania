@@ -186,9 +186,32 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
                                 <span class="item-price">{{ formatPrice(item.total) }}€</span>
                             </div>
                         </div>
-                        <div class="total-row">
-                            <span>{{ locale === 'lv' ? 'Kopā:' : 'Total:' }}</span>
-                            <span class="total-amount">{{ formatPrice(order.total_amount) }}€</span>
+                        <div class="price-breakdown">
+                            <div class="price-row">
+                                <span class="price-label">{{ locale === 'lv' ? 'Preces:' : 'Subtotal:' }}</span>
+                                <span>{{ formatPrice(order.subtotal) }}€</span>
+                            </div>
+                            <div class="price-row" v-if="parseFloat(order.shipping_cost) > 0">
+                                <span class="price-label"><i class="fas fa-truck"></i> {{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
+                                <span>{{ formatPrice(order.shipping_cost) }}€</span>
+                            </div>
+                            <div class="price-row free-shipping" v-else>
+                                <span class="price-label"><i class="fas fa-truck"></i> {{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
+                                <span class="price-free">{{ locale === 'lv' ? 'Bezmaksas' : 'Free' }}</span>
+                            </div>
+                            <div class="price-row price-discount" v-if="parseFloat(order.discount_amount) > 0">
+                                <span class="price-label">
+                                    <i class="fas fa-tag"></i>
+                                    {{ locale === 'lv' ? 'Atlaide' : 'Discount' }}
+                                    <span v-if="order.coupon_code" class="coupon-tag">{{ order.coupon_code }}</span>
+                                    <span v-else class="coupon-tag coupon-points">{{ locale === 'lv' ? 'Kupons' : 'Coupon' }}</span>
+                                </span>
+                                <span class="price-discount-val">−{{ formatPrice(order.discount_amount) }}€</span>
+                            </div>
+                            <div class="price-row price-total-row">
+                                <span class="price-label-total">{{ locale === 'lv' ? 'Kopā:' : 'Total:' }}</span>
+                                <span class="total-amount">{{ formatPrice(order.total_amount) }}€</span>
+                            </div>
                         </div>
                     </div>
 
@@ -336,6 +359,53 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
 .item-price { font-size: 14px; font-weight: 700; color: #1f2937; min-width: 60px; text-align: right; }
 .total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 15px; }
 .total-amount { font-size: 20px; font-weight: 700; color: #dc2626; }
+
+/* Price breakdown */
+.price-breakdown {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #374151;
+}
+.price-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6b7280;
+}
+.price-label i { width: 14px; color: #9ca3af; }
+.price-free { color: #059669; font-weight: 600; }
+.price-discount .price-label { color: #059669; }
+.price-discount-val { color: #059669; font-weight: 600; }
+.coupon-tag {
+    background: #d1fae5;
+    color: #065f46;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    font-family: monospace;
+}
+.coupon-points {
+    background: #dbeafe;
+    color: #1e40af;
+    font-family: inherit;
+}
+.price-total-row {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 8px;
+    margin-top: 2px;
+}
+.price-label-total { font-size: 15px; font-weight: 600; color: #1f2937; }
 
 /* Notes */
 .notes-textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; margin-bottom: 12px; box-sizing: border-box; }

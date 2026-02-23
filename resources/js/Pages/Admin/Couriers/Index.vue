@@ -82,6 +82,40 @@ const removeConfirmed = () => {
     });
 };
 
+// ─── EDIT COURIER MODAL ───────────────────────────────────────────────────────
+const showEditModal  = ref(false);
+const isEditing      = ref(false);
+const editCourier = ref({ id: null, full_name: '', phone: '', vehicle_type: '', delivery_area: '', hired_at: '', username: '' });
+
+const openEditModal = (c) => {
+    editCourier.value = {
+        id:            c.id,
+        full_name:     c.full_name,
+        phone:         c.phone,
+        vehicle_type:  c.vehicle_type || '',
+        delivery_area: c.delivery_area || '',
+        hired_at:      c.hired_at ? c.hired_at.substring(0, 10) : '',
+        username:      c.user?.username || '',
+    };
+    showEditModal.value = true;
+};
+
+const submitEditCourier = async () => {
+    isEditing.value = true;
+    try {
+        const { data } = await axios.put(`/admin/couriers/${editCourier.value.id}`, editCourier.value);
+        showToast(data.message || 'Kurjers atjaunināts!');
+        showEditModal.value = false;
+        setTimeout(() => router.reload(), 600);
+    } catch (err) {
+        const errors = err.response?.data?.errors;
+        const msg = errors ? Object.values(errors)[0][0] : (err.response?.data?.message || 'Kļūda.');
+        showToast(msg, 'error');
+    } finally {
+        isEditing.value = false;
+    }
+};
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US') : '—';
 </script>
@@ -178,6 +212,7 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                         <td>
                             <div class="action-btns">
                                 <Link :href="`/admin/couriers/${c.id}`" class="icon-btn" title="Skatīt"><i class="fas fa-eye"></i></Link>
+                                <button @click="openEditModal(c)" class="icon-btn" title="Rediģēt"><i class="fas fa-edit"></i></button>
                                 <button @click="openAssignModal(c.id)" class="icon-btn" title="Piešķirt pasūtījumu"><i class="fas fa-link"></i></button>
                                 <button @click="toggleCourier(c.id)" class="icon-btn" :title="c.is_active ? 'Deaktivizēt' : 'Aktivizēt'">
                                     <i :class="c.is_active ? 'fas fa-pause-circle' : 'fas fa-play-circle'"></i>
@@ -308,6 +343,54 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                 </div>
             </div>
         </div>
+
+        <!-- ─── EDIT COURIER MODAL ─── -->
+        <div v-if="showEditModal" class="modal-overlay" @click.self="showEditModal = false">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> {{ locale === 'lv' ? 'Rediģēt kurjeru' : 'Edit Courier' }}</h3>
+                    <button @click="showEditModal = false" class="close-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Lietotājvārds' : 'Username' }}</label>
+                        <input v-model="editCourier.username" type="text" class="form-input" placeholder="username" />
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Pilns vārds *' : 'Full Name *' }}</label>
+                        <input v-model="editCourier.full_name" type="text" class="form-input" />
+                    </div>
+                    <div class="form-grid2">
+                        <div class="form-row">
+                            <label class="form-label">{{ locale === 'lv' ? 'Tālrunis *' : 'Phone *' }}</label>
+                            <input v-model="editCourier.phone" type="text" class="form-input" placeholder="+371 2000 0000" />
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">{{ locale === 'lv' ? 'Transportlīdzeklis' : 'Vehicle' }}</label>
+                            <input v-model="editCourier.vehicle_type" type="text" class="form-input" :placeholder="locale === 'lv' ? 'Auto, Velosipēds...' : 'Car, Bicycle...'" />
+                        </div>
+                    </div>
+                    <div class="form-grid2">
+                        <div class="form-row">
+                            <label class="form-label">{{ locale === 'lv' ? 'Piegādes rajons' : 'Delivery Area' }}</label>
+                            <input v-model="editCourier.delivery_area" type="text" class="form-input" :placeholder="locale === 'lv' ? 'Rīgas centrs...' : 'City center...'" />
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">{{ locale === 'lv' ? 'Pieņemšanas datums' : 'Hire Date' }}</label>
+                            <input v-model="editCourier.hired_at" type="date" class="form-input" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="showEditModal = false" class="btn btn-outline">{{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}</button>
+                    <button @click="submitEditCourier" :disabled="isEditing || !editCourier.full_name || !editCourier.phone" class="btn btn-primary">
+                        <i v-if="isEditing" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-save"></i>
+                        {{ locale === 'lv' ? 'Saglabāt' : 'Save' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </AdminLayout>
 </template>
 
@@ -396,4 +479,50 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
 .form-row { display: flex; flex-direction: column; }
 .form-hint { font-size: 12px; color: #6b7280; margin: 6px 0 0 0; }
 .form-hint.warning { color: #d97706; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1024px) {
+    .data-table th:nth-child(4),
+    .data-table td:nth-child(4) { display: none; } /* Transportlīdzeklis */
+}
+
+@media (max-width: 768px) {
+    .admin-couriers { padding: 16px; }
+    .page-header { flex-direction: column; gap: 12px; }
+    .header-actions { width: 100%; }
+    .header-actions .btn { flex: 1; justify-content: center; }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-pill { padding: 8px 12px; }
+
+    /* Hide less important table columns on mobile */
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3),
+    .data-table th:nth-child(5),
+    .data-table td:nth-child(5),
+    .data-table th:nth-child(6),
+    .data-table td:nth-child(6) { display: none; } /* Rajons, Aktīvie, Pabeigti */
+
+    .form-grid2 { grid-template-columns: 1fr; }
+    .modal { margin: 0 8px; }
+    .modal-body { padding: 16px; }
+    .modal-footer { padding: 12px 16px; flex-wrap: wrap; }
+    .modal-footer .btn { flex: 1; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    /* On very small screens switch to card layout */
+    .table-card { overflow: visible; }
+    .data-table, .data-table thead, .data-table tbody,
+    .data-table th, .data-table td, .data-table tr { display: block; }
+    .data-table thead { display: none; }
+    .data-table tr { border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 10px; padding: 12px; background: white; }
+    .data-table td { border: none; padding: 4px 0; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .data-table td:nth-child(3),
+    .data-table td:nth-child(4),
+    .data-table td:nth-child(5),
+    .data-table td:nth-child(6) { display: flex; }
+    .action-btns { flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .icon-btn { width: 36px; height: 36px; font-size: 15px; }
+}
 </style>
