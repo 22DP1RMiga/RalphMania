@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Courier;
 use App\Http\Controllers\Controller;
 use App\Models\Courier;
 use App\Models\CourierAssignment;
+use App\Models\ContactMessage;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -292,10 +294,6 @@ class CourierController extends Controller
             'delivery_postal_code' => $order->delivery_postal_code,
             'delivery_country'     => $order->delivery_country,
             'total_amount'   => $order->total_amount,
-            'subtotal'       => $order->subtotal,
-            'shipping_cost'  => $order->shipping_cost,
-            'discount_amount'=> $order->discount_amount,
-            'coupon_code'    => $order->coupon_code,
             'notes'          => $order->notes,
             'tracking_number'=> $order->tracking_number,
             'shipped_at'     => $order->shipped_at,
@@ -311,5 +309,108 @@ class CourierController extends Controller
                 'image'        => $item->product?->image,
             ])->toArray(),
         ];
+    }
+
+    /**
+     * Courier inbox — sent reports + admin replies.
+     * GET /courier/inbox
+     */
+    public function inbox(): JsonResponse
+    {
+        $courier = $this->getCourier();
+        $courier->load('user');
+
+        $messages = ContactMessage::where(function ($q) use ($courier) {
+            $q->where('user_id', $courier->user_id);
+            if ($courier->user?->email) {
+                $q->orWhere('email', $courier->user->email);
+            }
+        })
+            ->where('subject', 'like', '%Kurjers%')
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get()
+            ->map(fn($m) => [
+                'id'         => $m->id,
+                'subject'    => $m->subject,
+                'message'    => $m->message,
+                'created_at' => $m->created_at,
+                'is_read'    => $m->is_read,
+                'is_replied' => $m->is_replied,
+                'reply_text' => $m->reply_text,
+                'replied_at' => $m->replied_at,
+            ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    /**
+     * Courier reports a delivery problem to admin.
+     * POST /courier/report
+     */
+    public function reportProblem(Request $request): JsonResponse
+    {
+        $courier = $this->getCourier();
+        $courier->load('user');
+
+        $validated = $request->validate([
+            'problem_type' => 'required|string|in:address,customer,vehicle,package,other',
+            'order_id'     => 'nullable|integer|exists:orders,id',
+            'description'  => 'required|string|min:10|max:1000',
+        ]);
+
+        $typeLabels = [
+            'address'  => 'Nepareiza adrese',
+            'customer' => 'Klients nesasniegts',
+            'vehicle'  => 'Transportlīdzekļa problēma',
+            'package'  => 'Bojāts iepakojums',
+            'other'    => 'Cita problēma',
+        ];
+
+        $typeLabel = $typeLabels[$validated['problem_type']];
+        $orderRef  = '';
+
+        if ($validated['order_id']) {
+            $order    = Order::find($validated['order_id']);
+            $orderRef = $order ? " — Pas. #{$order->order_number}" : '';
+        }
+
+        ContactMessage::create([
+            'user_id' => $courier->user_id,
+            'name'    => $courier->full_name,
+            'email'   => $courier->user?->email ?? 'kurjers@ralphmania.lv',
+            'phone'   => $courier->phone,
+            'subject' => "[🚨 Kurjers] {$typeLabel}{$orderRef}",
+            'message' => $validated['description'],
+            'is_read' => false,
+        ]);
+
+        $adminEmail = config('mail.admin_email', env('ADMIN_EMAIL', 'ralphmania.roltonslv@gmail.com'));
+
+        try {
+            Mail::send([], [], function ($mail) use ($courier, $typeLabel, $orderRef, $validated, $adminEmail) {
+                $mail->to($adminEmail)
+                    ->subject("[🚨 Kurjers] {$typeLabel}{$orderRef}")
+                    ->html(
+                        "<div style='font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px'>" .
+                        "<div style='background:#fee2e2;border:2px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px'>" .
+                        "<h2 style='color:#991b1b;margin:0 0 4px 0'>🚨 Kurjera problēmas ziņojums</h2>" .
+                        "<p style='color:#dc2626;margin:0;font-size:14px'>{$typeLabel}{$orderRef}</p>" .
+                        "</div>" .
+                        "<table style='width:100%;border-collapse:collapse;margin-bottom:20px'>" .
+                        "<tr><td style='padding:8px 0;color:#6b7280;font-size:13px;width:140px'>Kurjers:</td><td style='padding:8px 0;font-weight:600'>{$courier->full_name}</td></tr>" .
+                        "<tr><td style='padding:8px 0;color:#6b7280;font-size:13px'>Tālrunis:</td><td style='padding:8px 0'>{$courier->phone}</td></tr>" .
+                        "</table>" .
+                        "<div style='background:#f9fafb;border-radius:8px;padding:16px;border:1px solid #e5e7eb'>" .
+                        "<p style='color:#6b7280;font-size:12px;margin:0 0 8px 0;text-transform:uppercase'>Apraksts</p>" .
+                        "<p style='color:#111827;line-height:1.7;margin:0'>" . nl2br(htmlspecialchars($validated['description'])) . "</p>" .
+                        "</div></div>"
+                    );
+            });
+        } catch (\Exception $e) {
+            \Log::warning('Courier report email failed: ' . $e->getMessage());
+        }
+
+        return response()->json(['success' => true, 'message' => 'Ziņojums nosūtīts administratoram!']);
     }
 }

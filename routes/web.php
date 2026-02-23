@@ -220,6 +220,12 @@ Route::middleware(['auth', 'courier'])->prefix('courier')->name('courier.')->gro
 
     // Kurjera profila rediģēšana
     Route::put('/profile', [CourierController::class, 'updateProfile'])->name('profile.update');
+
+    // Problēmas ziņojums administratoram
+    Route::post('/report', [CourierController::class, 'reportProblem'])->name('report');
+
+    // Kurjera iesūtne (nosūtītie ziņojumi + atbildes)
+    Route::get('/inbox', [CourierController::class, 'inbox'])->name('inbox');
 });
 
 // ========== ADMIN ROUTES ==========

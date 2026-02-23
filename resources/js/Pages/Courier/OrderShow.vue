@@ -21,6 +21,27 @@ const notes = ref(props.assignment.notes || '');
 const saving = ref(false);
 const updating = ref(false);
 
+// ─── REPORT PROBLEM ───────────────────────────────────────────────────────────
+const showReportModal  = ref(false);
+const isSendingReport  = ref(false);
+const reportForm = ref({ problem_type: '', order_id: props.order.id, description: '' });
+
+const sendReport = async () => {
+    isSendingReport.value = true;
+    try {
+        const { data } = await axios.post('/courier/report', reportForm.value);
+        showToast(data.message || 'Ziņojums nosūtīts!', 'success');
+        showReportModal.value = false;
+        reportForm.value = { problem_type: '', order_id: props.order.id, description: '' };
+    } catch (err) {
+        const errors = err.response?.data?.errors;
+        const msg = errors ? Object.values(errors)[0][0] : (err.response?.data?.message || 'Kļūda.');
+        showToast(msg, 'error');
+    } finally {
+        isSendingReport.value = false;
+    }
+};
+
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
 const statusConfig = {
     pending:    { label: { lv: 'Gaida',      en: 'Pending'    }, color: '#92400e', bg: '#fef3c7' },
@@ -186,32 +207,9 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
                                 <span class="item-price">{{ formatPrice(item.total) }}€</span>
                             </div>
                         </div>
-                        <div class="price-breakdown">
-                            <div class="price-row">
-                                <span class="price-label">{{ locale === 'lv' ? 'Preces:' : 'Subtotal:' }}</span>
-                                <span>{{ formatPrice(order.subtotal) }}€</span>
-                            </div>
-                            <div class="price-row" v-if="parseFloat(order.shipping_cost) > 0">
-                                <span class="price-label"><i class="fas fa-truck"></i> {{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
-                                <span>{{ formatPrice(order.shipping_cost) }}€</span>
-                            </div>
-                            <div class="price-row free-shipping" v-else>
-                                <span class="price-label"><i class="fas fa-truck"></i> {{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
-                                <span class="price-free">{{ locale === 'lv' ? 'Bezmaksas' : 'Free' }}</span>
-                            </div>
-                            <div class="price-row price-discount" v-if="parseFloat(order.discount_amount) > 0">
-                                <span class="price-label">
-                                    <i class="fas fa-tag"></i>
-                                    {{ locale === 'lv' ? 'Atlaide' : 'Discount' }}
-                                    <span v-if="order.coupon_code" class="coupon-tag">{{ order.coupon_code }}</span>
-                                    <span v-else class="coupon-tag coupon-points">{{ locale === 'lv' ? 'Kupons' : 'Coupon' }}</span>
-                                </span>
-                                <span class="price-discount-val">−{{ formatPrice(order.discount_amount) }}€</span>
-                            </div>
-                            <div class="price-row price-total-row">
-                                <span class="price-label-total">{{ locale === 'lv' ? 'Kopā:' : 'Total:' }}</span>
-                                <span class="total-amount">{{ formatPrice(order.total_amount) }}€</span>
-                            </div>
+                        <div class="total-row">
+                            <span>{{ locale === 'lv' ? 'Kopā:' : 'Total:' }}</span>
+                            <span class="total-amount">{{ formatPrice(order.total_amount) }}€</span>
                         </div>
                     </div>
 
@@ -300,6 +298,54 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
                             </div>
                         </div>
                     </div>
+
+                    <!-- Report problem -->
+                    <div v-if="!assignment.is_completed" class="card report-card">
+                        <h2 class="card-title card-title-warning"><i class="fas fa-exclamation-triangle"></i> {{ locale === 'lv' ? 'Piegādes problēma?' : 'Delivery Problem?' }}</h2>
+                        <p class="report-hint">{{ locale === 'lv' ? 'Ziņo administratoram par jebkuru problēmu saistībā ar šo piegādi.' : 'Notify the admin about any issue with this delivery.' }}</p>
+                        <button @click="showReportModal = true" class="report-btn">
+                            <i class="fas fa-paper-plane"></i>
+                            {{ locale === 'lv' ? 'Ziņot par problēmu' : 'Report Problem' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── REPORT PROBLEM MODAL ─── -->
+        <div v-if="showReportModal" class="modal-overlay" @click.self="showReportModal = false">
+            <div class="modal">
+                <div class="modal-header modal-header-danger">
+                    <h3><i class="fas fa-exclamation-triangle"></i> {{ locale === 'lv' ? 'Ziņot par problēmu' : 'Report Problem' }}</h3>
+                    <button @click="showReportModal = false" class="close-btn-m"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body-m">
+                    <div class="form-row-m">
+                        <label class="form-label-m">{{ locale === 'lv' ? 'Problēmas veids *' : 'Problem Type *' }}</label>
+                        <select v-model="reportForm.problem_type" class="form-select-m">
+                            <option value="">{{ locale === 'lv' ? 'Izvēlēties...' : 'Select...' }}</option>
+                            <option value="address">{{ locale === 'lv' ? 'Nepareiza adrese' : 'Wrong address' }}</option>
+                            <option value="customer">{{ locale === 'lv' ? 'Klients nesasniegts' : 'Customer unreachable' }}</option>
+                            <option value="vehicle">{{ locale === 'lv' ? 'Transportlīdzekļa problēma' : 'Vehicle problem' }}</option>
+                            <option value="package">{{ locale === 'lv' ? 'Bojāts iepakojums' : 'Damaged package' }}</option>
+                            <option value="other">{{ locale === 'lv' ? 'Cita problēma' : 'Other problem' }}</option>
+                        </select>
+                    </div>
+                    <div class="form-row-m">
+                        <label class="form-label-m">{{ locale === 'lv' ? 'Apraksts *' : 'Description *' }}</label>
+                        <textarea v-model="reportForm.description" class="form-select-m" rows="5" style="resize:vertical"
+                                  :placeholder="locale === 'lv' ? 'Apraksti problēmu...' : 'Describe the problem...'"
+                        ></textarea>
+                    </div>
+                    <p class="report-info-m"><i class="fas fa-info-circle"></i> {{ locale === 'lv' ? 'Administrators saņems e-pastu un redzēs ziņojumu kontaktu panelī.' : 'The admin will receive an email and see this in the contacts panel.' }}</p>
+                </div>
+                <div class="modal-footer-m">
+                    <button @click="showReportModal = false" class="btn btn-outline">{{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}</button>
+                    <button @click="sendReport" :disabled="isSendingReport || !reportForm.problem_type || reportForm.description.length < 10" class="btn btn-report-send">
+                        <i v-if="isSendingReport" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-paper-plane"></i>
+                        {{ locale === 'lv' ? 'Nosūtīt' : 'Send' }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -360,53 +406,6 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
 .total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 15px; }
 .total-amount { font-size: 20px; font-weight: 700; color: #dc2626; }
 
-/* Price breakdown */
-.price-breakdown {
-    border-top: 1px solid #e5e7eb;
-    padding-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.price-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: #374151;
-}
-.price-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #6b7280;
-}
-.price-label i { width: 14px; color: #9ca3af; }
-.price-free { color: #059669; font-weight: 600; }
-.price-discount .price-label { color: #059669; }
-.price-discount-val { color: #059669; font-weight: 600; }
-.coupon-tag {
-    background: #d1fae5;
-    color: #065f46;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    letter-spacing: 0.5px;
-    font-family: monospace;
-}
-.coupon-points {
-    background: #dbeafe;
-    color: #1e40af;
-    font-family: inherit;
-}
-.price-total-row {
-    border-top: 1px solid #e5e7eb;
-    padding-top: 8px;
-    margin-top: 2px;
-}
-.price-label-total { font-size: 15px; font-weight: 600; color: #1f2937; }
-
 /* Notes */
 .notes-textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; margin-bottom: 12px; box-sizing: border-box; }
 .notes-textarea:focus { outline: none; border-color: #dc2626; }
@@ -427,6 +426,52 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
 .maps-link:hover { text-decoration: underline; }
 
 .customer-notes { font-size: 14px; color: #374151; line-height: 1.6; font-style: italic; margin: 0; }
+
+/* Report problem card */
+.report-card { border-color: #fed7aa !important; background: #fff7ed; }
+.card-title-warning { color: #9a3412 !important; }
+.card-title-warning i { color: #ea580c !important; }
+.report-hint { font-size: 13px; color: #c2410c; margin: 0 0 12px 0; line-height: 1.5; }
+.report-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #c2410c;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.report-btn:hover { background: #ffedd5; border-color: #fb923c; }
+.report-btn i { color: #ea580c; }
+
+/* Report modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { background: white; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid #e5e7eb; }
+.modal-header h3 { margin: 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.modal-header-danger { background: #fff5f5; }
+.modal-header-danger h3 { color: #991b1b; }
+.modal-header-danger h3 i { color: #dc2626; }
+.close-btn-m { background: none; border: none; cursor: pointer; font-size: 17px; color: #9ca3af; padding: 4px; line-height: 1; }
+.close-btn-m:hover { color: #374151; }
+.modal-body-m { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.modal-footer-m { padding: 14px 22px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px; }
+.form-row-m { display: flex; flex-direction: column; gap: 5px; }
+.form-label-m { font-size: 13px; font-weight: 500; color: #374151; }
+.form-select-m { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 7px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+.form-select-m:focus { outline: none; border-color: #dc2626; }
+.report-info-m { font-size: 12px; color: #6b7280; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; margin: 0; display: flex; align-items: flex-start; gap: 7px; }
+.report-info-m i { color: #3b82f6; margin-top: 1px; flex-shrink: 0; }
+.btn-report-send { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: #dc2626; color: white; transition: all 0.15s; }
+.btn-report-send:hover:not(:disabled) { background: #b91c1c; }
+.btn-report-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.15s; }
 .btn-outline { background: white; color: #374151; border: 1px solid #d1d5db; }

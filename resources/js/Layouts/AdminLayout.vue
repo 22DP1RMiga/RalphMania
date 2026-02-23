@@ -22,6 +22,23 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const isSuperAdmin = computed(() => user.value?.is_super_admin || false);
 
+// ─── ADMIN BADGES ─────────────────────────────────────────────────────────────
+// Shared via HandleInertiaRequests — { contacts, orders, users, products, couriers }
+const badges = computed(() => page.props.adminBadges || {});
+
+const getBadge = (key) => {
+    const val = badges.value[key];
+    return (val && val > 0) ? (val > 99 ? '99+' : String(val)) : null;
+};
+
+// Total for the header bell icon
+const totalAlerts = computed(() => {
+    const b = badges.value;
+    if (!b) return null;
+    const sum = (b.contacts || 0) + (b.orders || 0) + (b.couriers || 0);
+    return sum > 0 ? (sum > 99 ? '99+' : String(sum)) : null;
+});
+
 // Get user avatar with correct path
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
@@ -92,6 +109,9 @@ const navItems = computed(() => {
             icon: 'fas fa-box',
             route: 'admin.products.index',
             url: '/admin/products',
+            badgeKey: 'products',
+            badgeColor: 'badge-orange',
+            badgeTip: locale.value === 'lv' ? 'Zems krājums' : 'Low stock',
         },
         {
             nameKey: 'admin.nav.categories',
@@ -104,6 +124,9 @@ const navItems = computed(() => {
             icon: 'fas fa-shopping-cart',
             route: 'admin.orders.index',
             url: '/admin/orders',
+            badgeKey: 'orders',
+            badgeColor: 'badge-blue',
+            badgeTip: locale.value === 'lv' ? 'Jauni pasūtījumi' : 'New orders',
         },
         {
             nameKey: 'admin.nav.content',
@@ -128,18 +151,27 @@ const navItems = computed(() => {
             icon: 'fas fa-envelope',
             route: 'admin.contacts.index',
             url: '/admin/contacts',
+            badgeKey: 'contacts',
+            badgeColor: 'badge-red',
+            badgeTip: locale.value === 'lv' ? 'Nelasīti ziņojumi' : 'Unread messages',
         },
         {
             nameKey: 'admin.nav.users',
             icon: 'fas fa-users',
             route: 'admin.users.index',
             url: '/admin/users',
+            badgeKey: 'users',
+            badgeColor: 'badge-green',
+            badgeTip: locale.value === 'lv' ? 'Jauni lietotāji' : 'New users',
         },
         {
             nameKey: 'admin.nav.couriers',
             icon: 'fas fa-truck',
             route: 'admin.couriers.index',
             url: '/admin/couriers',
+            badgeKey: 'couriers',
+            badgeColor: 'badge-orange',
+            badgeTip: locale.value === 'lv' ? 'Kurjeru problēmas' : 'Courier issues',
         },
         {
             nameKey: 'admin.nav.settings',
@@ -206,8 +238,25 @@ const isActiveRoute = (url) => {
                     }"
                     @click="closeMobileSidebar"
                 >
-                    <i :class="item.icon"></i>
-                    <span v-if="isSidebarOpen">{{ t(item.nameKey) }}</span>
+                    <!-- Icon wrapper — holds the dot badge when collapsed -->
+                    <span class="nav-icon-wrap">
+                        <i :class="item.icon"></i>
+                        <!-- Dot when sidebar is collapsed -->
+                        <span
+                            v-if="!isSidebarOpen && item.badgeKey && getBadge(item.badgeKey)"
+                            class="nav-dot"
+                            :class="item.badgeColor"
+                        ></span>
+                    </span>
+                    <!-- Label -->
+                    <span v-if="isSidebarOpen" class="nav-label">{{ t(item.nameKey) }}</span>
+                    <!-- Pill badge when expanded -->
+                    <span
+                        v-if="isSidebarOpen && item.badgeKey && getBadge(item.badgeKey)"
+                        class="nav-badge"
+                        :class="[item.badgeColor, isActiveRoute(item.url) ? 'nav-badge-active' : '']"
+                        :title="item.badgeTip"
+                    >{{ getBadge(item.badgeKey) }}</span>
                 </Link>
             </nav>
 
@@ -248,6 +297,17 @@ const isActiveRoute = (url) => {
                         <i class="fas fa-crown"></i>
                         <span>Super Admin</span>
                     </div>
+
+                    <!-- Notification Bell — only shows when there are unread alerts -->
+                    <Link
+                        v-if="totalAlerts"
+                        href="/admin/contacts"
+                        class="admin-bell"
+                        :title="locale === 'lv' ? `${totalAlerts} jauni paziņojumi` : `${totalAlerts} new alerts`"
+                    >
+                        <i class="fas fa-bell"></i>
+                        <span class="bell-count">{{ totalAlerts }}</span>
+                    </Link>
 
                     <!-- User Dropdown -->
                     <div class="admin-user-dropdown" v-click-outside="closeUserDropdown">
@@ -413,6 +473,127 @@ const isActiveRoute = (url) => {
 
 .sidebar-collapsed .sidebar-nav-item span {
     display: none;
+}
+
+/* ── NAV BADGE SYSTEM ─────────────────────────────────────────────── */
+.nav-icon-wrap {
+    position: relative;
+    width: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.nav-label {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Pill badge — visible when sidebar is expanded */
+.nav-badge {
+    margin-left: auto;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+}
+
+.sidebar-nav-item:hover .nav-badge {
+    transform: scale(1.1);
+}
+
+/* When the nav item is active, use semi-transparent white so it stays readable */
+.nav-badge-active {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+}
+
+/* Dot badge — visible when sidebar is collapsed */
+.nav-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #1e293b;
+    flex-shrink: 0;
+}
+
+/* Badge colours */
+.badge-red    { background: #ef4444; color: #fff; }
+.badge-blue   { background: #3b82f6; color: #fff; }
+.badge-green  { background: #10b981; color: #fff; }
+.badge-orange { background: #f97316; color: #fff; }
+
+/* Dot variants inherit same colours */
+.nav-dot.badge-red    { background: #ef4444; border-color: #1e293b; }
+.nav-dot.badge-blue   { background: #3b82f6; border-color: #1e293b; }
+.nav-dot.badge-green  { background: #10b981; border-color: #1e293b; }
+.nav-dot.badge-orange { background: #f97316; border-color: #1e293b; }
+
+/* ── HEADER BELL ──────────────────────────────────────────────────── */
+.admin-bell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    border-radius: 0.5rem;
+    color: #dc2626;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    animation: bell-ring 4s ease-in-out infinite;
+}
+
+.admin-bell:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    transform: scale(1.05);
+    animation: none;
+}
+
+.admin-bell i {
+    font-size: 0.95rem;
+}
+
+.bell-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.2rem;
+    background: #dc2626;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 800;
+    border-radius: 9999px;
+    border: 1.5px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+@keyframes bell-ring {
+    0%, 80%, 100% { transform: rotate(0deg); }
+    85% { transform: rotate(12deg); }
+    90% { transform: rotate(-10deg); }
+    95% { transform: rotate(6deg); }
 }
 
 /* Super Admin Item */

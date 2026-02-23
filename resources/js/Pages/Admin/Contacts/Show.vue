@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
@@ -10,70 +10,84 @@ const props = defineProps({
     message: Object,
 });
 
-// Reply state
-const showReplyForm = ref(false);
-const replyText = ref('');
-const isSubmitting = ref(false);
+// ─── REPLY STATE ──────────────────────────────────────────────────────────────
+const showReplyForm  = ref(false);
+const replyText      = ref('');
+const isSubmitting   = ref(false);
 
-// Format date
+// Edit mode for an existing reply
+const isEditingReply = ref(false);
+const editReplyText  = ref(props.message?.reply_text || '');
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 const formatDate = (date) => {
-    if (!date) return '-';
+    if (!date) return '—';
     return new Date(date).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
     });
 };
 
-// Get user avatar
+const formatDateShort = (date) => {
+    if (!date) return '—';
+    return new Date(date).toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    });
+};
+
 const getUserAvatar = (user) => {
     if (!user?.profile_picture) return null;
     if (user.profile_picture.startsWith('http')) return user.profile_picture;
     return `/storage/${user.profile_picture}`;
 };
 
-// Get status info
+// Is this a courier problem report?
+const isCourierReport = computed(() =>
+    props.message?.subject?.includes('🚨') || props.message?.subject?.includes('[Kurjers]')
+);
+
 const getStatusInfo = () => {
-    if (props.message.is_replied) {
+    if (props.message.is_replied)
         return { class: 'replied', icon: 'fas fa-check-double', label: t('admin.contacts.status.replied') };
-    }
-    if (props.message.is_read) {
+    if (props.message.is_read)
         return { class: 'read', icon: 'fas fa-envelope-open', label: t('admin.contacts.status.read') };
-    }
     return { class: 'unread', icon: 'fas fa-envelope', label: t('admin.contacts.status.unread') };
 };
 
-// Submit reply
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
 const submitReply = () => {
     if (!replyText.value.trim() || replyText.value.length < 10) {
         alert(t('admin.contacts.replyMinLength'));
         return;
     }
-
     isSubmitting.value = true;
-    router.put(`/admin/contacts/${props.message.id}/reply`, {
-        reply_text: replyText.value,
-    }, {
+    router.put(`/admin/contacts/${props.message.id}/reply`, { reply_text: replyText.value }, {
         preserveScroll: true,
-        onSuccess: () => {
-            showReplyForm.value = false;
-        },
-        onFinish: () => {
-            isSubmitting.value = false;
-        },
+        onSuccess: () => { showReplyForm.value = false; replyText.value = ''; },
+        onFinish: () => { isSubmitting.value = false; },
     });
 };
 
-// Delete message
+const submitEditReply = () => {
+    if (!editReplyText.value.trim() || editReplyText.value.length < 10) {
+        alert(t('admin.contacts.replyMinLength'));
+        return;
+    }
+    isSubmitting.value = true;
+    router.put(`/admin/contacts/${props.message.id}/reply`, { reply_text: editReplyText.value }, {
+        preserveScroll: true,
+        onSuccess: () => { isEditingReply.value = false; },
+        onFinish: () => { isSubmitting.value = false; },
+    });
+};
+
 const deleteMessage = () => {
     if (confirm(t('admin.contacts.confirmDelete'))) {
         router.delete(`/admin/contacts/${props.message.id}`);
     }
 };
 
-// Copy to clipboard
 const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text).then(() => {
         alert(t('admin.contacts.copied', { type }));
@@ -107,81 +121,185 @@ const copyToClipboard = (text, type) => {
             <div class="content-grid">
                 <!-- Main Content -->
                 <div class="main-content">
-                    <!-- Message Card -->
-                    <div class="message-card">
-                        <div class="message-header">
-                            <h2>{{ message.subject }}</h2>
+
+                    <!-- Courier alert banner -->
+                    <div v-if="isCourierReport" class="courier-banner">
+                        <span class="courier-banner-icon"><i class="fas fa-truck"></i></span>
+                        <div class="courier-banner-body">
+                            <strong>{{ locale === 'lv' ? 'Kurjera problēmas ziņojums' : 'Courier Problem Report' }}</strong>
+                            <span class="courier-banner-type">{{ message.subject.replace(/^\[.*?\]\s*/, '') }}</span>
+                        </div>
+                        <Link href="/admin/couriers" class="courier-banner-link">
+                            <i class="fas fa-arrow-right"></i>
+                            {{ locale === 'lv' ? 'Uz kurjeriem' : 'Couriers' }}
+                        </Link>
+                    </div>
+
+                    <!-- ── CONVERSATION THREAD ───────────────────────────────── -->
+                    <div class="thread">
+
+                        <!-- Sender message (left) -->
+                        <div class="thread-row thread-left">
+                            <div class="thread-avatar">
+                                <img
+                                    v-if="getUserAvatar(message.user)"
+                                    :src="getUserAvatar(message.user)"
+                                    :alt="message.name"
+                                    class="thread-avatar-img"
+                                />
+                                <div v-else class="thread-avatar-initials">
+                                    {{ message.name?.charAt(0)?.toUpperCase() || '?' }}
+                                </div>
+                            </div>
+                            <div class="thread-content">
+                                <div class="thread-meta">
+                                    <span class="thread-author">{{ message.name }}</span>
+                                    <span v-if="message.user" class="thread-username">@{{ message.user.username }}</span>
+                                    <span class="thread-time">{{ formatDateShort(message.created_at) }}</span>
+                                </div>
+                                <div class="thread-bubble bubble-user">
+                                    <p class="bubble-subject">
+                                        <i class="fas fa-envelope"></i>
+                                        {{ message.subject }}
+                                    </p>
+                                    <p class="bubble-body">{{ message.message }}</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="message-body">
-                            <p>{{ message.message }}</p>
-                        </div>
-
-                        <div class="message-footer">
-                            <span class="message-date">
-                                <i class="fas fa-clock"></i>
-                                {{ formatDate(message.created_at) }}
+                        <!-- Thread divider with status -->
+                        <div class="thread-divider">
+                            <div class="thread-divider-line"></div>
+                            <span class="thread-divider-label">
+                                <i :class="getStatusInfo().icon"></i>
+                                {{ getStatusInfo().label }}
                             </span>
+                            <div class="thread-divider-line"></div>
                         </div>
-                    </div>
 
-                    <!-- Reply Section -->
-                    <div v-if="message.is_replied" class="reply-card">
-                        <div class="reply-header">
-                            <div class="reply-title">
-                                <i class="fas fa-reply"></i>
-                                {{ t('admin.contacts.yourReplyTitle') }}
+                        <!-- Admin reply (right) — ALREADY REPLIED -->
+                        <template v-if="message.is_replied">
+                            <div class="thread-row thread-right">
+                                <div class="thread-content thread-content-right">
+                                    <div class="thread-meta thread-meta-right">
+                                        <span class="thread-time">{{ formatDateShort(message.replied_at) }}</span>
+                                        <span v-if="message.replied_by" class="thread-username">@{{ message.replied_by.username }}</span>
+                                        <span class="thread-author">{{ locale === 'lv' ? 'Administrators' : 'Admin' }}</span>
+                                    </div>
+
+                                    <!-- VIEW mode -->
+                                    <div v-if="!isEditingReply" class="thread-bubble bubble-admin">
+                                        <div class="bubble-admin-header">
+                                            <span class="bubble-admin-label">
+                                                <i class="fas fa-reply"></i>
+                                                {{ t('admin.contacts.yourReplyTitle') }}
+                                            </span>
+                                            <button
+                                                class="btn-edit-reply"
+                                                @click="isEditingReply = true; editReplyText = message.reply_text"
+                                                :title="locale === 'lv' ? 'Rediģēt atbildi' : 'Edit reply'"
+                                            >
+                                                <i class="fas fa-edit"></i>
+                                                {{ locale === 'lv' ? 'Rediģēt' : 'Edit' }}
+                                            </button>
+                                        </div>
+                                        <p class="bubble-body">{{ message.reply_text }}</p>
+                                    </div>
+
+                                    <!-- EDIT mode -->
+                                    <div v-else class="thread-bubble bubble-admin bubble-editing">
+                                        <div class="bubble-admin-header editing">
+                                            <span class="bubble-admin-label editing">
+                                                <i class="fas fa-edit"></i>
+                                                {{ locale === 'lv' ? 'Rediģē atbildi' : 'Editing reply' }}
+                                            </span>
+                                        </div>
+                                        <textarea
+                                            v-model="editReplyText"
+                                            class="reply-textarea"
+                                            rows="6"
+                                            :placeholder="t('admin.contacts.replyPlaceholder')"
+                                        ></textarea>
+                                        <div class="reply-form-actions">
+                                            <button @click="isEditingReply = false" class="btn btn-cancel">
+                                                <i class="fas fa-times"></i>
+                                                {{ t('admin.common.cancel') }}
+                                            </button>
+                                            <button
+                                                @click="submitEditReply"
+                                                :disabled="isSubmitting || editReplyText.length < 10"
+                                                class="btn btn-submit"
+                                            >
+                                                <i :class="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
+                                                {{ isSubmitting
+                                                ? t('admin.contacts.sending')
+                                                : (locale === 'lv' ? 'Saglabāt' : 'Save') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="thread-avatar">
+                                    <div class="thread-avatar-admin">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="reply-meta">
-                                <span v-if="message.replied_by">
-                                    {{ t('admin.contacts.repliedBy') }}: @{{ message.replied_by.username }}
-                                </span>
-                                <span>{{ formatDate(message.replied_at) }}</span>
+                        </template>
+
+                        <!-- Admin reply (right) — NOT YET REPLIED -->
+                        <template v-else>
+                            <div class="thread-row thread-right">
+                                <div class="thread-content thread-content-right" style="flex:1">
+
+                                    <!-- Collapsed trigger -->
+                                    <div v-if="!showReplyForm" class="reply-trigger" @click="showReplyForm = true">
+                                        <i class="fas fa-reply"></i>
+                                        {{ t('admin.contacts.writeReply') }}
+                                        <i class="fas fa-chevron-down" style="margin-left:auto"></i>
+                                    </div>
+
+                                    <!-- Expanded form -->
+                                    <div v-else class="thread-bubble bubble-admin bubble-editing">
+                                        <div class="bubble-admin-header editing">
+                                            <span class="bubble-admin-label editing">
+                                                <i class="fas fa-reply"></i>
+                                                {{ t('admin.contacts.writeReply') }}
+                                            </span>
+                                        </div>
+                                        <div class="reply-to-info">
+                                            <i class="fas fa-paper-plane"></i>
+                                            {{ t('admin.contacts.willSendTo') }}: <strong>{{ message.email }}</strong>
+                                        </div>
+                                        <textarea
+                                            v-model="replyText"
+                                            class="reply-textarea"
+                                            rows="7"
+                                            :placeholder="t('admin.contacts.replyPlaceholder')"
+                                        ></textarea>
+                                        <div class="reply-form-actions">
+                                            <button @click="showReplyForm = false" class="btn btn-cancel">
+                                                {{ t('admin.common.cancel') }}
+                                            </button>
+                                            <button
+                                                @click="submitReply"
+                                                :disabled="isSubmitting || replyText.length < 10"
+                                                class="btn btn-submit"
+                                            >
+                                                <i :class="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+                                                {{ isSubmitting ? t('admin.contacts.sending') : t('admin.contacts.sendReply') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="thread-avatar">
+                                    <div class="thread-avatar-admin">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="reply-body">
-                            <p>{{ message.reply_text }}</p>
-                        </div>
-                    </div>
+                        </template>
 
-                    <!-- Reply Form -->
-                    <div v-else class="reply-form-card">
-                        <div class="reply-form-header" @click="showReplyForm = !showReplyForm">
-                            <h3>
-                                <i class="fas fa-reply"></i>
-                                {{ t('admin.contacts.writeReply') }}
-                            </h3>
-                            <i :class="showReplyForm ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-                        </div>
-
-                        <div v-if="showReplyForm" class="reply-form-body">
-                            <div class="reply-to-info">
-                                <i class="fas fa-paper-plane"></i>
-                                {{ t('admin.contacts.willSendTo') }}: <strong>{{ message.email }}</strong>
-                            </div>
-
-                            <textarea
-                                v-model="replyText"
-                                class="reply-textarea"
-                                rows="8"
-                                :placeholder="t('admin.contacts.replyPlaceholder')"
-                            ></textarea>
-
-                            <div class="reply-form-actions">
-                                <button @click="showReplyForm = false" class="btn btn-cancel">
-                                    {{ t('admin.common.cancel') }}
-                                </button>
-                                <button
-                                    @click="submitReply"
-                                    class="btn btn-submit"
-                                    :disabled="isSubmitting || replyText.length < 10"
-                                >
-                                    <i :class="isSubmitting ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
-                                    {{ isSubmitting ? t('admin.contacts.sending') : t('admin.contacts.sendReply') }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    </div><!-- end .thread -->
                 </div>
 
                 <!-- Sidebar -->
@@ -394,162 +512,330 @@ const copyToClipboard = (text, type) => {
     gap: 1.5rem;
 }
 
-/* Message Card */
-.message-card {
-    background: white;
+/* Message Card — kept for legacy, hidden by new thread */
+.message-card,
+.reply-card,
+.reply-form-card { display: none; }
+
+/* ── COURIER BANNER ──────────────────────────────────────────────── */
+.courier-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 1.25rem;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 1.5px solid #fed7aa;
     border-radius: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    margin-bottom: 1.25rem;
 }
 
-.message-header {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+.courier-banner-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    background: #f97316;
+    color: white;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
-.message-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
+.courier-banner-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.courier-banner-body strong {
+    font-size: 0.875rem;
+    color: #9a3412;
+}
+
+.courier-banner-type {
+    font-size: 0.8rem;
+    color: #c2410c;
+}
+
+.courier-banner-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: #f97316;
+    color: white;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.courier-banner-link:hover { background: #ea580c; }
+
+/* ── THREAD (conversation view) ──────────────────────────────────── */
+.thread {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.thread-row {
+    display: flex;
+    gap: 0.875rem;
+    align-items: flex-start;
+}
+
+.thread-left  { flex-direction: row; }
+.thread-right { flex-direction: row-reverse; }
+
+/* Avatar */
+.thread-avatar { flex-shrink: 0; }
+
+.thread-avatar-img {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.thread-avatar-initials {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.thread-avatar-admin {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Content area */
+.thread-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    max-width: calc(100% - 3.5rem);
+    flex: 1;
+}
+
+.thread-content-right { align-items: flex-end; }
+
+/* Meta line */
+.thread-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.thread-meta-right {
+    flex-direction: row-reverse;
+}
+
+.thread-author {
+    font-size: 0.85rem;
+    font-weight: 600;
     color: #111827;
 }
 
-.message-body {
-    padding: 1.5rem;
+.thread-username {
+    font-size: 0.75rem;
+    color: #10b981;
 }
 
-.message-body p {
+.thread-time {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+/* Bubbles */
+.thread-bubble {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    width: 100%;
+}
+
+/* User bubble — light grey, left-aligned */
+.bubble-user {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-top-left-radius: 0.125rem;
+}
+
+.bubble-subject {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
     margin: 0;
-    font-size: 0.95rem;
+}
+
+.bubble-subject i { color: #9ca3af; font-size: 0.8rem; }
+
+.bubble-body {
+    padding: 1rem;
+    margin: 0;
+    font-size: 0.9rem;
     color: #374151;
     line-height: 1.7;
     white-space: pre-wrap;
 }
 
-.message-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #e5e7eb;
-    background: #f9fafb;
+/* Admin bubble — green tint, right-aligned */
+.bubble-admin {
+    background: white;
+    border: 1.5px solid #bbf7d0;
+    border-top-right-radius: 0.125rem;
 }
 
-.message-date {
-    font-size: 0.8rem;
-    color: #6b7280;
+.bubble-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 1rem;
+    background: #f0fdf4;
+    border-bottom: 1px solid #bbf7d0;
+}
+
+.bubble-admin-label {
     display: flex;
     align-items: center;
     gap: 0.375rem;
-}
-
-/* Reply Card */
-.reply-card {
-    background: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid #10b981;
-    overflow: hidden;
-}
-
-.reply-header {
-    padding: 1rem 1.5rem;
-    background: #f0fdf4;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.reply-title {
-    font-weight: 600;
-    color: #065f46;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.reply-meta {
-    display: flex;
-    gap: 1rem;
     font-size: 0.75rem;
-    color: #6b7280;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #065f46;
 }
 
-.reply-body {
-    padding: 1.5rem;
-}
+.bubble-admin-label.editing { color: #d97706; }
+.bubble-admin-header.editing { background: #fffbeb; border-bottom-color: #fde68a; }
 
-.reply-body p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #374151;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-/* Reply Form Card */
-.reply-form-card {
+.btn-edit-reply {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.625rem;
     background: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-.reply-form-header {
-    padding: 1rem 1.5rem;
-    background: #f9fafb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #059669;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.15s;
 }
 
-.reply-form-header:hover {
-    background: #f3f4f6;
+.btn-edit-reply:hover {
+    background: #f0fdf4;
+    border-color: #6ee7b7;
 }
 
-.reply-form-header h3 {
-    margin: 0;
-    font-size: 1rem;
-    color: #374151;
+/* Editing bubble */
+.bubble-editing {
+    border-color: #fde68a;
+}
+
+/* Thread divider */
+.thread-divider {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    padding: 0 0.25rem;
 }
 
-.reply-form-header h3 i {
+.thread-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+}
+
+.thread-divider-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    color: #9ca3af;
+}
+
+/* Reply trigger (collapsed state) */
+.reply-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.25rem;
+    background: white;
+    border: 1.5px dashed #d1d5db;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.reply-trigger:hover {
+    background: #fafafa;
+    border-color: #dc2626;
     color: #dc2626;
 }
 
-.reply-form-body {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
+.reply-trigger i:first-child { color: #dc2626; }
 
+/* Reply form inside bubble */
 .reply-to-info {
-    font-size: 0.85rem;
-    color: #6b7280;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem;
-    background: #f3f4f6;
-    border-radius: 0.375rem;
+    padding: 0.625rem 1rem;
+    background: #fffbeb;
+    font-size: 0.8rem;
+    color: #92400e;
+    border-bottom: 1px solid #fde68a;
 }
 
-.reply-to-info strong {
-    color: #111827;
-}
+.reply-to-info strong { color: #451a03; }
 
 .reply-textarea {
     width: 100%;
-    padding: 1rem;
+    padding: 0.875rem 1rem;
     border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
+    border-radius: 0;
     font-size: 0.9rem;
     resize: vertical;
-    min-height: 150px;
+    min-height: 140px;
     font-family: inherit;
+    box-sizing: border-box;
+    display: block;
 }
 
 .reply-textarea:focus {
@@ -562,6 +848,9 @@ const copyToClipboard = (text, type) => {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
 }
 
 .btn {
@@ -896,22 +1185,20 @@ const copyToClipboard = (text, type) => {
         flex-direction: column;
         gap: 0.25rem;
     }
+
+    /* Thread on mobile: hide avatars to save space */
+    .thread-avatar { display: none; }
+    .thread-content { max-width: 100%; }
+    .thread-right { flex-direction: row; }
+    .thread-content-right { align-items: flex-start; }
+    .thread-meta-right { flex-direction: row; }
+    .bubble-admin { border-top-right-radius: 0.75rem; border-top-left-radius: 0.125rem; }
+
+    .courier-banner { flex-wrap: wrap; }
+    .courier-banner-link { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 480px) {
-    .message-header h2 {
-        font-size: 1.1rem;
-    }
-
-    .message-body p {
-        font-size: 0.875rem;
-    }
-
-    .sender-avatar {
-        width: 3rem;
-        height: 3rem;
-    }
-
     .info-card, .actions-card, .timeline-card {
         padding: 1rem;
     }

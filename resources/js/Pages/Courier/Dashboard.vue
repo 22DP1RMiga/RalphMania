@@ -107,6 +107,60 @@ const saveProfile = async () => {
         isSavingProfile.value = false;
     }
 };
+
+// ─── REPORT PROBLEM ───────────────────────────────────────────────────────────
+const showReportModal  = ref(false);
+const isSendingReport  = ref(false);
+const reportForm = ref({ problem_type: '', order_id: null, description: '' });
+
+const sendReport = async () => {
+    isSendingReport.value = true;
+    try {
+        const { data } = await axios.post('/courier/report', reportForm.value);
+        showToast(data.message || 'Ziņojums nosūtīts!', 'success');
+        showReportModal.value = false;
+        reportForm.value = { problem_type: '', order_id: null, description: '' };
+        // Refresh inbox after new report
+        loadInbox();
+    } catch (err) {
+        const errors = err.response?.data?.errors;
+        const msg = errors ? Object.values(errors)[0][0] : (err.response?.data?.message || 'Kļūda.');
+        showToast(msg, 'error');
+    } finally {
+        isSendingReport.value = false;
+    }
+};
+
+// ─── INBOX ────────────────────────────────────────────────────────────────────
+const inboxMessages  = ref([]);
+const inboxLoading   = ref(false);
+const inboxLoaded    = ref(false);
+const expandedMsg    = ref(null);
+
+const loadInbox = async () => {
+    inboxLoading.value = true;
+    try {
+        const { data } = await axios.get('/courier/inbox');
+        inboxMessages.value = data.messages || [];
+        inboxLoaded.value = true;
+    } catch (err) {
+        showToast(locale.value === 'lv' ? 'Nevarēja ielādēt ziņojumus.' : 'Could not load messages.', 'error');
+    } finally {
+        inboxLoading.value = false;
+    }
+};
+
+const formatInboxDate = (d) => d ? new Intl.DateTimeFormat(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+}).format(new Date(d)) : '—';
+
+// Strip the "[🚨 Kurjers]" prefix for display
+const cleanSubject = (subject) => subject?.replace(/^\[.*?\]\s*/, '') || subject;
+
+// Toggle expanded message
+const toggleMsg = (id) => {
+    expandedMsg.value = expandedMsg.value === id ? null : id;
+};
 </script>
 
 <template>
@@ -132,10 +186,16 @@ const saveProfile = async () => {
                         {{ courier.full_name }}
                         <span class="area-tag" v-if="courier.delivery_area">{{ courier.delivery_area }}</span>
                     </div>
-                    <button @click="showEditProfile = true" class="btn-edit-profile">
-                        <i class="fas fa-edit"></i>
-                        {{ locale === 'lv' ? 'Rediģēt profilu' : 'Edit Profile' }}
-                    </button>
+                    <div class="header-btns">
+                        <button @click="showReportModal = true" class="btn-report-problem">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ locale === 'lv' ? 'Ziņot par problēmu' : 'Report Problem' }}
+                        </button>
+                        <button @click="showEditProfile = true" class="btn-edit-profile">
+                            <i class="fas fa-edit"></i>
+                            {{ locale === 'lv' ? 'Rediģēt profilu' : 'Edit Profile' }}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -291,6 +351,171 @@ const saveProfile = async () => {
                     </div>
                 </div>
             </div>
+
+            <!-- ─── IESŪTNE ─── -->
+            <div class="section inbox-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-inbox"></i>
+                        {{ locale === 'lv' ? 'Mani ziņojumi' : 'My Messages' }}
+                        <span v-if="inboxMessages.length > 0" class="count-badge">{{ inboxMessages.length }}</span>
+                        <span
+                            v-if="inboxMessages.filter(m => m.is_replied).length > 0"
+                            class="reply-badge"
+                        >
+                            <i class="fas fa-reply"></i>
+                            {{ inboxMessages.filter(m => m.is_replied).length }}
+                            {{ locale === 'lv' ? 'atbilde' : 'repl.' }}
+                        </span>
+                    </h2>
+                    <button
+                        @click="loadInbox"
+                        class="inbox-load-btn"
+                        :disabled="inboxLoading"
+                    >
+                        <i :class="inboxLoading ? 'fas fa-spinner fa-spin' : (inboxLoaded ? 'fas fa-sync-alt' : 'fas fa-download')"></i>
+                        {{ inboxLoading
+                        ? (locale === 'lv' ? 'Ielādē...' : 'Loading...')
+                        : (inboxLoaded
+                            ? (locale === 'lv' ? 'Atjaunot' : 'Refresh')
+                            : (locale === 'lv' ? 'Ielādēt ziņojumus' : 'Load Messages')) }}
+                    </button>
+                </div>
+
+                <!-- Not loaded yet -->
+                <div v-if="!inboxLoaded && !inboxLoading" class="inbox-placeholder">
+                    <i class="fas fa-inbox"></i>
+                    <p>{{ locale === 'lv' ? 'Nospied "Ielādēt ziņojumus", lai apskatītu savus nosūtītos ziņojumus un administratora atbildes.' : 'Press "Load Messages" to see your sent reports and admin replies.' }}</p>
+                </div>
+
+                <!-- Loading -->
+                <div v-if="inboxLoading" class="inbox-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>{{ locale === 'lv' ? 'Ielādē...' : 'Loading...' }}</p>
+                </div>
+
+                <!-- Empty -->
+                <div v-if="inboxLoaded && !inboxLoading && inboxMessages.length === 0" class="inbox-empty">
+                    <i class="fas fa-paper-plane"></i>
+                    <p>{{ locale === 'lv' ? 'Vēl nav nosūtīts neviens ziņojums.' : 'No messages sent yet.' }}</p>
+                </div>
+
+                <!-- Message list -->
+                <div v-if="inboxLoaded && inboxMessages.length > 0" class="inbox-list">
+                    <div
+                        v-for="msg in inboxMessages"
+                        :key="msg.id"
+                        class="inbox-item"
+                        :class="{ 'has-reply': msg.is_replied, 'expanded': expandedMsg === msg.id }"
+                    >
+                        <!-- Item header - always visible, clickable to expand -->
+                        <div class="inbox-item-head" @click="toggleMsg(msg.id)">
+                            <div class="inbox-item-left">
+                                <span class="inbox-status-dot" :class="msg.is_replied ? 'replied' : (msg.is_read ? 'read' : 'unread')">
+                                    <i :class="msg.is_replied ? 'fas fa-reply' : (msg.is_read ? 'fas fa-envelope-open' : 'fas fa-envelope')"></i>
+                                </span>
+                                <div class="inbox-subject-wrap">
+                                    <span class="inbox-subject">{{ cleanSubject(msg.subject) }}</span>
+                                    <span v-if="msg.is_replied" class="inbox-replied-tag">
+                                        <i class="fas fa-check-double"></i>
+                                        {{ locale === 'lv' ? 'Atbildēts' : 'Replied' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="inbox-item-right">
+                                <span class="inbox-date">{{ formatInboxDate(msg.created_at) }}</span>
+                                <i :class="expandedMsg === msg.id ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="inbox-chevron"></i>
+                            </div>
+                        </div>
+
+                        <!-- Expanded content -->
+                        <Transition name="expand">
+                            <div v-if="expandedMsg === msg.id" class="inbox-item-body">
+                                <!-- Original message -->
+                                <div class="inbox-msg-block sent">
+                                    <div class="inbox-msg-label">
+                                        <i class="fas fa-paper-plane"></i>
+                                        {{ locale === 'lv' ? 'Mans ziņojums' : 'My Report' }}
+                                        <span class="inbox-msg-date">{{ formatInboxDate(msg.created_at) }}</span>
+                                    </div>
+                                    <div class="inbox-msg-text">{{ msg.message }}</div>
+                                </div>
+
+                                <!-- Admin reply -->
+                                <div v-if="msg.is_replied && msg.reply_text" class="inbox-msg-block reply">
+                                    <div class="inbox-msg-label">
+                                        <i class="fas fa-headset"></i>
+                                        {{ locale === 'lv' ? 'Administratora atbilde' : 'Admin Reply' }}
+                                        <span class="inbox-msg-date">{{ formatInboxDate(msg.replied_at) }}</span>
+                                    </div>
+                                    <div class="inbox-msg-text">{{ msg.reply_text }}</div>
+                                </div>
+
+                                <!-- Pending reply -->
+                                <div v-else-if="!msg.is_replied" class="inbox-pending">
+                                    <i class="fas fa-clock"></i>
+                                    {{ locale === 'lv' ? 'Gaida administratora atbildi...' : 'Awaiting admin reply...' }}
+                                </div>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ─── REPORT PROBLEM MODAL ─── -->
+        <div v-if="showReportModal" class="modal-overlay" @click.self="showReportModal = false">
+            <div class="modal">
+                <div class="modal-header modal-header-danger">
+                    <h3><i class="fas fa-exclamation-triangle"></i> {{ locale === 'lv' ? 'Ziņot par piegādes problēmu' : 'Report Delivery Problem' }}</h3>
+                    <button @click="showReportModal = false" class="close-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Problēmas veids *' : 'Problem Type *' }}</label>
+                        <select v-model="reportForm.problem_type" class="form-input">
+                            <option value="">{{ locale === 'lv' ? 'Izvēlēties...' : 'Select...' }}</option>
+                            <option value="address">{{ locale === 'lv' ? 'Nepareiza adrese' : 'Wrong address' }}</option>
+                            <option value="customer">{{ locale === 'lv' ? 'Klients nesasniegts' : 'Customer unreachable' }}</option>
+                            <option value="vehicle">{{ locale === 'lv' ? 'Transportlīdzekļa problēma' : 'Vehicle problem' }}</option>
+                            <option value="package">{{ locale === 'lv' ? 'Bojāts iepakojums' : 'Damaged package' }}</option>
+                            <option value="other">{{ locale === 'lv' ? 'Cita problēma' : 'Other problem' }}</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Saistītais pasūtījums (neobligāti)' : 'Related Order (optional)' }}</label>
+                        <select v-model="reportForm.order_id" class="form-input">
+                            <option :value="null">{{ locale === 'lv' ? 'Nav konkrēta pasūtījuma' : 'No specific order' }}</option>
+                            <option v-for="a in activeOrders" :key="a.order.id" :value="a.order.id">
+                                #{{ a.order.order_number }} — {{ a.order.customer_name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">{{ locale === 'lv' ? 'Apraksts *' : 'Description *' }}</label>
+                        <textarea
+                            v-model="reportForm.description"
+                            class="form-input"
+                            rows="5"
+                            style="resize:vertical"
+                            :placeholder="locale === 'lv' ? 'Apraksti problēmu pēc iespējas precīzāk...' : 'Describe the problem in as much detail as possible...'"
+                        ></textarea>
+                    </div>
+                    <div class="report-info">
+                        <i class="fas fa-info-circle"></i>
+                        {{ locale === 'lv' ? 'Administrators saņems e-pastu un redzēs ziņojumu kontaktu panelī.' : 'The administrator will receive an email and see the report in the contacts panel.' }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="showReportModal = false" class="btn btn-outline">{{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}</button>
+                    <button @click="sendReport" :disabled="isSendingReport || !reportForm.problem_type || reportForm.description.length < 10" class="btn btn-danger">
+                        <i v-if="isSendingReport" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-paper-plane"></i>
+                        {{ locale === 'lv' ? 'Nosūtīt ziņojumu' : 'Send Report' }}
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- ─── EDIT PROFILE MODAL ─── -->
@@ -396,6 +621,33 @@ const saveProfile = async () => {
     gap: 8px;
 }
 
+.header-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.btn-report-problem {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #c2410c;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-report-problem:hover {
+    background: #ffedd5;
+    border-color: #fb923c;
+}
+.btn-report-problem i { color: #ea580c; }
+
 .btn-edit-profile {
     display: inline-flex;
     align-items: center;
@@ -452,6 +704,21 @@ const saveProfile = async () => {
     gap: 8px;
 }
 .modal-header h3 i { color: #dc2626; }
+.modal-header.modal-header-danger { background: #fff5f5; }
+.modal-header.modal-header-danger h3 { color: #991b1b; }
+.modal-header.modal-header-danger h3 i { color: #dc2626; }
+.report-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: #6b7280;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.report-info i { color: #3b82f6; margin-top: 1px; flex-shrink: 0; }
 .close-btn {
     background: none;
     border: none;
@@ -664,9 +931,196 @@ const saveProfile = async () => {
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-outline { background: white; color: #374151; border: 1px solid #d1d5db; }
 .btn-outline:hover { background: #f3f4f6; }
+.btn-danger { background: #dc2626; color: white; border: none; }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Completed table */
-.completed-table { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+/* Inbox section */
+.inbox-section { border-top: 3px solid #fef2f2; }
+
+.reply-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #d1fae5;
+    color: #065f46;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.inbox-load-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.inbox-load-btn:hover:not(:disabled) { background: #e5e7eb; }
+.inbox-load-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.inbox-placeholder {
+    text-align: center;
+    padding: 32px;
+    color: #9ca3af;
+    font-size: 13px;
+}
+.inbox-placeholder i { font-size: 28px; display: block; margin-bottom: 10px; color: #d1d5db; }
+
+.inbox-empty {
+    text-align: center;
+    padding: 32px;
+    color: #9ca3af;
+    font-size: 13px;
+}
+.inbox-empty i { font-size: 28px; display: block; margin-bottom: 10px; color: #d1d5db; }
+
+.inbox-list { display: flex; flex-direction: column; gap: 0; }
+
+.inbox-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    transition: box-shadow 0.15s;
+}
+.inbox-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.inbox-item.has-reply { border-color: #bbf7d0; }
+.inbox-item.expanded { border-color: #fca5a5; }
+
+.inbox-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: #fafafa;
+    gap: 12px;
+}
+.inbox-item.has-reply .inbox-item-head { background: #f0fdf4; }
+.inbox-item-head:hover { background: #f3f4f6; }
+.inbox-item.has-reply .inbox-item-head:hover { background: #dcfce7; }
+
+.inbox-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.inbox-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.inbox-status-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+.inbox-status-dot.unread  { background: #fee2e2; color: #dc2626; }
+.inbox-status-dot.read    { background: #fef3c7; color: #d97706; }
+.inbox-status-dot.replied { background: #d1fae5; color: #059669; }
+
+.inbox-subject-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.inbox-subject { font-size: 13px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inbox-replied-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #059669; background: #d1fae5; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
+
+.inbox-date { font-size: 11px; color: #9ca3af; white-space: nowrap; }
+.inbox-chevron { font-size: 11px; color: #9ca3af; transition: transform 0.2s; }
+
+.inbox-item-body {
+    padding: 14px 16px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: white;
+}
+
+.inbox-msg-block { border-radius: 8px; overflow: hidden; }
+.inbox-msg-block.sent  { border: 1px solid #e5e7eb; }
+.inbox-msg-block.reply { border: 2px solid #bbf7d0; }
+
+.inbox-msg-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.inbox-msg-block.sent  .inbox-msg-label { background: #f9fafb; color: #6b7280; }
+.inbox-msg-block.reply .inbox-msg-label { background: #f0fdf4; color: #059669; }
+
+.inbox-msg-date {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: none;
+    color: #9ca3af;
+}
+
+.inbox-msg-text { padding: 10px 12px; font-size: 13px; color: #374151; line-height: 1.6; white-space: pre-wrap; }
+
+.inbox-pending {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 8px 0;
+}
+.inbox-pending i { color: #d1d5db; }
+
+/* expand transition */
+.expand-enter-active, .expand-leave-active { transition: all 0.2s ease; overflow: hidden; }
+.expand-enter-from, .expand-leave-to { opacity: 0; max-height: 0; }
+.expand-enter-to, .expand-leave-from { opacity: 1; max-height: 600px; }
+
+/* Report button in header */
+.header-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.btn-report-problem {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #c2410c;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-report-problem:hover { background: #ffedd5; border-color: #fb923c; }
+
+/* Modal danger header */
+.modal-header.modal-header-danger { background: #fff5f5; }
+.modal-header.modal-header-danger h3 { color: #991b1b; }
+.modal-header.modal-header-danger h3 i { color: #dc2626; }
+.report-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: #6b7280;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 4px;
+}
+.report-info i { color: #3b82f6; margin-top: 1px; flex-shrink: 0; }
+
 .table-header, .table-row {
     display: grid;
     grid-template-columns: 2fr 2fr 2fr 1fr;
@@ -692,33 +1146,12 @@ const saveProfile = async () => {
 @media (max-width: 1024px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 768px) {
-    .courier-dashboard { padding: 16px 12px; }
-    .dashboard-header { flex-direction: column; align-items: stretch; gap: 12px; }
-    .header-right { align-items: flex-start; flex-direction: row; justify-content: space-between; flex-wrap: wrap; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .stat-card { padding: 14px; gap: 10px; }
-    .stat-icon { width: 40px; height: 40px; font-size: 18px; }
-    .stat-value { font-size: 22px; }
-    .section { padding: 16px; }
+@media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .orders-grid { grid-template-columns: 1fr; }
-    .table-header, .table-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .dashboard-header { flex-direction: column; }
+    .table-header, .table-row { grid-template-columns: 1fr 1fr; }
     .table-header span:nth-child(3),
     .table-row span:nth-child(3) { display: none; }
-    .form-grid2 { grid-template-columns: 1fr; }
-    .modal { margin: 0 8px; }
-    .modal-body { padding: 16px; }
-    .modal-footer { padding: 12px 16px; flex-wrap: wrap; }
-    .modal-footer .btn { flex: 1; justify-content: center; }
-}
-@media (max-width: 480px) {
-    .header-title { font-size: 22px; }
-    .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stat-value { font-size: 20px; }
-    .order-card-footer { flex-direction: column; }
-    .order-card-footer .btn { width: 100%; justify-content: center; }
-    .table-header, .table-row { grid-template-columns: 2fr 1fr; }
-    .table-header span:nth-child(4),
-    .table-row span:nth-child(4) { display: none; }
 }
 </style>
