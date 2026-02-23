@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminAdministratorController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminActivityLogController;
+use App\Http\Controllers\Admin\AdminCourierController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\Courier\CourierController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Foundation\Application;
@@ -195,8 +197,38 @@ Route::middleware('auth')->group(function () {
     Route::post('/content/{id}/like', [ContentController::class, 'toggleLike'])->name('content.like');
 });
 
-// ========== ADMIN ROUTES ==========
+// ========== COURIER ROUTES ==========
+Route::middleware(['auth', 'courier'])->prefix('courier')->name('courier.')->group(function () {
 
+    // Dashboard
+    Route::get('/dashboard', [CourierController::class, 'dashboard'])->name('dashboard');
+
+    // Pasūtījumu saraksts ar filtriem
+    Route::get('/orders', [CourierController::class, 'orders'])->name('orders');
+
+    // Pasūtījuma detaļas
+    Route::get('/orders/{orderId}', [CourierController::class, 'showOrder'])->name('orders.show');
+
+    // Statusa maiņa (packed→shipped→in_transit→delivered)
+    Route::put('/orders/{orderId}/status', [CourierController::class, 'updateStatus'])->name('orders.status');
+
+    // Piezīmju saglabāšana
+    Route::put('/orders/{orderId}/notes', [CourierController::class, 'updateNotes'])->name('orders.notes');
+
+    // Kurjera profils
+    Route::get('/profile', [CourierController::class, 'profile'])->name('profile');
+
+    // Kurjera profila rediģēšana
+    Route::put('/profile', [CourierController::class, 'updateProfile'])->name('profile.update');
+
+    // Problēmas ziņojums administratoram
+    Route::post('/report', [CourierController::class, 'reportProblem'])->name('report');
+
+    // Kurjera iesūtne (nosūtītie ziņojumi + atbildes)
+    Route::get('/inbox', [CourierController::class, 'inbox'])->name('inbox');
+});
+
+// ========== ADMIN ROUTES ==========
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
     // Dashboard
@@ -294,6 +326,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::middleware(['can:logs.view'])->group(function () {
         Route::get('/logs', [AdminActivityLogController::class, 'index'])->name('logs.index');
         Route::get('/logs/export', [AdminActivityLogController::class, 'export'])->name('logs.export');
+    });
+
+    Route::prefix('couriers')->name('couriers.')->group(function () {
+        Route::get('/',                   [AdminCourierController::class, 'index'])->name('index');
+        Route::post('/',                  [AdminCourierController::class, 'store'])->name('store');
+        // Statiskie maršruti PIRMS /{id} — citādi Laravel uzskata 'assign' par {id}
+        Route::post('/assign',            [AdminCourierController::class, 'assignOrder'])->name('assign');
+        Route::delete('/assignments/{assignmentId}', [AdminCourierController::class, 'unassignOrder'])->name('unassign');
+        // Dinamiskie maršruti ar {id} — vienmēr pēdējie
+        Route::get('/{id}',               [AdminCourierController::class, 'show'])->name('show');
+        Route::put('/{id}',               [AdminCourierController::class, 'update'])->name('update');
+        Route::put('/{id}/toggle-active', [AdminCourierController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('/{id}',            [AdminCourierController::class, 'destroy'])->name('destroy');
     });
 });
 

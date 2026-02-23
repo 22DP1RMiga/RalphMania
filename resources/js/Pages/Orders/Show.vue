@@ -163,11 +163,25 @@ const getOrderTimeline = () => {
             active: currentIndex === 2,
         },
         {
+            label: locale.value === 'lv' ? 'Iepakots' : 'Packed',
+            icon: 'fas fa-box',
+            date: ['packed', 'shipped', 'in_transit', 'delivered'].includes(props.order.status) ? props.order.updated_at : null,
+            completed: currentIndex >= 3,
+            active: currentIndex === 3,
+        },
+        {
             label: locale.value === 'lv' ? 'Nosūtīts' : 'Shipped',
             icon: 'fas fa-shipping-fast',
             date: props.order.shipped_at,
             completed: currentIndex >= 4,
             active: currentIndex === 4,
+        },
+        {
+            label: locale.value === 'lv' ? 'Ceļā' : 'In Transit',
+            icon: 'fas fa-truck',
+            date: ['in_transit', 'delivered'].includes(props.order.status) ? props.order.shipped_at : null,
+            completed: currentIndex >= 5,
+            active: currentIndex === 5,
         },
         {
             label: locale.value === 'lv' ? 'Piegādāts' : 'Delivered',

@@ -21,6 +21,10 @@ const vClickOutside = {
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
+// Role checks
+const isAdministrator = computed(() => user.value?.is_administrator || false);
+const isCourier = computed(() => user.value?.is_courier || false);
+
 // Get user avatar with correct path
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
@@ -59,6 +63,16 @@ const closeUserDropdown = () => {
 
 const logout = () => {
     router.post(route('logout'));
+};
+
+const goToAdminPanel = () => {
+    closeUserDropdown();
+    router.visit('/admin/dashboard');
+};
+
+const goToCourierDashboard = () => {
+    closeUserDropdown();
+    router.visit('/courier/dashboard');
 };
 </script>
 
@@ -102,6 +116,26 @@ const logout = () => {
                         <!-- Dropdown Menu -->
                         <Transition name="dropdown">
                             <div v-if="isUserDropdownOpen" class="auth-dropdown-menu">
+                                <!-- Admin Panel (if administrator) -->
+                                <button
+                                    v-if="isAdministrator"
+                                    @click="goToAdminPanel"
+                                    class="auth-dropdown-item auth-dropdown-admin"
+                                >
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>{{ t('dashboard.sections.profile.admin_title') }}</span>
+                                </button>
+
+                                <!-- Courier Dashboard (if courier) -->
+                                <button
+                                    v-if="isCourier"
+                                    @click="goToCourierDashboard"
+                                    class="auth-dropdown-item auth-dropdown-courier"
+                                >
+                                    <i class="fas fa-truck"></i>
+                                    <span>{{ currentLocale === 'lv' ? 'Kurjera panelis' : 'Courier Dashboard' }}</span>
+                                </button>
+
                                 <Link
                                     :href="route('profile.edit')"
                                     class="auth-dropdown-item"
@@ -323,6 +357,36 @@ const logout = () => {
 
 .auth-dropdown-logout:hover {
     background: #fef2f2;
+}
+
+/* Admin item */
+.auth-dropdown-admin {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.auth-dropdown-admin:hover {
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+    color: #78350f;
+}
+
+.auth-dropdown-admin i {
+    color: #d97706;
+}
+
+/* Courier item */
+.auth-dropdown-courier {
+    background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+    color: #1e3a5f;
+}
+
+.auth-dropdown-courier:hover {
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
+    color: #1e3a5f;
+}
+
+.auth-dropdown-courier i {
+    color: #2563eb;
 }
 
 /* Locale Switcher */

@@ -65,7 +65,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * The accessors to append to the model's array form.
      */
-    protected $appends = ['is_administrator', 'is_super_admin'];
+    protected $appends = ['is_administrator', 'is_super_admin', 'is_courier'];
 
     /**
      * RELATIONSHIPS
@@ -209,6 +209,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Accessor for is_courier attribute (for frontend)
+     */
+    public function getIsCourierAttribute(): bool
+    {
+        return $this->isCourier();
+    }
+
+    /**
      * Check if user has a specific admin permission
      */
     public function hasAdminPermission(string $permission): bool
@@ -230,13 +238,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->administrator->hasAnyPermission($permissions);
     }
 
+    public function courier(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\Courier::class);
+    }
+
     /**
-     * Check if user is courier
+     * Check if user is a courier
      */
     public function isCourier(): bool
     {
-        return $this->role && $this->role->name === 'courier';
+        $this->loadMissing('role');
+        return $this->role?->name === 'courier';
     }
+//    public function isCourier(): bool
+//    {
+//        return $this->role && $this->role->name === 'courier';
+//    }
 
     /**
      * Check if user is customer

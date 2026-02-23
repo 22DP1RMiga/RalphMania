@@ -11,6 +11,9 @@ const isAuthenticated = computed(() => !!user.value);
 // Check if user is administrator
 const isAdministrator = computed(() => user.value?.is_administrator || false);
 
+// Check if user is courier
+const isCourier = computed(() => user.value?.is_courier || false);
+
 // Get user avatar with correct path
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
@@ -116,6 +119,11 @@ const goToAdminPanel = () => {
     router.visit('/admin/dashboard');
 };
 
+const goToCourierDashboard = () => {
+    closeMenus();
+    router.visit('/courier/dashboard');
+};
+
 const logout = () => {
     closeMenus();
     router.post('/logout', {}, {
@@ -202,6 +210,12 @@ onUnmounted(() => {
                             <button v-if="isAdministrator" @click="goToAdminPanel" class="dropdown-item dropdown-item-admin">
                                 <i class="fas fa-shield-alt"></i>
                                 <span>{{ $t('dashboard.sections.profile.admin_title') }}</span>
+                            </button>
+
+                            <!-- Courier Dashboard Link (if courier) -->
+                            <button v-if="isCourier" @click="goToCourierDashboard" class="dropdown-item dropdown-item-courier">
+                                <i class="fas fa-truck"></i>
+                                <span>{{ currentLocale === 'lv' ? 'Kurjera panelis' : 'Courier Dashboard' }}</span>
                             </button>
 
                             <!-- Dashboard Link -->
@@ -559,6 +573,20 @@ onUnmounted(() => {
 
 .dropdown-item-admin i {
     color: #d97706;
+}
+
+/* Courier item styling */
+.dropdown-item-courier {
+    background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+    color: #1e3a5f;
+}
+
+.dropdown-item-courier:hover {
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
+}
+
+.dropdown-item-courier i {
+    color: #2563eb;
 }
 
 /* Logout item styling */
