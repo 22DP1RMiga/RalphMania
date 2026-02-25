@@ -38,6 +38,12 @@ class Product extends Model
         'low_stock_threshold' => 'integer',
     ];
 
+    protected $appends = [
+        'discount_percentage',
+        'price_ex_vat',
+        'vat_amount',
+    ];
+
     // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
 
     public function category()
@@ -83,5 +89,48 @@ class Product extends Model
     public function getDiscountPercentageAttribute(): int
     {
         return $this->discount();
+    }
+
+    /**
+     * VAT rate — reads from settings table, defaults to 21%.
+     * Caches in static so only one DB query per request.
+     */
+    public static function vatRate(): float
+    {
+        static $rate = null;
+        if ($rate === null) {
+            $rate = (float) (\App\Models\Setting::get('tax_rate', 21));
+        }
+        return $rate;
+    }
+
+    /**
+     * Price WITHOUT VAT (neto cena).
+     * Cena DB ir ar PVN iekļautu (bruto) — t.i., 8.99 € ir tas, ko klients maksā.
+     * Neto = bruto / 1.21
+     * Piemērs: 15.00 / 1.21 = 12.3967... → 12.40
+     */
+    public function getPriceExVatAttribute(): float
+    {
+        return round((float) $this->price / (1 + self::vatRate() / 100), 2);
+    }
+
+    /**
+     * VAT amount contained in the price.
+     * PVN = bruto - neto
+     * Piemērs: 15.00 - 12.40 = 2.60 (vai precīzāk: 15.00 - 12.3967 = 2.6033 → 2.61)
+     */
+    public function getVatAmountAttribute(): float
+    {
+        return round((float) $this->price - $this->price_ex_vat, 2);
+    }
+
+    /**
+     * Same for compare_price (vecā cena).
+     */
+    public function getComparePriceExVatAttribute(): ?float
+    {
+        if (!$this->compare_price) return null;
+        return round((float) $this->compare_price / (1 + self::vatRate() / 100), 2);
     }
 }

@@ -92,9 +92,14 @@ const subtotal = computed(() => {
     return props.order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 });
 
-// Calculate VAT (21%)
+// PVN "tai skaitā" 21% — izvelk no bruto (subtotal jau SATUR PVN)
+// vat = subtotal * 21 / 121  (NE subtotal * 0.21!)
+const VAT_RATE = 21;
 const vatAmount = computed(() => {
-    return props.order.total_amount * 0.21;
+    return Math.round(subtotal.value * VAT_RATE / (100 + VAT_RATE) * 100) / 100;
+});
+const subtotalExVat = computed(() => {
+    return Math.round((subtotal.value - vatAmount.value) * 100) / 100;
 });
 
 // Payment method label
@@ -206,7 +211,7 @@ const timeline = computed(() => {
                             <div v-for="item in order.items" :key="item.id" class="order-item">
                                 <div class="item-image">
                                     <img
-                                        :src="item.product?.image ? `/img/Products/${item.product.image}` : '/img/Products/placeholder-product.png'"
+                                        :src="item.product?.image || '/img/Products/placeholder-product.png'"
                                         :alt="item.product_name"
                                     >
                                 </div>
@@ -235,13 +240,25 @@ const timeline = computed(() => {
                                 <span class="totals-label">{{ t('admin.orders.show.subtotal') }}</span>
                                 <span class="totals-value">{{ formatPrice(subtotal) }}</span>
                             </div>
-                            <div class="totals-row">
-                                <span class="totals-label">{{ t('admin.orders.show.shipping') }}</span>
-                                <span class="totals-value">{{ formatPrice(order.shipping_cost) }}</span>
+                            <div class="totals-row totals-row-vat">
+                                <span class="totals-label totals-vat-label">
+                                    <i class="fas fa-info-circle"></i>
+                                    t.sk. PVN ({{ VAT_RATE }}%)
+                                </span>
+                                <span class="totals-value totals-vat-value">{{ formatPrice(vatAmount) }}</span>
                             </div>
                             <div class="totals-row">
-                                <span class="totals-label">{{ t('admin.orders.show.vat') }} (21%)</span>
-                                <span class="totals-value">{{ formatPrice(vatAmount) }}</span>
+                                <span class="totals-label">{{ t('admin.orders.show.shipping') }}</span>
+                                <span class="totals-value">
+                                    {{ order.shipping_cost > 0 ? formatPrice(order.shipping_cost) : (locale === 'lv' ? 'Bezmaksas' : 'Free') }}
+                                </span>
+                            </div>
+                            <div v-if="order.discount_amount > 0" class="totals-row totals-discount">
+                                <span class="totals-label">
+                                    {{ t('admin.orders.show.discount') || 'Atlaide' }}
+                                    <code v-if="order.coupon_code" class="coupon-code-badge">{{ order.coupon_code }}</code>
+                                </span>
+                                <span class="totals-value discount-value">-{{ formatPrice(order.discount_amount) }}</span>
                             </div>
                             <div class="totals-row totals-final">
                                 <span class="totals-label">{{ t('admin.orders.show.total') }}</span>
@@ -640,6 +657,15 @@ const timeline = computed(() => {
     font-weight: 600;
     color: #111827;
 }
+
+.totals-row-vat { opacity: 0.85; }
+.totals-vat-label { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; font-style: italic; }
+.totals-vat-label .fa-info-circle { font-size: 0.7rem; color: #d1d5db; }
+.totals-vat-value { font-size: 0.8rem; color: #9ca3af; }
+
+.totals-discount .totals-label { color: #059669; }
+.discount-value { color: #059669; }
+.coupon-code-badge { background: #d1fae5; color: #065f46; padding: 1px 5px; border-radius: 3px; font-size: 0.7rem; margin-left: 4px; }
 
 .totals-final {
     margin-top: 0.5rem;

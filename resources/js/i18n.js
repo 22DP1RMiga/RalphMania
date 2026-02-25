@@ -1450,6 +1450,7 @@ const messages = {
                     cardNumber: 'Kartes numurs',
                     paymentStatus: 'Maksājuma statuss',
                     timeline: 'Laika skala',
+                    discount: 'Atlaide',
                 },
                 timeline: {
                     created: 'Izveidots',
@@ -3355,6 +3356,7 @@ const messages = {
                     cardNumber: 'Card Number',
                     paymentStatus: 'Payment status',
                     timeline: 'Timeline',
+                    discount: 'Discount',
                 },
                 timeline: {
                     created: 'Created',

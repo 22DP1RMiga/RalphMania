@@ -305,6 +305,9 @@ const closeToast = () => {
                                         €{{ formatPrice(product.price) }}
                                     </span>
                                 </div>
+                                <div v-if="product.vat_amount" class="price-vat-note">
+                                    t.sk. PVN: €{{ formatPrice(product.vat_amount) }}
+                                </div>
                             </div>
                         </a>
                         <button
@@ -685,6 +688,12 @@ const closeToast = () => {
     font-size: 1.25rem;
     font-weight: 700;
     color: #dc2626;
+}
+
+.price-vat-note {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 0.1rem;
 }
 
 .add-to-cart-button {

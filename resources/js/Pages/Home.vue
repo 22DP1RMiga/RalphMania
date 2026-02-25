@@ -212,6 +212,9 @@ const formatDate = (dateString) => {
                                 <span v-if="product.sale_price" class="price-original">{{ formatPrice(product.price) }}</span>
                                 <span class="price-current">{{ formatPrice(product.sale_price || product.price) }}</span>
                             </div>
+                            <div v-if="product.vat_amount" class="price-vat-note">
+                                t.sk. PVN: €{{ formatPrice(product.vat_amount) }}
+                            </div>
                         </div>
                     </Link>
                 </div>
@@ -663,6 +666,12 @@ const formatDate = (dateString) => {
     color: #dc2626;
     font-size: 1.5rem;
     font-weight: 800;
+}
+
+.price-vat-note {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 0.1rem;
 }
 
 /* About Section */

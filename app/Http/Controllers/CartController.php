@@ -21,19 +21,37 @@ class CartController extends Controller
         $cart = Cart::getCurrentCart();
         $cart->load(['items.product']);
 
+        $subtotal = (float) $cart->total_amount;
+        $vatRate  = (float) \App\Models\Setting::get('tax_rate', 21);
+        $vatAmount = round($subtotal * $vatRate / (100 + $vatRate), 2);
+
+        // Piegādes info (bez valsts — parāda abas iespējas)
+        $shippingZones = [
+            'latvia'  => \App\Http\Controllers\OrderController::shippingInfo('Latvia', $subtotal),
+            'baltics' => \App\Http\Controllers\OrderController::shippingInfo('Estonia', $subtotal),
+            'eu'      => \App\Http\Controllers\OrderController::shippingInfo('Other', $subtotal),
+        ];
+
         return Inertia::render('Cart/Index', [
             'cart' => [
-                'id'           => $cart->id,
-                'total_items'  => $cart->total_items,
-                'total_amount' => $cart->total_amount,
+                'id'              => $cart->id,
+                'total_items'     => $cart->total_items,
+                'total_amount'    => $subtotal,
+                // PVN sadalījums
+                'vat_rate'        => $vatRate,
+                'vat_amount'      => $vatAmount,
+                'subtotal_ex_vat' => round($subtotal - $vatAmount, 2),
             ],
-            'items' => $cart->items->map(function ($item) {
+            'items' => $cart->items->map(function ($item) use ($vatRate) {
+                $itemVat = round($item->price * $vatRate / (100 + $vatRate), 2);
                 return [
                     'id'         => $item->id,
                     'product_id' => $item->product_id,
                     'quantity'   => $item->quantity,
-                    'size'       => $item->size,    // ← PIEVIENOTS
+                    'size'       => $item->size,
                     'price'      => $item->price,
+                    'price_ex_vat' => round($item->price - $itemVat, 2),
+                    'vat_amount'   => $itemVat,
                     'total'      => $item->total,
                     'product'    => [
                         'id'             => $item->product->id,
@@ -41,12 +59,16 @@ class CartController extends Controller
                         'name_en'        => $item->product->name_en,
                         'slug'           => $item->product->slug,
                         'price'          => $item->product->price,
+                        'price_ex_vat'   => $item->product->price_ex_vat,
+                        'vat_amount'     => $item->product->vat_amount,
                         'image'          => $item->product->image,
                         'stock_quantity' => $item->product->stock_quantity,
-                        'has_sizes'      => (bool) $item->product->has_sizes, // ← PIEVIENOTS
+                        'has_sizes'      => (bool) $item->product->has_sizes,
                     ],
                 ];
             }),
+            'shipping_zones' => $shippingZones,
+            'vat_rate'        => $vatRate,
         ]);
     }
 
@@ -233,21 +255,30 @@ class CartController extends Controller
         $cart = Cart::getCurrentCart();
         $cart->load(['items.product']);
 
+        $subtotal  = (float) $cart->total_amount;
+        $vatRate   = (float) \App\Models\Setting::get('tax_rate', 21);
+        $vatAmount = round($subtotal * $vatRate / (100 + $vatRate), 2);
+
         return response()->json([
             'cart'  => [
-                'id'           => $cart->id,
-                'total_items'  => $cart->total_items,
-                'total_amount' => $cart->total_amount,
+                'id'              => $cart->id,
+                'total_items'     => $cart->total_items,
+                'total_amount'    => $subtotal,
+                'vat_rate'        => $vatRate,
+                'vat_amount'      => $vatAmount,
+                'subtotal_ex_vat' => round($subtotal - $vatAmount, 2),
             ],
             'items' => $cart->items->map(function ($item) {
                 return [
-                    'id'         => $item->id,
-                    'product_id' => $item->product_id,
-                    'quantity'   => $item->quantity,
-                    'size'       => $item->size,    // ← PIEVIENOTS
-                    'price'      => $item->price,
-                    'total'      => $item->total,
-                    'product'    => [
+                    'id'           => $item->id,
+                    'product_id'   => $item->product_id,
+                    'quantity'     => $item->quantity,
+                    'size'         => $item->size,
+                    'price'        => $item->price,
+                    'price_ex_vat' => $item->product->price_ex_vat,
+                    'vat_amount'   => $item->product->vat_amount,
+                    'total'        => $item->total,
+                    'product'      => [
                         'id'      => $item->product->id,
                         'name_lv' => $item->product->name_lv,
                         'name_en' => $item->product->name_en,

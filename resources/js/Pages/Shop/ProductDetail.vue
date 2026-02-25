@@ -208,6 +208,19 @@ const closeToast = () => { showToast.value = false; };
                                 <span class="price-current">€{{ formatPrice(productData.price) }}</span>
                                 <span v-if="discountPercentage > 0" class="save-badge">{{ $t('product.save') }} {{ discountPercentage }}%</span>
                             </div>
+                            <!-- t.sk. PVN -->
+                            <div v-if="productData.vat_amount" class="price-vat-note">
+                                <span v-if="locale === 'lv'">
+                                    t.sk. PVN ({{ productData.vat_rate || 21 }}%):
+                                    <strong>€{{ formatPrice(productData.vat_amount) }}</strong>
+                                    &nbsp;·&nbsp; bez PVN: <strong>€{{ formatPrice(productData.price_ex_vat) }}</strong>
+                                </span>
+                                <span v-else>
+                                    incl. VAT ({{ productData.vat_rate || 21 }}%):
+                                    <strong>€{{ formatPrice(productData.vat_amount) }}</strong>
+                                    &nbsp;·&nbsp; excl. VAT: <strong>€{{ formatPrice(productData.price_ex_vat) }}</strong>
+                                </span>
+                            </div>
 
                             <!-- Stock status -->
                             <div :class="['stock-status', { 'out-of-stock': !isInStock }]">
@@ -368,6 +381,7 @@ const closeToast = () => { showToast.value = false; };
 .price-original { font-size: 1.5rem; color: #9ca3af; text-decoration: line-through; }
 .price-current { font-size: 2.5rem; font-weight: 800; color: #dc2626; }
 .save-badge { background-color: #fee2e2; color: #dc2626; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; }
+.price-vat-note { font-size: 0.8rem; color: #9ca3af; margin-top: 0.25rem; }
 .stock-status { display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background-color: #f0fdf4; border-radius: 0.5rem; }
 .stock-status.out-of-stock { background-color: #fef2f2; }
 .stock-status i { font-size: 1.25rem; color: #16a34a; }
