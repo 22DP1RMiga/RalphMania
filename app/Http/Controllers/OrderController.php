@@ -164,11 +164,22 @@ class OrderController extends Controller
         // ─── GALĪGĀ SUMMA ────────────────────────────────────────────────────
         $totalAmount = max(0, $subtotal + $shippingCost - $discountAmount);
 
+        // ─── PVN SADALĪJUMS (t.sk. PVN 21%) ─────────────────────────────────
+        // Cenas datubāzē ir BRUTO (ar PVN iekļautu). PVN ir "tai skaitā".
+        // PVN bāze = subtotal (produktu summa); piegādei PVN netiek pielietots.
+        // vat_amount = subtotal * 21 / 121  (ekvivalents: subtotal - subtotal/1.21)
+        $vatRate   = (float) \App\Models\Setting::get('tax_rate', 21);
+        $vatAmount = round($subtotal * $vatRate / (100 + $vatRate), 2);
+        $subtotalExVat = round($subtotal - $vatAmount, 2);
+
         \Log::info('Order totals:', [
-            'subtotal'  => $subtotal,
-            'shipping'  => $shippingCost,
-            'discount'  => $discountAmount,
-            'total'     => $totalAmount,
+            'subtotal'         => $subtotal,
+            'subtotal_ex_vat'  => $subtotalExVat,
+            'vat_amount'       => $vatAmount,
+            'vat_rate'         => $vatRate . '%',
+            'shipping'         => $shippingCost,
+            'discount'         => $discountAmount,
+            'total'            => $totalAmount,
         ]);
 
         DB::beginTransaction();
@@ -293,16 +304,63 @@ class OrderController extends Controller
         return 'RM-' . date('Ymd') . '-' . strtoupper(substr(md5(uniqid()), 0, 6));
     }
 
+    /**
+     * Piegādes izmaksu aprēķins ar pareiziem bezmaksas sliekšņiem.
+     *
+     * Zonas un cenas (no FAQ + settings tabulas):
+     *   Latvija        — bezmaksas virs €35, citādi €3.49
+     *   Baltija (EE/LT)— bezmaksas virs €50, citādi €5.49
+     *   Pārējā ES      — bezmaksas virs €50, citādi €10.99
+     *
+     * Slieksnis tiek nolasīts no settings tabulas (free_shipping_threshold = 50),
+     * bet Latvijai ir īpašs zemāks slieksnis (35 €).
+     */
     private function calculateShipping(string $country, float $subtotal): float
     {
-        if ($subtotal >= 50) return 0;
+        // Nolasa globālo slieksni (default 50) no settings tabulas
+        $globalThreshold = (float) \App\Models\Setting::get('free_shipping_threshold', 50);
 
-        return match($country) {
-            'Latvia'    => 3.99,
-            'Estonia'   => 5.99,
-            'Lithuania' => 5.99,
-            default     => 5.99,
+        switch ($country) {
+            case 'Latvia':
+                // Latvijai īpašs slieksnis: bezmaksas no 35 €
+                $latviaThreshold = 35.0;
+                return $subtotal >= $latviaThreshold ? 0.0 : 3.49;
+
+            case 'Estonia':
+            case 'Lithuania':
+                // Baltija: bezmaksas no globalThreshold (50 €)
+                return $subtotal >= $globalThreshold ? 0.0 : 5.49;
+
+            default:
+                // Pārējā ES: bezmaksas no globalThreshold (50 €)
+                return $subtotal >= $globalThreshold ? 0.0 : 10.99;
+        }
+    }
+
+    /**
+     * Aprēķina piegādes izmaksas un informāciju par bezmaksas piegādes slieksni.
+     * Atgriež masīvu ar cost, threshold, remaining (cik trūkst līdz bezmaksas).
+     */
+    public static function shippingInfo(string $country, float $subtotal): array
+    {
+        $globalThreshold = (float) \App\Models\Setting::get('free_shipping_threshold', 50);
+
+        [$cost, $threshold] = match ($country) {
+            'Latvia'    => [3.49,  35.0],
+            'Estonia',
+            'Lithuania' => [5.49,  $globalThreshold],
+            default     => [10.99, $globalThreshold],
         };
+
+        $isFree    = $subtotal >= $threshold;
+        $remaining = max(0, round($threshold - $subtotal, 2));
+
+        return [
+            'cost'      => $isFree ? 0.0 : $cost,
+            'is_free'   => $isFree,
+            'threshold' => $threshold,
+            'remaining' => $remaining, // Cik € vēl jāiepērkas bezmaksas piegādei
+        ];
     }
 
     private function detectCardBrand(string $cardNumber): string

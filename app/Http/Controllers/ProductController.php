@@ -72,6 +72,8 @@ class ProductController extends Controller
      */
     public function featured()
     {
+        $vatRate = Product::vatRate();
+
         $products = Product::where('is_active', 1)
             ->where('is_featured', 1)
             ->orderBy('created_at', 'desc')
@@ -83,6 +85,9 @@ class ProductController extends Controller
                 'name_en'       => $p->name_en,
                 'slug'          => $p->slug,
                 'price'         => (float) $p->price,
+                'price_ex_vat'  => $p->price_ex_vat,
+                'vat_amount'    => $p->vat_amount,
+                'vat_rate'      => $vatRate,
                 'compare_price' => $p->compare_price ? (float) $p->compare_price : null,
                 'image'         => $p->image,
                 'stock_quantity'=> $p->stock_quantity,
@@ -111,9 +116,12 @@ class ProductController extends Controller
     /**
      * Standarts produkta masīvs visām atbildēm.
      * Iekļauj has_sizes lai frontend zina vai rādīt izmēru izvēlni.
+     * Iekļauj PVN (VAT) sadalījumu — cenas datubāzē ir ar PVN iekļautu (bruto).
      */
     private function formatProduct(Product $p): array
     {
+        $vatRate = Product::vatRate(); // 21.0
+
         return [
             'id'                  => $p->id,
             'name_lv'             => $p->name_lv,
@@ -122,14 +130,24 @@ class ProductController extends Controller
             'sku'                 => $p->sku,
             'description_lv'      => $p->description_lv,
             'description_en'      => $p->description_en,
-            'price'               => (float) $p->price,
+
+            // ── CENAS ─────────────────────────────────────────────────────
+            // Datubāzē cenas ir BRUTO (ar PVN iekļautu).
+            // Gala cena = price (to klients maksā).
+            // t.sk. PVN = vat_amount, cena bez PVN = price_ex_vat.
+            'price'               => (float) $p->price,               // Gala cena (bruto, ar PVN)
+            'price_ex_vat'        => $p->price_ex_vat,                // Cena bez PVN (neto)
+            'vat_amount'          => $p->vat_amount,                   // PVN summa t.sk.
+            'vat_rate'            => $vatRate,                         // 21.0
             'compare_price'       => $p->compare_price ? (float) $p->compare_price : null,
+            // ──────────────────────────────────────────────────────────────
+
             'image'               => $p->image,
             'stock_quantity'      => $p->stock_quantity,
             'low_stock_threshold' => $p->low_stock_threshold,
             'is_active'           => $p->is_active,
             'is_featured'         => $p->is_featured,
-            'has_sizes'           => (bool) $p->has_sizes,  // ← JAUNS
+            'has_sizes'           => (bool) $p->has_sizes,
             'category_id'         => $p->category_id,
             'category'            => $p->category ? [
                 'id'      => $p->category->id,

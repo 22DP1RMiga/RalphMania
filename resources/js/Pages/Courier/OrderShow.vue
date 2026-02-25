@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -117,6 +117,13 @@ const formatDate = (d) => d ? new Intl.DateTimeFormat(locale.value === 'lv' ? 'l
 }).format(new Date(d)) : null;
 
 const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
+
+// PVN "tai skaitā" — izvelk no subtotal bruto: vat = subtotal * 21 / 121
+const VAT_RATE = 21;
+const vatAmount = computed(() => {
+    const subtotal = parseFloat(props.order.subtotal || 0);
+    return Math.round(subtotal * VAT_RATE / (100 + VAT_RATE) * 100) / 100;
+});
 </script>
 
 <template>
@@ -202,14 +209,45 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
                                 <div class="item-info">
                                     <span class="item-name">{{ item.product_name }}</span>
                                     <span v-if="item.size" class="item-size">{{ item.size }}</span>
+                                    <span class="item-unit-price">{{ formatPrice(item.price) }}€ × {{ item.quantity }}</span>
                                 </div>
-                                <span class="item-qty">×{{ item.quantity }}</span>
                                 <span class="item-price">{{ formatPrice(item.total) }}€</span>
                             </div>
                         </div>
-                        <div class="total-row">
-                            <span>{{ locale === 'lv' ? 'Kopā:' : 'Total:' }}</span>
-                            <span class="total-amount">{{ formatPrice(order.total_amount) }}€</span>
+
+                        <!-- Cenu sadalījums -->
+                        <div class="price-breakdown">
+                            <div class="breakdown-row">
+                                <span>{{ locale === 'lv' ? 'Produkti:' : 'Products:' }}</span>
+                                <span>{{ formatPrice(order.subtotal) }}€</span>
+                            </div>
+                            <div class="breakdown-row breakdown-vat">
+                                <span>
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ locale === 'lv' ? `t.sk. PVN (${VAT_RATE}%):` : `incl. VAT (${VAT_RATE}%):` }}
+                                </span>
+                                <span>{{ formatPrice(vatAmount) }}€</span>
+                            </div>
+                            <div class="breakdown-row" v-if="order.shipping_cost > 0">
+                                <span>{{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
+                                <span>{{ formatPrice(order.shipping_cost) }}€</span>
+                            </div>
+                            <div class="breakdown-row shipping-free" v-else>
+                                <span>{{ locale === 'lv' ? 'Piegāde:' : 'Shipping:' }}</span>
+                                <span>{{ locale === 'lv' ? 'Bezmaksas' : 'Free' }}</span>
+                            </div>
+                            <div class="breakdown-row discount-row" v-if="order.discount_amount > 0">
+                                <span>
+                                    {{ locale === 'lv' ? 'Atlaide:' : 'Discount:' }}
+                                    <code v-if="order.coupon_code" class="coupon-chip">{{ order.coupon_code }}</code>
+                                </span>
+                                <span class="discount-val">-{{ formatPrice(order.discount_amount) }}€</span>
+                            </div>
+                            <div class="breakdown-divider"></div>
+                            <div class="breakdown-row breakdown-total">
+                                <span>{{ locale === 'lv' ? 'Kopā:' : 'Total:' }}</span>
+                                <span class="total-amount">{{ formatPrice(order.total_amount) }}€</span>
+                            </div>
                         </div>
                     </div>
 
@@ -398,11 +436,24 @@ const formatPrice = (p) => parseFloat(p || 0).toFixed(2);
 .items-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
 .item-row { display: flex; align-items: center; gap: 12px; }
 .item-img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
-.item-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.item-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
 .item-name { font-size: 14px; font-weight: 500; color: #111827; }
 .item-size { display: inline-block; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 3px; padding: 1px 6px; font-size: 11px; font-weight: 700; color: #374151; width: fit-content; }
+.item-unit-price { font-size: 12px; color: #9ca3af; }
 .item-qty { font-size: 14px; color: #6b7280; font-weight: 500; }
 .item-price { font-size: 14px; font-weight: 700; color: #1f2937; min-width: 60px; text-align: right; }
+
+/* Cenu sadalījums */
+.price-breakdown { border-top: 1px solid #f3f4f6; padding-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+.breakdown-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #6b7280; }
+.breakdown-row.shipping-free span:last-child { color: #059669; font-weight: 600; }
+.breakdown-row.discount-row { color: #059669; }
+.breakdown-vat { font-size: 12px; color: #9ca3af; font-style: italic; }
+.breakdown-vat i { font-size: 10px; margin-right: 3px; color: #d1d5db; }
+.discount-val { color: #059669; font-weight: 700; }
+.coupon-chip { background: #d1fae5; color: #065f46; padding: 1px 5px; border-radius: 3px; font-size: 10px; margin-left: 5px; font-family: monospace; border: 1px solid #a7f3d0; }
+.breakdown-divider { border-top: 1px solid #e5e7eb; margin: 4px 0; }
+.breakdown-total { font-size: 15px; font-weight: 600; color: #1f2937; }
 .total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 15px; }
 .total-amount { font-size: 20px; font-weight: 700; color: #dc2626; }
 

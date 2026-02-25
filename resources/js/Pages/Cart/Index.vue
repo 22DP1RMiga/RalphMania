@@ -9,8 +9,12 @@ import axios from 'axios';
 const { locale } = useI18n();
 
 const props = defineProps({
-    cart: Object,
-    items: Array,
+    cart:            Object,
+    items:           Array,
+    vat_rate:        { type: Number, default: 21 },
+    vat_amount:      { type: Number, default: 0  },
+    subtotal_ex_vat: { type: Number, default: 0  },
+    shipping_zones:  { type: Array,  default: () => [] },
 });
 
 // Modal state
@@ -28,10 +32,22 @@ const couponApplied      = ref(null);   // { code, type, value, discount }
 const isApplyingCoupon   = ref(false);
 
 // ── CENU APRĒĶINI ────────────────────────────────────────────────
+// SVARĪGI: Datubāzē cenas ir BRUTO (ar PVN iekļautu).
+// PVN NAV pieskaitāms klāt — tas jau IR subtotal iekšā.
+// Gala cena grozā = subtotal - discount  (piegāde aprēķinās checkout)
 const subtotal = computed(() => parseFloat(props.cart?.total_amount || 0));
-const vat      = computed(() => Math.round(subtotal.value * 0.21 * 100) / 100);
+
+// PVN "tai skaitā" — izvelk no bruto: vat = subtotal * 21 / 121
+const vatRate = computed(() => props.vat_rate || 21);
+const vat = computed(() => {
+    if (props.vat_amount > 0) return props.vat_amount;
+    return Math.round(subtotal.value * vatRate.value / (100 + vatRate.value) * 100) / 100;
+});
+
 const discount = computed(() => couponDiscount.value);
-const total    = computed(() => Math.max(0, subtotal.value + vat.value - discount.value));
+
+// Kopā grozā (bez piegādes — aprēķinās checkout pēc valsts izvēles)
+const total = computed(() => Math.max(0, subtotal.value - discount.value));
 
 // Helper functions
 const formatPrice = (price) => parseFloat(price || 0).toFixed(2);
@@ -263,9 +279,12 @@ const cancelClear = () => { showClearModal.value = false; };
                         <span>{{ locale === 'lv' ? 'Starpsumma' : 'Subtotal' }}</span>
                         <span>{{ formatPrice(subtotal) }}€</span>
                     </div>
-                    <div class="summary-row">
-                        <span>{{ locale === 'lv' ? 'PVN (21%)' : 'VAT (21%)' }}</span>
-                        <span>{{ formatPrice(vat) }}€</span>
+                    <div class="summary-row summary-row-vat">
+                        <span class="vat-label">
+                            <i class="fas fa-info-circle"></i>
+                            {{ locale === 'lv' ? `t.sk. PVN (${vatRate}%)` : `incl. VAT (${vatRate}%)` }}
+                        </span>
+                        <span class="vat-value">{{ formatPrice(vat) }}€</span>
                     </div>
                     <div class="summary-row">
                         <span>{{ $t('cart.shipping') }}</span>
@@ -463,6 +482,10 @@ const cancelClear = () => { showClearModal.value = false; };
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 0; font-size: 14px; color: #6b7280;
 }
+.summary-row-vat { padding: 2px 0 10px; }
+.vat-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #9ca3af; font-style: italic; }
+.vat-label .fa-info-circle { font-size: 11px; color: #d1d5db; }
+.vat-value { font-size: 12px; color: #9ca3af; }
 .text-gray { color: #9ca3af; }
 .discount-row { color: #059669; font-weight: 600; }
 .discount-row i { margin-right: 4px; }

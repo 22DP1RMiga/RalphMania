@@ -9,8 +9,12 @@ import axios from 'axios';
 const { locale } = useI18n();
 
 const props = defineProps({
-    cart: Object,
-    user: Object,
+    cart:            Object,
+    user:            Object,
+    vat_rate:        { type: Number, default: 21 },
+    vat_amount:      { type: Number, default: 0  },
+    subtotal_ex_vat: { type: Number, default: 0  },
+    shipping_zones:  { type: Array,  default: () => [] },
 });
 
 // Form data
@@ -57,18 +61,55 @@ onMounted(() => {
 });
 
 // ── CENU APRĒĶINI ────────────────────────────────────────────────
-const subtotal = computed(() => parseFloat(props.cart?.total_amount || 0));
-const vat      = computed(() => Math.round(subtotal.value * 0.21 * 100) / 100);
-const discount = computed(() => couponDiscount.value);
+// SVARĪGI: Datubāzē cenas ir BRUTO (ar PVN iekļautu).
+// PVN nav pieskaitāms klāt — tas jau ir iekļauts subtotal.
+// Gala cena = subtotal + shipping - discount  (BEZ vat pieskaitīšanas!)
 
-const shippingCost = computed(() => {
-    if (subtotal.value >= 50) return 0;
-    const shipping = { Latvia: 3.99, Estonia: 5.99, Lithuania: 5.99 };
-    return shipping[form.value.delivery_country] || 5.99;
+const subtotal = computed(() => parseFloat(props.cart?.total_amount || 0));
+
+// PVN "tai skaitā" — aprēķina no bruto summas (iekļauts subtotal)
+// vat = subtotal * 21 / 121
+const vatRate = computed(() => props.vat_rate || 21);
+const vat = computed(() => {
+    // Ja backend nodeva, izmanto to; citādi aprēķina pašs
+    if (props.vat_amount > 0) return props.vat_amount;
+    return Math.round(subtotal.value * vatRate.value / (100 + vatRate.value) * 100) / 100;
+});
+const subtotalExVat = computed(() => {
+    if (props.subtotal_ex_vat > 0) return props.subtotal_ex_vat;
+    return Math.round((subtotal.value - vat.value) * 100) / 100;
 });
 
+const discount = computed(() => couponDiscount.value);
+
+// Piegādes izmaksu aprēķins — sakrīt ar OrderController::calculateShipping()
+// Latvija: bezmaksas no €35, Baltija/ES: bezmaksas no €50
+const shippingCost = computed(() => {
+    const country = form.value.delivery_country;
+    const amt = subtotal.value;
+
+    if (country === 'Latvia') {
+        return amt >= 35 ? 0 : 3.49;
+    } else if (country === 'Estonia' || country === 'Lithuania') {
+        return amt >= 50 ? 0 : 5.49;
+    } else {
+        // Pārējā ES
+        return amt >= 50 ? 0 : 10.99;
+    }
+});
+
+// Cik € vēl vajag bezmaksas piegādei
+const shippingFreeRemaining = computed(() => {
+    const country = form.value.delivery_country;
+    const threshold = country === 'Latvia' ? 35 : 50;
+    const remaining = threshold - subtotal.value;
+    return remaining > 0 ? Math.round(remaining * 100) / 100 : 0;
+});
+
+// Gala summa: subtotal (ar PVN iekļautu) + piegāde - atlaide
+// PVN NAV pieskaitāms klāt — tas jau IR iekļauts
 const totalWithShipping = computed(() => {
-    return Math.max(0, subtotal.value + vat.value + shippingCost.value - discount.value);
+    return Math.max(0, subtotal.value + shippingCost.value - discount.value);
 });
 
 const hasContactErrors  = computed(() => !!(errors.value.customer_name || errors.value.customer_email || errors.value.customer_phone));
@@ -426,7 +467,7 @@ const placeOrder = async () => {
                                     <div class="product-info">
                                         <p class="product-name">{{ getProductName(item.product) }}</p>
                                         <p class="product-quantity">
-                                            {{ locale === 'lv' ? 'Daudzums' : 'Qty' }}: {{ item.quantity }}
+                                            {{ locale === 'lv' ? 'Daudzums' : 'Quantity' }}: {{ item.quantity }}
                                             <span v-if="item.size" class="summary-size-badge">{{ item.size }}</span>
                                         </p>
                                     </div>
@@ -441,13 +482,22 @@ const placeOrder = async () => {
                                 <span>{{ locale === 'lv' ? 'Starpsumma' : 'Subtotal' }}</span>
                                 <span>{{ formatPrice(subtotal) }}€</span>
                             </div>
-                            <div class="summary-row">
-                                <span>{{ locale === 'lv' ? 'PVN (21%)' : 'VAT (21%)' }}</span>
-                                <span>{{ formatPrice(vat) }}€</span>
+                            <div class="summary-row summary-row-vat">
+                                <span class="vat-label">
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ locale === 'lv' ? `t.sk. PVN (${vatRate}%)` : `incl. VAT (${vatRate}%)` }}
+                                </span>
+                                <span class="vat-value">{{ formatPrice(vat) }}€</span>
                             </div>
                             <div class="summary-row">
                                 <span>{{ locale === 'lv' ? 'Piegāde' : 'Shipping' }}</span>
                                 <span>{{ shippingCost === 0 ? (locale === 'lv' ? 'Bezmaksas' : 'Free') : formatPrice(shippingCost) + '€' }}</span>
+                            </div>
+                            <!-- Bezmaksas piegādes progress -->
+                            <div v-if="shippingFreeRemaining > 0" class="free-shipping-hint">
+                                <i class="fas fa-truck"></i>
+                                <span v-if="locale === 'lv'">Pievieno vēl <strong>{{ formatPrice(shippingFreeRemaining) }}€</strong> bezmaksas piegādei!</span>
+                                <span v-else>Add <strong>{{ formatPrice(shippingFreeRemaining) }}€</strong> more for free shipping!</span>
                             </div>
 
                             <!-- Discount row -->
@@ -617,6 +667,12 @@ textarea { width: 100%; resize: vertical; }
 .product-price { font-size: 14px; font-weight: 600; color: #dc2626; margin: 0; }
 .summary-divider { height: 1px; background: #e5e7eb; margin: 16px 0; }
 .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #6b7280; }
+.summary-row-vat { padding: 2px 0 8px; }
+.vat-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #9ca3af; font-style: italic; }
+.vat-label .fa-info-circle { color: #d1d5db; font-size: 11px; }
+.vat-value { font-size: 12px; color: #9ca3af; }
+.free-shipping-hint { display: flex; align-items: center; gap: 6px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 7px 10px; font-size: 12px; color: #92400e; margin: 4px 0 2px; }
+.free-shipping-hint .fa-truck { color: #d97706; }
 .discount-row { color: #059669; font-weight: 600; }
 .discount-row i { margin-right: 4px; }
 .discount-amount { color: #059669; font-weight: 700; }
