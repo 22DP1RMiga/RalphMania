@@ -98,6 +98,7 @@ const submit = () => {
                             v-model="form.login"
                             class="form-input"
                             :class="{ 'input-error': form.errors.login }"
+                            :placeholder="currentLocale === 'lv' ? 'Ievadiet e-pastu vai lietotājvārdu...' : 'Enter email or username...'"
                             required
                             autofocus
                             autocomplete="username"
@@ -118,6 +119,7 @@ const submit = () => {
                             v-model="form.password"
                             class="form-input"
                             :class="{ 'input-error': form.errors.password }"
+                            :placeholder="currentLocale === 'lv' ? 'Ievadiet paroli...' : 'Enter password...'"
                             required
                             autocomplete="current-password"
                         />
