@@ -5,7 +5,7 @@ const messages = {
     lv: {
         nav: {
             home: 'Sākumlapa',
-            about: 'Par Mums',
+            about: 'Par mums',
             contact: 'Kontakti',
             shop: 'Veikals',
             content: 'Saturs',
@@ -135,38 +135,38 @@ const messages = {
         },
         hero: {
             title: 'Laipni lūdzam RalphMania!',
-            subtitle: 'Tavs galamērķis saturam un zīmola produktiem',
-            cta_content: 'Skatīt Saturu',
-            cta_shop: 'Apmeklēt Veikalu',
+            subtitle: 'Jūsu galamērķis saturam un zīmola produktiem',
+            cta_content: 'Skatīt saturu',
+            cta_shop: 'Apmeklēt veikalu',
         },
         about: {
             hero: {
-                title: 'Par Mums',
+                title: 'Par mums',
                 subtitle: 'Iepazīstieties ar mūsu stāstu un vērtībām',
             },
             story: {
-                title: 'Mūsu Stāsts',
+                title: 'Mūsu stāsts',
                 paragraph_1: 'RalphMania ir radīta ar mērķi apvienot saturu un produktus vienā platformā. Mēs ticam, ka kvalitāte un autentiskums ir vissvarīgākais.',
                 paragraph_2: 'Mūsu ceļojums sākās ar vienkāršu ideju - radīt kopienu, kas dalās ar mūsu aizraušanos un vērtībām. Šodien esam lepni piedāvāt gan unikālu saturu, gan ekskluzīvus produktus.',
                 paragraph_3: 'Katrs mūsu produkts ir rūpīgi izvēlēts un katrs satura gabals ir radīts ar mīlestību. Mēs vēlamies būt vairāk nekā tikai veikals - mēs vēlamies būt kopiena.',
             },
             mission: {
-                title: 'Mūsu Misija',
+                title: 'Mūsu misija',
                 content: {
-                    title: 'Kvalitatīvs Saturs',
+                    title: 'Kvalitatīvs saturs',
                     text: 'Radām oriģinālu un iesaistošu saturu, kas iedvesmo un izklaidē mūsu kopienu.',
                 },
                 products: {
-                    title: 'Unikāli Produkti',
+                    title: 'Unikāli produkti',
                     text: 'Piedāvājam ekskluzīvus produktus, kas atspoguļo mūsu zīmolu un vērtības.',
                 },
                 community: {
-                    title: 'Stipra Kopiena',
+                    title: 'Stipra kopiena',
                     text: 'Veidojam kopienu, kur katra balss tiek dzirdēta un novērtēta.',
                 },
             },
             values: {
-                title: 'Mūsu Vērtības',
+                title: 'Mūsu vērtības',
                 quality: {
                     title: 'Kvalitāte',
                     text: 'Mēs nekad neapmierinamies ar viduvējību. Katrs produkts un satura gabals ir rūpīgi pārdomāts.',
@@ -185,7 +185,7 @@ const messages = {
                 },
             },
             cta: {
-                title: 'Pievienojies Mūsu Kopienai!',
+                title: 'Pievienojies mūsu kopienai!',
                 text: 'Atrodi savus iecienītākos produktus un saturu vienuviet',
                 shop: 'Iepirkties',
                 contact: 'Sazināties',
@@ -193,8 +193,8 @@ const messages = {
         },
         contact: {
             hero: {
-                title: 'Sazinies ar Mums',
-                subtitle: 'Mēs labprāt atbildēsim uz visiem taviem jautājumiem',
+                title: 'Sazinies ar mums',
+                subtitle: 'Mēs labprāt atbildēsim uz visiem Jūsu jautājumiem',
                 youAreLoggedInAs: 'Jūs esat pieteicies kā',
             },
             form: {
@@ -210,8 +210,8 @@ const messages = {
                 success: 'Paldies! Jūsu ziņojums ir nosūtīts.',
                 subjectPlaceholder: 'Temata nosaukums šeit..',
                 messagePlaceholder: 'Kas man ir sakāms..',
-                usernameHint: 'Lietotājvārds tiek ņemts no jūsu profila',
-                emailHint: 'E-pasts tiek ņemts no jūsu profila',
+                usernameHint: 'Lietotājvārds tiek ņemts no Jūsu profila',
+                emailHint: 'E-pasts tiek ņemts no Jūsu profila',
             },
             info: {
                 title: 'Kontaktinformācija',
@@ -543,7 +543,7 @@ const messages = {
         },
         common: {
             loading: 'Lādē...',
-            view_more: 'Skatīt Vairāk',
+            view_more: 'Skatīt vairāk',
             view_all: 'Skatīt visu',
             add_to_cart: 'Pievienot grozam',
             search: 'Meklēt...',

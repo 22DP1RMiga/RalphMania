@@ -88,6 +88,7 @@ const submit = () => {
                             v-model="form.first_name"
                             class="form-input"
                             :class="{ 'input-error': form.errors.first_name }"
+                            :placeholder="currentLocale === 'lv' ? 'Piem., Alberts...' : 'E.g., Albert...'"
                             required
                             autofocus
                             autocomplete="given-name"
@@ -108,6 +109,7 @@ const submit = () => {
                             v-model="form.last_name"
                             class="form-input"
                             :class="{ 'input-error': form.errors.last_name }"
+                            :placeholder="currentLocale === 'lv' ? 'Piem., Einšteins...' : 'E.g., Einstein...'"
                             required
                             autocomplete="family-name"
                         />
@@ -127,6 +129,7 @@ const submit = () => {
                             v-model="form.username"
                             class="form-input"
                             :class="{ 'input-error': form.errors.username }"
+                            :placeholder="currentLocale === 'lv' ? 'Piem., MasterAlbert310...' : 'E.g., MasterAlbert310 ....'"
                             required
                             autocomplete="username"
                         />
@@ -146,6 +149,7 @@ const submit = () => {
                             v-model="form.email"
                             class="form-input"
                             :class="{ 'input-error': form.errors.email }"
+                            :placeholder="currentLocale === 'lv' ? 'Piem., alberts.einsteins@gmail.com...' : 'E.g., albert.einstein@gmail.com ....'"
                             required
                             autocomplete="email"
                         />
@@ -165,6 +169,7 @@ const submit = () => {
                             v-model="form.password"
                             class="form-input"
                             :class="{ 'input-error': form.errors.password }"
+                            :placeholder="currentLocale === 'lv' ? 'Ievadiet paroli' : 'Enter password'"
                             required
                             autocomplete="new-password"
                         />
@@ -184,6 +189,7 @@ const submit = () => {
                             v-model="form.password_confirmation"
                             class="form-input"
                             :class="{ 'input-error': form.errors.password_confirmation }"
+                            :placeholder="currentLocale === 'lv' ? 'Atkārtoti ievadiet paroli...' : 'Re-enter password...'"
                             required
                             autocomplete="new-password"
                         />
