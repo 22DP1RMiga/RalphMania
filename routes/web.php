@@ -132,12 +132,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/addresses/{id}/edit', [ProfileController::class, 'addressEdit'])->name('profile.addresses.edit');
         Route::put('/addresses/{id}', [ProfileController::class, 'addressUpdate'])->name('profile.addresses.update');
         Route::delete('/addresses/{id}', [ProfileController::class, 'addressDelete'])->name('profile.addresses.delete');
-
-        // Privacy settings update
-        Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy'])
-            ->middleware('auth')
-            ->name('profile.privacy.update');
     });
+
+    // Privacy settings update (ārpus prefix grupas — URL: /profile/privacy)
+    Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy'])
+        ->name('profile.privacy.update');
 
     // Grozs
     Route::prefix('cart')->name('cart.')->group(function () {

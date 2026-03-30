@@ -4,7 +4,18 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SubscriberOffers from '@/Components/SubscriberOffers.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
 import axios from 'axios';
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
+
+const closeToast = () => { toast.value.show = false; };
 
 const props = defineProps({
     auth: Object,
@@ -109,16 +120,15 @@ const savePrivacySettings = async () => {
             is_private: isPrivateProfile.value
         });
 
-        // Success notification (if you have toast)
-        alert(currentLocale.value === 'lv'
-            ? 'Iestatījumi veiksmīgi saglabāti!'
-            : 'Settings saved successfully!'
+        showToast(
+            currentLocale.value === 'lv' ? 'Iestatījumi veiksmīgi saglabāti!' : 'Settings saved successfully!',
+            'success'
         );
     } catch (error) {
         console.error('Failed to save settings:', error);
-        alert(currentLocale.value === 'lv'
-            ? 'Neizdevās saglabāt iestatījumus'
-            : 'Failed to save settings'
+        showToast(
+            currentLocale.value === 'lv' ? 'Neizdevās saglabāt iestatījumus' : 'Failed to save settings',
+            'error'
         );
     } finally {
         savingSettings.value = false;
@@ -128,6 +138,14 @@ const savePrivacySettings = async () => {
 
 <template>
     <Head :title="$t('auth.dashboard')" />
+
+    <!-- Toast Notification -->
+    <ToastNotification
+        :show="toast.show"
+        :message="toast.message"
+        :type="toast.type"
+        @close="closeToast"
+    />
 
     <div class="dashboard">
         <!-- Dashboard Header with Logo -->
@@ -483,33 +501,64 @@ const savePrivacySettings = async () => {
                 <div v-if="activeSection === 'reviews'" class="section-content">
                     <h2 class="section-title">{{ $t('dashboard.sections.reviews.title') }}</h2>
 
-                    <!-- Reviews List -->
                     <div v-if="recentReviews && recentReviews.length > 0" class="reviews-full-list">
                         <div v-for="review in recentReviews" :key="review.id" class="review-card">
+
+                            <!-- Header: zvaigznes + apstiprināšanas statuss + datums -->
                             <div class="review-card-header">
                                 <div class="review-rating-stars">
                                     <i v-for="n in 5" :key="n"
                                        :class="['fas fa-star', n <= review.rating ? 'star-filled' : 'star-empty']">
                                     </i>
                                 </div>
-                                <span class="review-card-date">{{ formatDate(review.created_at) }}</span>
+                                <div class="review-header-right">
+                                    <span v-if="!review.is_approved" class="review-pending-badge">
+                                        <i class="fas fa-clock"></i>
+                                        {{ currentLocale === 'lv' ? 'Gaida apstiprinājumu' : 'Pending approval' }}
+                                    </span>
+                                    <span class="review-card-date">{{ formatDate(review.created_at) }}</span>
+                                </div>
                             </div>
 
+                            <!-- Atsauksmes teksts -->
                             <p class="review-card-text">
-                                {{ currentLocale === 'lv' ? review.review_text_lv : review.review_text_en }}
+                                {{ currentLocale === 'lv'
+                                ? (review.review_text_lv || review.review_text_en || '—')
+                                : (review.review_text_en || review.review_text_lv || '—') }}
                             </p>
 
+                            <!-- Produkts vai saturs — ar linku un tipa badge -->
                             <div v-if="review.reviewable" class="review-card-item">
-                                <i :class="review.reviewable.type === 'Product' ? 'fas fa-box' : 'fas fa-file-alt'"></i>
+                                <i :class="review.reviewable.type === 'Product'
+                                    ? 'fas fa-box'
+                                    : 'fas fa-file-alt'">
+                                </i>
                                 <span class="review-item-name">
-                                    <span v-if="review.reviewable.type === 'Product'">
-                                        {{ currentLocale === 'lv' ? review.reviewable.name_lv : review.reviewable.name_en }}
-                                    </span>
+                                    <a
+                                        v-if="review.reviewable.link"
+                                        :href="review.reviewable.link"
+                                        class="review-item-link"
+                                    >
+                                        {{ currentLocale === 'lv'
+                                        ? review.reviewable.name_lv
+                                        : review.reviewable.name_en }}
+                                    </a>
                                     <span v-else>
-                                        {{ currentLocale === 'lv' ? review.reviewable.title_lv : review.reviewable.title_en }}
+                                        {{ currentLocale === 'lv'
+                                        ? review.reviewable.name_lv
+                                        : review.reviewable.name_en }}
                                     </span>
                                 </span>
-                                <span class="review-item-type">{{ review.reviewable.type }}</span>
+                                <span
+                                    class="review-item-type"
+                                    :class="review.reviewable.type === 'Product'
+                                        ? 'review-type-product'
+                                        : 'review-type-content'"
+                                >
+                                    {{ review.reviewable.type === 'Product'
+                                    ? (currentLocale === 'lv' ? 'Produkts' : 'Product')
+                                    : (currentLocale === 'lv' ? 'Saturs' : 'Content') }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -524,9 +573,18 @@ const savePrivacySettings = async () => {
                         <p class="empty-state-text">
                             {{ currentLocale === 'lv'
                             ? 'Jūs vēl neesat atstājis nevienu atsauksmi par produktiem vai saturu.'
-                            : 'You haven\'t written any reviews for products or content yet.'
-                            }}
+                            : "You haven't written any reviews for products or content yet." }}
                         </p>
+                        <div class="empty-state-actions">
+                            <Link href="/shop" class="btn btn-primary">
+                                <i class="fas fa-shopping-bag"></i>
+                                {{ currentLocale === 'lv' ? 'Doties uz veikalu' : 'Visit Shop' }}
+                            </Link>
+                            <Link href="/content" class="btn btn-secondary">
+                                <i class="fas fa-book"></i>
+                                {{ currentLocale === 'lv' ? 'Skatīt saturu' : 'View Content' }}
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -733,6 +791,9 @@ const savePrivacySettings = async () => {
     display: flex;
     align-items: center;
     gap: 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .dashboard-brand {
@@ -832,7 +893,25 @@ const savePrivacySettings = async () => {
 
 @media (max-width: 640px) {
     .dashboard-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);  /* WAS: 1fr */
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    .stat-card {
+        padding: 1rem;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    .dashboard-content {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    .dashboard-main {
+        padding: 1rem;
+    }
+    .welcome-title {
+        font-size: 1.25rem;
     }
 }
 
@@ -1408,8 +1487,30 @@ const savePrivacySettings = async () => {
 .review-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.review-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.review-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.6rem;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    color: #92400e;
+    font-weight: 600;
 }
 
 .review-rating-stars {
@@ -1459,12 +1560,28 @@ const savePrivacySettings = async () => {
 
 .review-item-type {
     padding: 0.25rem 0.5rem;
-    background: white;
-    border: 1px solid #e5e7eb;
     border-radius: 0.25rem;
     font-size: 0.75rem;
-    color: #6b7280;
     font-weight: 600;
+}
+
+.review-item-link {
+    color: #1e40af;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.review-item-link:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.review-type-content {
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
 }
 
 /* Empty State Large */

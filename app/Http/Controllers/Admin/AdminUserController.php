@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\NewsletterSubscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -116,6 +117,28 @@ class AdminUserController extends Controller
             ];
         }
 
+        // Newsletter subscriber info
+        $subscriber = NewsletterSubscriber::where('user_id', $user->id)
+            ->orWhere('email', $user->email)
+            ->first();
+
+        $newsletterStatus = null;
+        if ($subscriber) {
+            $newsletterStatus = [
+                'subscribed'    => $subscriber->is_active && !$subscriber->is_expired,
+                'is_active'     => $subscriber->is_active,
+                'is_verified'   => $subscriber->is_verified,
+                'expires_at'    => $subscriber->subscription_expires_at?->format('d.m.Y'),
+                'days_remaining'=> $subscriber->days_remaining,
+                'is_expired'    => $subscriber->is_expired,
+                'preferences'   => [
+                    'receive_news'          => $subscriber->receive_news,
+                    'receive_promotions'    => $subscriber->receive_promotions,
+                    'receive_announcements' => $subscriber->receive_announcements,
+                ],
+            ];
+        }
+
         return Inertia::render('Admin/Users/Show', [
             'user' => [
                 'id' => $user->id,
@@ -142,6 +165,7 @@ class AdminUserController extends Controller
                 // Return address as array with single item for backwards compatibility
                 'addresses' => $address ? [$address] : [],
             ],
+            'newsletterStatus' => $newsletterStatus,
         ]);
     }
 
