@@ -1,408 +1,477 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ToastNotification from '@/Components/ToastNotification.vue';
 
-const { t, locale } = useI18n({ useScope: 'global' });
-const page = usePage();
+const { locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
-    logs: { type: Object, default: () => ({ data: [], links: [] }) },
-    filters: { type: Object, default: () => ({}) },
-    activityTypes: { type: Array, default: () => [] },
-    users: { type: Array, default: () => [] },
+    logs: Object,
+    filters: Object,
+    activityTypes: Array,
+    users: Array,
 });
 
-// Toast
-const showToast = ref(false);
-const toastMessage = ref('');
-const toastType = ref('success');
+// ── Filters ──────────────────────────────────────────────────────
+const search        = ref(props.filters?.search || '');
+const typeFilter    = ref(props.filters?.activity_type || '');
+const userFilter    = ref(props.filters?.user_id || '');
+const dateFrom      = ref(props.filters?.date_from || '');
+const dateTo        = ref(props.filters?.date_to || '');
 
-// Filters
-const search = ref(props.filters?.search || '');
-const activityTypeFilter = ref(props.filters?.activity_type || '');
-const userFilter = ref(props.filters?.user_id || '');
-const dateFrom = ref(props.filters?.date_from || '');
-const dateTo = ref(props.filters?.date_to || '');
-
-// Modal
-const showDetailsModal = ref(false);
-const selectedLog = ref(null);
-
-// Debounced search
-let searchTimeout;
-watch(search, () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => applyFilters(), 300);
-});
-
+let searchTimeout = null;
 const applyFilters = () => {
     router.get('/admin/logs', {
-        search: search.value || undefined,
-        activity_type: activityTypeFilter.value || undefined,
-        user_id: userFilter.value || undefined,
-        date_from: dateFrom.value || undefined,
-        date_to: dateTo.value || undefined,
+        search:        search.value || undefined,
+        activity_type: typeFilter.value || undefined,
+        user_id:       userFilter.value || undefined,
+        date_from:     dateFrom.value || undefined,
+        date_to:       dateTo.value || undefined,
     }, { preserveState: true, replace: true });
 };
 
-const resetFilters = () => {
-    search.value = '';
-    activityTypeFilter.value = '';
-    userFilter.value = '';
-    dateFrom.value = '';
-    dateTo.value = '';
-    router.get('/admin/logs');
+watch([typeFilter, userFilter, dateFrom, dateTo], applyFilters);
+watch(search, () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 350);
+});
+
+const clearFilters = () => {
+    search.value = ''; typeFilter.value = ''; userFilter.value = '';
+    dateFrom.value = ''; dateTo.value = '';
 };
 
-const hasFilters = computed(() => search.value || activityTypeFilter.value || userFilter.value || dateFrom.value || dateTo.value);
+const hasFilters = computed(() =>
+    search.value || typeFilter.value || userFilter.value || dateFrom.value || dateTo.value
+);
 
-// View log details
-const viewDetails = (log) => { selectedLog.value = log; showDetailsModal.value = true; };
-const closeModal = () => { showDetailsModal.value = false; selectedLog.value = null; };
-
-// Format date
-const formatDate = (date) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
-        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+// ── Helpers ───────────────────────────────────────────────────────
+const formatDateTime = (d) => {
+    if (!d) return '—';
+    return new Date(d).toLocaleString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
 };
 
-// Get activity type icon and color
-const getActivityStyle = (type) => {
-    const styles = {
-        'login': { icon: 'fa-sign-in-alt', color: 'green' },
-        'logout': { icon: 'fa-sign-out-alt', color: 'gray' },
-        'order_created': { icon: 'fa-shopping-cart', color: 'blue' },
-        'order_updated': { icon: 'fa-edit', color: 'blue' },
-        'order_cancelled': { icon: 'fa-times-circle', color: 'red' },
-        'profile_updated': { icon: 'fa-user-edit', color: 'purple' },
-        'password_changed': { icon: 'fa-key', color: 'orange' },
-        'review_created': { icon: 'fa-star', color: 'yellow' },
-        'comment_created': { icon: 'fa-comment', color: 'blue' },
-        'contact_sent': { icon: 'fa-envelope', color: 'green' },
-        'product_viewed': { icon: 'fa-eye', color: 'gray' },
-        'cart_updated': { icon: 'fa-shopping-basket', color: 'purple' },
-        'settings_updated': { icon: 'fa-cog', color: 'gray' },
-        'test_email_sent': { icon: 'fa-envelope', color: 'orange' },
-    };
-    return styles[type] || { icon: 'fa-circle', color: 'gray' };
+// ── Activity type styling & labelling ────────────────────────────
+const typeConfig = {
+    login:              { icon: 'fas fa-sign-in-alt',   cls: 'type-login',    lv: 'Pieslēgšanās',     en: 'Login' },
+    logout:             { icon: 'fas fa-sign-out-alt',  cls: 'type-logout',   lv: 'Atslēgšanās',      en: 'Logout' },
+    register:           { icon: 'fas fa-user-plus',     cls: 'type-register', lv: 'Reģistrācija',     en: 'Register' },
+    profile_update:     { icon: 'fas fa-user-edit',     cls: 'type-profile',  lv: 'Profils atjaunots',en: 'Profile Updated' },
+    privacy_update:     { icon: 'fas fa-user-shield',   cls: 'type-privacy',  lv: 'Privātums mainīts',en: 'Privacy Changed' },
+    password_change:    { icon: 'fas fa-key',           cls: 'type-password', lv: 'Parole mainīta',   en: 'Password Changed' },
+    order_placed:       { icon: 'fas fa-shopping-bag',  cls: 'type-order',    lv: 'Pasūtījums',       en: 'Order Placed' },
+    order_cancelled:    { icon: 'fas fa-times-circle',  cls: 'type-cancel',   lv: 'Pasūtījums atcelts',en: 'Order Cancelled' },
+    review_added:       { icon: 'fas fa-star',          cls: 'type-review',   lv: 'Atsauksme',        en: 'Review Added' },
+    comment_added:      { icon: 'fas fa-comment',       cls: 'type-comment',  lv: 'Komentārs',        en: 'Comment Added' },
+    newsletter_subscribed: { icon: 'fas fa-envelope',    cls: 'type-newsletter-subscribed',    lv: 'Abonēšana',    en: 'Subscription' },
+    newsletter_unsubscribe: { icon: 'fas fa-envelope-open',cls:'type-unsub',  lv: 'Atmelots',         en: 'Unsubscribed' },
+    admin_action:       { icon: 'fas fa-shield-alt',    cls: 'type-admin',    lv: 'Administratora darbība',    en: 'Admin Action' },
+
+    order_created: { icon: 'fas fa-shopping-cart',    cls: 'type-order',    lv: 'Pasūtījums izveidots',    en: 'Order Created' },
+    order_updated: { icon: 'fas fa-edit',    cls: 'type-order',    lv: 'Pasūtījums atjaunināts',    en: 'Order Updated' },
+    profile_updated: { icon: 'fas fa-user-edit',    cls: 'type-profile',    lv: 'Profils atjaunināts',    en: 'Profile Updated' },
+    password_changed: { icon: 'fas fa-key',    cls: 'type-password',    lv: 'Parole nomainīta',    en: 'Password Changed' },
+    review_created: { icon: 'fas fa-star',    cls: 'type-review',    lv: 'Atsauksme pievienota',    en: 'Review Added' },
+    comment_created: { icon: 'fas fa-comment',    cls: 'type-comment',    lv: 'Komentārs pievienots',    en: 'Comment Added' },
+    contact_sent: { icon: 'fas fa-envelope',    cls: 'type-contact',    lv: 'Ziņojums nosūtīts',    en: 'Message Sent' },
+    product_viewed: { icon: 'fas fa-eye',    cls: 'type-product',    lv: 'Produkts apskatīts',    en: 'Product Viewed' },
+    cart_updated: { icon: 'fas fa-shopping-basket',    cls: 'type-cart',    lv: 'Grozs atjaunināts',    en: 'Cart Updated' },
+    settings_updated: { icon: 'fas fa-cog',    cls: 'type-default',    lv: 'Iestatījumu atjaunināšana',    en: 'Settings Updated' },
+    test_email_sent: { icon: 'fas fa-envelope',    cls: 'type-test-email-sent',    lv: 'Testa e-pasta nosūtīšana',    en: 'Test Email Sent' },
+    cache_cleared: { icon: 'fas fa-database',    cls: 'type-password',    lv: 'Kešatmiņa notīrīta',    en: 'Cache Cleared' },
 };
 
-// Get user avatar
-const getUserAvatar = (user) => {
-    if (!user?.profile_picture) return '/img/default-avatar.png';
-    if (user.profile_picture.startsWith('http')) return user.profile_picture;
-    return `/storage/${user.profile_picture}`;
+const getTypeInfo = (type) => typeConfig[type] ?? {
+    icon: 'fas fa-circle', cls: 'type-default',
+    lv: type, en: type,
 };
 
-// Export logs
+// ── Privacy change highlight ──────────────────────────────────────
+const isPrivacyChange = (log) =>
+    log.activity_type === 'privacy_update' ||
+    (log.description && /privāt|is_public|privacy/i.test(log.description));
+
+// ── Export ────────────────────────────────────────────────────────
 const exportLogs = () => {
-    const params = new URLSearchParams({
-        format: 'csv',
-        search: search.value,
-        activity_type: activityTypeFilter.value,
-        user_id: userFilter.value,
-        date_from: dateFrom.value,
-        date_to: dateTo.value
-    });
+    const params = new URLSearchParams();
+    if (typeFilter.value)  params.set('activity_type', typeFilter.value);
+    if (userFilter.value)  params.set('user_id', userFilter.value);
+    if (dateFrom.value)    params.set('date_from', dateFrom.value);
+    if (dateTo.value)      params.set('date_to', dateTo.value);
+    if (search.value)      params.set('search', search.value);
     window.location.href = `/admin/logs/export?${params.toString()}`;
-};
-
-// Translate activity type
-const translateActivityType = (type) => {
-    const key = `admin.logs.types.${type}`;
-    const translated = t(key);
-    return translated !== key ? translated : type;
 };
 </script>
 
 <template>
-    <Head :title="t('admin.logs.title')" />
+    <Head :title="locale === 'lv' ? 'Aktivitāšu žurnāls' : 'Activity Log'" />
+
     <AdminLayout>
-        <template #title>{{ t('admin.logs.title') }}</template>
+        <template #title>
+            <i class="fas fa-history"></i>
+            {{ locale === 'lv' ? 'Aktivitāšu žurnāls' : 'Activity Log' }}
+        </template>
 
-        <ToastNotification :show="showToast" :message="toastMessage" :type="toastType" @close="showToast = false" />
-
-        <!-- Filters -->
+        <!-- ── FILTERS ── -->
         <div class="filters-card">
-            <div class="filters-row">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input v-model="search" type="text" :placeholder="t('admin.logs.searchPlaceholder')" class="search-input">
-                    <button v-if="search" @click="search = ''" class="clear-search"><i class="fas fa-times"></i></button>
+            <div class="filters-grid">
+                <!-- Search -->
+                <div class="search-wrap">
+                    <i class="fas fa-search search-icon"></i>
+                    <input
+                        v-model="search"
+                        type="text"
+                        class="search-input"
+                        :placeholder="locale === 'lv' ? 'Meklēt aprakstā, IP...' : 'Search description, IP...'"
+                    >
+                    <button v-if="search" @click="search = ''" class="clear-btn"><i class="fas fa-times"></i></button>
                 </div>
 
-                <select v-model="activityTypeFilter" @change="applyFilters" class="filter-select">
-                    <option value="">{{ t('admin.logs.allTypes') }}</option>
+                <!-- Activity type -->
+                <select v-model="typeFilter" class="filter-select">
+                    <option value="">{{ locale === 'lv' ? 'Visas darbības' : 'All activity types' }}</option>
                     <option v-for="type in activityTypes" :key="type" :value="type">
-                        {{ translateActivityType(type) }}
+                        {{ getTypeInfo(type)[locale === 'lv' ? 'lv' : 'en'] }}
                     </option>
                 </select>
 
-                <select v-model="userFilter" @change="applyFilters" class="filter-select">
-                    <option value="">{{ t('admin.logs.allUsers') }}</option>
-                    <option v-for="user in users" :key="user.id" :value="user.id">{{ user.username }}</option>
+                <!-- User -->
+                <select v-model="userFilter" class="filter-select">
+                    <option value="">{{ locale === 'lv' ? 'Visi lietotāji' : 'All users' }}</option>
+                    <option v-for="u in users" :key="u.id" :value="u.id">{{ u.username }}</option>
                 </select>
 
-                <input v-model="dateFrom" type="date" @change="applyFilters" class="filter-date" :title="t('admin.logs.dateFrom')">
-                <input v-model="dateTo" type="date" @change="applyFilters" class="filter-date" :title="t('admin.logs.dateTo')">
+                <!-- Date from -->
+                <input v-model="dateFrom" type="date" class="filter-select" :max="dateTo || undefined">
 
-                <button v-if="hasFilters" @click="resetFilters" class="btn btn-secondary btn-icon-only" :title="t('admin.common.clear')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+                <!-- Date to -->
+                <input v-model="dateTo" type="date" class="filter-select" :min="dateFrom || undefined">
 
-            <div class="filters-actions">
-                <button @click="exportLogs" class="btn btn-sm btn-outline">
-                    <i class="fas fa-download"></i> CSV
-                </button>
+                <div class="filter-actions">
+                    <button v-if="hasFilters" @click="clearFilters" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        {{ locale === 'lv' ? 'Notīrīt' : 'Clear' }}
+                    </button>
+                    <button @click="exportLogs" class="btn btn-export">
+                        <i class="fas fa-download"></i>
+                        CSV
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Logs Table (Desktop) -->
+        <!-- ── TABLE ── -->
         <div class="table-card">
-            <table class="data-table">
+            <!-- Empty -->
+            <div v-if="logs.data.length === 0" class="empty-state">
+                <i class="fas fa-history"></i>
+                <p>{{ locale === 'lv' ? 'Nav atrasto ierakstu' : 'No log entries found' }}</p>
+            </div>
+
+            <!-- Desktop table -->
+            <table v-else class="log-table">
                 <thead>
                 <tr>
-                    <th>{{ t('admin.logs.table.time') }}</th>
-                    <th>{{ t('admin.logs.table.user') }}</th>
-                    <th>{{ t('admin.logs.table.type') }}</th>
-                    <th>{{ t('admin.logs.table.description') }}</th>
-                    <th>{{ t('admin.logs.table.ip') }}</th>
-                    <th></th>
+                    <th>{{ locale === 'lv' ? 'Laiks' : 'Time' }}</th>
+                    <th>{{ locale === 'lv' ? 'Lietotājs' : 'User' }}</th>
+                    <th>{{ locale === 'lv' ? 'Darbība' : 'Activity' }}</th>
+                    <th>{{ locale === 'lv' ? 'Apraksts' : 'Description' }}</th>
+                    <th>IP</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="log in logs.data" :key="log.id">
-                    <td><span class="log-time">{{ formatDate(log.created_at) }}</span></td>
-                    <td>
-                        <div class="user-cell">
-                            <img :src="getUserAvatar(log.user)" class="user-avatar">
-                            <span>{{ log.user?.username || t('admin.logs.system') }}</span>
-                        </div>
-                    </td>
-                    <td>
-                            <span :class="['activity-badge', `activity-${getActivityStyle(log.activity_type).color}`]">
-                                <i :class="['fas', getActivityStyle(log.activity_type).icon]"></i>
-                                {{ translateActivityType(log.activity_type) }}
+                <tr
+                    v-for="log in logs.data"
+                    :key="log.id"
+                    :class="{ 'row-privacy': isPrivacyChange(log) }"
+                >
+                    <td class="td-time">{{ formatDateTime(log.created_at) }}</td>
+
+                    <td class="td-user">
+                            <span v-if="log.user" class="user-chip">
+                                <Link :href="`/admin/users/${log.user.id}`" class="user-link">
+                                    {{ log.user.username }}
+                                </Link>
+                            </span>
+                        <span v-else class="system-chip">
+                                <i class="fas fa-robot"></i> Sistēma
                             </span>
                     </td>
-                    <td><span class="log-description">{{ log.description || '-' }}</span></td>
-                    <td><code class="ip-address">{{ log.ip_address || '-' }}</code></td>
-                    <td>
-                        <button @click="viewDetails(log)" class="btn-icon btn-view"><i class="fas fa-eye"></i></button>
+
+                    <td class="td-type">
+                            <span :class="['type-badge', getTypeInfo(log.activity_type).cls]">
+                                <i :class="getTypeInfo(log.activity_type).icon"></i>
+                                {{ getTypeInfo(log.activity_type)[locale === 'lv' ? 'lv' : 'en'] }}
+                            </span>
+                        <span v-if="isPrivacyChange(log)" class="privacy-flag">
+                                <i class="fas fa-user-shield"></i>
+                            </span>
                     </td>
-                </tr>
-                <tr v-if="logs.data.length === 0">
-                    <td colspan="6" class="empty-state">
-                        <i class="fas fa-history"></i>
-                        <p>{{ t('admin.logs.noLogs') }}</p>
+
+                    <td class="td-desc">
+                        <span class="desc-text">{{ log.description || '—' }}</span>
+                    </td>
+
+                    <td class="td-ip">
+                        <span class="ip-mono">{{ log.ip_address || '—' }}</span>
                     </td>
                 </tr>
                 </tbody>
             </table>
 
-            <div v-if="logs.links && logs.links.length > 3" class="pagination">
-                <Link v-for="link in logs.links" :key="link.label" :href="link.url || '#'"
-                      :class="['page-link', { active: link.active, disabled: !link.url }]" v-html="link.label" preserve-scroll />
-            </div>
-        </div>
-
-        <!-- Mobile Cards -->
-        <div class="mobile-cards">
-            <div v-if="logs.data.length === 0" class="empty-state-mobile">
-                <i class="fas fa-history"></i>
-                <p>{{ t('admin.logs.noLogs') }}</p>
-            </div>
-            <div v-for="log in logs.data" :key="log.id" class="log-card" @click="viewDetails(log)">
-                <div class="card-header">
-                    <span :class="['activity-badge', `activity-${getActivityStyle(log.activity_type).color}`]">
-                        <i :class="['fas', getActivityStyle(log.activity_type).icon]"></i>
-                        {{ translateActivityType(log.activity_type) }}
-                    </span>
-                    <span class="log-time-sm">{{ formatDate(log.created_at) }}</span>
-                </div>
-                <div class="card-body">
-                    <p class="log-description">{{ log.description || '-' }}</p>
-                    <div class="card-meta">
-                        <div class="user-cell-sm">
-                            <img :src="getUserAvatar(log.user)" class="user-avatar-sm">
-                            <span>{{ log.user?.username || t('admin.logs.system') }}</span>
-                        </div>
-                        <code class="ip-address-sm">{{ log.ip_address || '-' }}</code>
+            <!-- Mobile cards -->
+            <div v-if="logs.data.length > 0" class="mobile-log-cards">
+                <div
+                    v-for="log in logs.data"
+                    :key="log.id"
+                    class="log-card"
+                    :class="{ 'log-card-privacy': isPrivacyChange(log) }"
+                >
+                    <div class="lc-top">
+                        <span :class="['type-badge', getTypeInfo(log.activity_type).cls]">
+                            <i :class="getTypeInfo(log.activity_type).icon"></i>
+                            {{ getTypeInfo(log.activity_type)[locale === 'lv' ? 'lv' : 'en'] }}
+                        </span>
+                        <span v-if="isPrivacyChange(log)" class="privacy-flag">
+                            <i class="fas fa-user-shield"></i>
+                        </span>
+                        <span class="lc-time">{{ formatDateTime(log.created_at) }}</span>
+                    </div>
+                    <div class="lc-user">
+                        <i class="fas fa-user"></i>
+                        <Link v-if="log.user" :href="`/admin/users/${log.user.id}`" class="user-link">
+                            {{ log.user.username }}
+                        </Link>
+                        <span v-else class="system-chip"><i class="fas fa-robot"></i> Sistēma</span>
+                    </div>
+                    <div v-if="log.description" class="lc-desc">{{ log.description }}</div>
+                    <div class="lc-ip">
+                        <i class="fas fa-network-wired"></i>
+                        {{ log.ip_address || '—' }}
                     </div>
                 </div>
             </div>
 
-            <div v-if="logs.links && logs.links.length > 3" class="pagination mobile-pagination">
-                <Link v-for="link in logs.links" :key="link.label" :href="link.url || '#'"
-                      :class="['page-link', { active: link.active, disabled: !link.url }]" v-html="link.label" preserve-scroll />
+            <!-- Pagination -->
+            <div v-if="logs.links && logs.links.length > 3" class="pagination-wrapper">
+                <div class="pagination-info">
+                    {{ logs.from }}–{{ logs.to }}
+                    {{ locale === 'lv' ? 'no' : 'of' }}
+                    {{ logs.total }}
+                </div>
+                <div class="pagination">
+                    <template v-for="link in logs.links" :key="link.label">
+                        <Link
+                            v-if="link.url"
+                            :href="link.url"
+                            class="page-link"
+                            :class="{ active: link.active }"
+                            v-html="link.label"
+                            preserve-scroll
+                        />
+                        <span v-else class="page-link disabled" v-html="link.label" />
+                    </template>
+                </div>
             </div>
         </div>
-
-        <!-- Details Modal -->
-        <Teleport to="body">
-            <Transition name="modal">
-                <div v-if="showDetailsModal" class="modal-overlay" @click.self="closeModal">
-                    <div class="modal-container">
-                        <div class="modal-header">
-                            <h3 class="modal-title"><i class="fas fa-info-circle"></i> {{ t('admin.logs.details') }}</h3>
-                            <button @click="closeModal" class="modal-close"><i class="fas fa-times"></i></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="detail-row">
-                                <label>{{ t('admin.logs.table.time') }}</label>
-                                <span>{{ formatDate(selectedLog?.created_at) }}</span>
-                            </div>
-                            <div class="detail-row">
-                                <label>{{ t('admin.logs.table.user') }}</label>
-                                <div class="user-cell">
-                                    <img :src="getUserAvatar(selectedLog?.user)" class="user-avatar">
-                                    <span>{{ selectedLog?.user?.username || t('admin.logs.system') }}</span>
-                                </div>
-                            </div>
-                            <div class="detail-row">
-                                <label>{{ t('admin.logs.table.type') }}</label>
-                                <span :class="['activity-badge', `activity-${getActivityStyle(selectedLog?.activity_type).color}`]">
-                                    <i :class="['fas', getActivityStyle(selectedLog?.activity_type).icon]"></i>
-                                    {{ translateActivityType(selectedLog?.activity_type) }}
-                                </span>
-                            </div>
-                            <div class="detail-row">
-                                <label>{{ t('admin.logs.table.description') }}</label>
-                                <span>{{ selectedLog?.description || '-' }}</span>
-                            </div>
-                            <div class="detail-row">
-                                <label>{{ t('admin.logs.table.ip') }}</label>
-                                <code class="ip-address">{{ selectedLog?.ip_address || '-' }}</code>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button @click="closeModal" class="btn btn-secondary">{{ t('admin.common.close') }}</button>
-                        </div>
-                    </div>
-                </div>
-            </Transition>
-        </Teleport>
     </AdminLayout>
 </template>
 
 <style scoped>
-/* Filters */
-.filters-card { background: white; border-radius: 0.75rem; padding: 1rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.filters-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; flex: 1; }
-.search-box { flex: 1; min-width: 200px; position: relative; }
-.search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9ca3af; }
-.search-input { width: 100%; padding: 0.625rem 2.5rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; }
-.search-input:focus { outline: none; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
-.clear-search { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; }
-.filter-select, .filter-date { padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; background: white; }
-.filters-actions { display: flex; gap: 0.5rem; }
+/* ── Filters ── */
+.filters-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+.filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+}
+.search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.search-icon { position: absolute; left: 0.75rem; color: #9ca3af; font-size: 0.8rem; pointer-events: none; }
+.search-input {
+    width: 100%;
+    padding: 0.6rem 2.25rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+.search-input:focus { outline: none; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.08); }
+.clear-btn { position: absolute; right: 0.5rem; background: none; border: none; color: #9ca3af; cursor: pointer; }
+.filter-select {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: white;
+    width: 100%;
+}
+.filter-actions { display: flex; gap: 0.5rem; }
 
-/* Table */
-.table-card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 0.875rem 1rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
-.data-table th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 0.75rem; text-transform: uppercase; }
-.data-table tr:hover { background: #f9fafb; }
-
-.log-time { font-size: 0.8rem; color: #6b7280; }
-.user-cell { display: flex; align-items: center; gap: 0.5rem; }
-.user-avatar { width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; }
-.user-avatar-sm { width: 1.5rem; height: 1.5rem; border-radius: 50%; object-fit: cover; }
-
-.activity-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; }
-.activity-green { background: #d1fae5; color: #065f46; }
-.activity-blue { background: #dbeafe; color: #1e40af; }
-.activity-red { background: #fee2e2; color: #991b1b; }
-.activity-purple { background: #ede9fe; color: #5b21b6; }
-.activity-orange { background: #ffedd5; color: #9a3412; }
-.activity-yellow { background: #fef3c7; color: #92400e; }
-.activity-gray { background: #f3f4f6; color: #6b7280; }
-
-.log-description { color: #374151; font-size: 0.875rem; }
-.ip-address { background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.7rem; color: #6b7280; }
-
-/* Empty State */
-.empty-state { text-align: center; padding: 3rem !important; color: #6b7280; }
-.empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; display: block; }
-
-/* Pagination */
-.pagination { display: flex; justify-content: center; gap: 0.25rem; padding: 1rem; border-top: 1px solid #e5e7eb; flex-wrap: wrap; }
-.page-link { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; color: #374151; text-decoration: none; font-size: 0.875rem; }
-.page-link:hover:not(.disabled):not(.active) { background: #f3f4f6; }
-.page-link.active { background: #dc2626; border-color: #dc2626; color: white; }
-.page-link.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-
-/* Buttons */
-.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; font-size: 0.875rem; }
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.575rem 1rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; }
 .btn-secondary { background: #f3f4f6; color: #374151; }
 .btn-secondary:hover { background: #e5e7eb; }
-.btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
-.btn-outline { background: white; border: 1px solid #d1d5db; color: #374151; }
-.btn-outline:hover { background: #f3f4f6; }
-.btn-icon { width: 2rem; height: 2rem; border: none; border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.btn-icon-only { padding: 0.5rem; }
-.btn-view { background: #dbeafe; color: #2563eb; }
-.btn-view:hover { background: #2563eb; color: white; }
+.btn-export { background: #d1fae5; color: #065f46; }
+.btn-export:hover { background: #a7f3d0; }
 
-/* Mobile Cards */
-.mobile-cards { display: none; }
+/* ── Table ── */
+.table-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.log-table { width: 100%; border-collapse: collapse; }
+.log-table thead tr { background: #f9fafb; }
+.log-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+}
+.log-table tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.15s; }
+.log-table tbody tr:hover { background: #fafafa; }
+.log-table tbody tr:last-child { border-bottom: none; }
 
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-.modal-container { background: white; border-radius: 1rem; width: 100%; max-width: 500px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-.modal-title { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
-.modal-title i { color: #2563eb; }
-.modal-close { background: none; border: none; color: #6b7280; font-size: 1.25rem; cursor: pointer; }
-.modal-body { padding: 1.5rem; overflow-y: auto; }
-.modal-footer { display: flex; justify-content: flex-end; padding: 1.25rem 1.5rem; border-top: 1px solid #e5e7eb; }
+/* Privacy row highlight */
+.row-privacy { background: #fffbeb !important; border-left: 3px solid #f59e0b; }
+.row-privacy:hover { background: #fef3c7 !important; }
 
-.detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; gap: 1rem; }
-.detail-row:last-child { border-bottom: none; }
-.detail-row label { font-weight: 600; color: #6b7280; font-size: 0.875rem; min-width: 100px; flex-shrink: 0; }
+.td-time { padding: 0.75rem 1rem; font-size: 0.75rem; color: #6b7280; white-space: nowrap; }
+.td-user { padding: 0.75rem 1rem; }
+.td-type { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.td-desc { padding: 0.75rem 1rem; max-width: 280px; }
+.td-ip   { padding: 0.75rem 1rem; }
 
-/* Transitions */
-.modal-enter-active, .modal-leave-active { transition: all 0.3s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from .modal-container, .modal-leave-to .modal-container { transform: scale(0.9); }
+.user-chip { display: inline-flex; align-items: center; }
+.user-link { color: #1e40af; font-size: 0.875rem; font-weight: 500; text-decoration: none; }
+.user-link:hover { text-decoration: underline; }
+.system-chip { font-size: 0.8rem; color: #6b7280; display: flex; align-items: center; gap: 0.25rem; }
 
-/* Responsive */
+/* Type badges */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.type-login    { background: #dbeafe; color: #1e40af; }
+.type-logout   { background: #f3f4f6; color: #374151; }
+.type-register { background: #d1fae5; color: #065f46; }
+.type-profile  { background: #ede9fe; color: #5b21b6; }
+.type-privacy  { background: #fef3c7; color: #92400e; }
+.type-password { background: #fee2e2; color: #991b1b; }
+.type-order    { background: #dbeafe; color: #1d4ed8; }
+.type-product    { background: #ebdbfe; color: #841dd8; }
+.type-cart    { background: #fedbf8; color: #d81dcf; }
+.type-cancel   { background: #fee2e2; color: #dc2626; }
+.type-review   { background: #fef3c7; color: #d97706; }
+.type-comment  { background: #ede9fe; color: #7c3aed; }
+.type-newsletter-subscribed { background: #d1fae5; color: #047857; }
+.type-unsub    { background: #fee2e2; color: #b91c1c; }
+.type-admin    { background: #fee2e2; color: #991b1b; }
+.type-test-email-sent    { background: #dbeafe; color: #1d4ed8; }
+.type-contact   { background: #d1fad6; color: #047817; }
+.type-default  { background: #f3f4f6; color: #6b7280; }
+
+.privacy-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: #fef3c7;
+    color: #d97706;
+    border-radius: 50%;
+    font-size: 0.7rem;
+}
+
+.desc-text { font-size: 0.8rem; color: #374151; line-height: 1.4; }
+.ip-mono   { font-family: monospace; font-size: 0.8rem; color: #6b7280; }
+
+/* ── Pagination ── */
+.pagination-wrapper { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; }
+.pagination-info { font-size: 0.8rem; color: #6b7280; }
+.pagination { display: flex; gap: 0.25rem; }
+.page-link { padding: 0.4rem 0.7rem; border-radius: 0.375rem; font-size: 0.8rem; color: #374151; text-decoration: none; transition: all 0.15s; }
+.page-link:hover:not(.disabled):not(.active) { background: #f3f4f6; }
+.page-link.active { background: #dc2626; color: white; }
+.page-link.disabled { color: #d1d5db; cursor: not-allowed; }
+
+/* ── Empty ── */
+.empty-state { text-align: center; padding: 4rem 2rem; color: #9ca3af; }
+.empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+
+/* ── Mobile log cards (hidden on desktop) ── */
+.mobile-log-cards { display: none; }
+
+/* ══════════════════════ RESPONSIVE ══════════════════════ */
+@media (max-width: 1200px) {
+    .filters-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+
 @media (max-width: 1024px) {
-    .filters-row { flex-direction: column; align-items: stretch; }
-    .search-box { min-width: 100%; }
-    .filter-select, .filter-date { width: 100%; }
+    .log-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 @media (max-width: 768px) {
-    .filters-card { flex-direction: column; }
-    .filters-actions { width: 100%; justify-content: flex-end; }
-    .table-card { display: none; }
-    .mobile-cards { display: flex; flex-direction: column; gap: 1rem; }
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+    .search-wrap { grid-column: span 2; }
+    .filter-actions { grid-column: span 2; justify-content: flex-start; }
 
-    .log-card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; cursor: pointer; }
-    .log-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .card-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #e5e7eb; }
-    .log-time-sm { font-size: 0.7rem; color: #9ca3af; }
-    .card-body { padding: 1rem; }
-    .card-body .log-description { margin-bottom: 0.75rem; }
-    .card-meta { display: flex; justify-content: space-between; align-items: center; }
-    .user-cell-sm { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; color: #6b7280; }
-    .ip-address-sm { font-size: 0.65rem; }
+    /* Hide table, show cards */
+    .log-table { display: none; }
+    .mobile-log-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    .log-card {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .log-card-privacy { background: #fffbeb; border-color: #f59e0b; border-left: 3px solid #f59e0b; }
+    .lc-top { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .lc-time { font-size: 0.7rem; color: #9ca3af; margin-left: auto; }
+    .lc-user { font-size: 0.8rem; color: #374151; display: flex; align-items: center; gap: 0.375rem; }
+    .lc-desc { font-size: 0.8rem; color: #4b5563; padding: 0.5rem; background: white; border-radius: 0.375rem; }
+    .lc-ip { font-size: 0.75rem; color: #9ca3af; font-family: monospace; }
+    .pagination-wrapper { flex-direction: column; gap: 0.75rem; padding: 1rem; }
+    .pagination { flex-wrap: wrap; justify-content: center; }
+}
 
-    .empty-state-mobile { text-align: center; padding: 3rem; background: white; border-radius: 0.75rem; }
-    .empty-state-mobile i { font-size: 3rem; color: #d1d5db; margin-bottom: 1rem; display: block; }
-    .mobile-pagination { background: white; border-radius: 0.75rem; margin-top: 1rem; border-top: none; }
-
-    .modal-footer { justify-content: center; }
-    .modal-footer .btn { width: 100%; justify-content: center; }
-
-    .detail-row { flex-direction: column; gap: 0.25rem; }
-    .detail-row label { min-width: unset; }
+@media (max-width: 480px) {
+    .filters-grid { grid-template-columns: 1fr; }
+    .search-wrap { grid-column: span 1; }
+    .filter-actions { grid-column: span 1; }
 }
 </style>

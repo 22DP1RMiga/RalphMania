@@ -10,6 +10,7 @@ const currentUser = computed(() => page.props.auth.user);
 
 const props = defineProps({
     user: { type: Object, required: true },
+    newsletterStatus: { type: Object, default: null }, // { subscribed, expires_at, is_active }
 });
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -189,6 +190,7 @@ const activeTab = ref('overview');
                         { id: 'overview', icon: 'fas fa-user', lv: 'Pārskats', en: 'Overview' },
                         { id: 'address',  icon: 'fas fa-map-marker-alt', lv: 'Adrese', en: 'Address' },
                         { id: 'activity', icon: 'fas fa-history', lv: 'Aktivitāte', en: 'Activity' },
+                        { id: 'newsletter', icon: 'fas fa-envelope', lv: 'Abonements', en: 'Newsletter' },
                     ]"
                     :key="tab.id"
                     @click="activeTab = tab.id"
@@ -377,9 +379,93 @@ const activeTab = ref('overview');
                 </div>
             </div>
 
-        </div>
+            <!-- ─── NEWSLETTER TAB ─── -->
+            <div v-if="activeTab === 'newsletter'" class="tab-content">
+                <div class="info-card" style="max-width: 540px;">
+                    <h3 class="card-heading">
+                        <i class="fas fa-envelope"></i>
+                        {{ locale === 'lv' ? 'Jaunumu abonements' : 'Newsletter Subscription' }}
+                    </h3>
 
-        <!-- ─── BAN CONFIRM MODAL ─── -->
+                    <div v-if="newsletterStatus" class="info-rows">
+                        <!-- Subscribed status -->
+                        <div class="info-row">
+                            <span class="ilabel">{{ locale === 'lv' ? 'Statuss' : 'Status' }}</span>
+                            <span class="ivalue">
+                                <span v-if="newsletterStatus.subscribed" class="nl-badge nl-active">
+                                    <i class="fas fa-check-circle"></i>
+                                    {{ locale === 'lv' ? 'Abonēts' : 'Subscribed' }}
+                                </span>
+                                <span v-else class="nl-badge nl-inactive">
+                                    <i class="fas fa-times-circle"></i>
+                                    {{ locale === 'lv' ? 'Nav abonēts' : 'Not subscribed' }}
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- Verified -->
+                        <div class="info-row" v-if="newsletterStatus.subscribed">
+                            <span class="ilabel">{{ locale === 'lv' ? 'Verificēts' : 'Verified' }}</span>
+                            <span class="ivalue">
+                                <span v-if="newsletterStatus.is_verified" class="text-green">
+                                    <i class="fas fa-check-circle"></i>
+                                    {{ locale === 'lv' ? 'Jā' : 'Yes' }}
+                                </span>
+                                <span v-else class="text-red">
+                                    <i class="fas fa-times-circle"></i>
+                                    {{ locale === 'lv' ? 'Nē' : 'No' }}
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- Expiry -->
+                        <div class="info-row" v-if="newsletterStatus.subscribed">
+                            <span class="ilabel">{{ locale === 'lv' ? 'Termiņš' : 'Expires' }}</span>
+                            <span class="ivalue">
+                                <span v-if="newsletterStatus.expires_at">
+                                    {{ newsletterStatus.expires_at }}
+                                    <span v-if="newsletterStatus.days_remaining !== null" style="margin-left:.375rem;" :style="{ color: newsletterStatus.days_remaining <= 7 ? '#dc2626' : '#6b7280' }">
+                                        ({{ newsletterStatus.days_remaining }}d)
+                                    </span>
+                                </span>
+                                <span v-else class="text-green">
+                                    <i class="fas fa-infinity"></i>
+                                    {{ locale === 'lv' ? 'Bez termiņa' : 'No expiry' }}
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- Preferences -->
+                        <template v-if="newsletterStatus.subscribed && newsletterStatus.preferences">
+                            <div class="info-row">
+                                <span class="ilabel">{{ locale === 'lv' ? 'Jaunumi' : 'News' }}</span>
+                                <span class="ivalue">
+                                    <i :class="newsletterStatus.preferences.receive_news ? 'fas fa-check text-green-icon' : 'fas fa-times text-red-icon'"></i>
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="ilabel">{{ locale === 'lv' ? 'Akcijas' : 'Promotions' }}</span>
+                                <span class="ivalue">
+                                    <i :class="newsletterStatus.preferences.receive_promotions ? 'fas fa-check text-green-icon' : 'fas fa-times text-red-icon'"></i>
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="ilabel">{{ locale === 'lv' ? 'Paziņojumi' : 'Announcements' }}</span>
+                                <span class="ivalue">
+                                    <i :class="newsletterStatus.preferences.receive_announcements ? 'fas fa-check text-green-icon' : 'fas fa-times text-red-icon'"></i>
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div v-else class="empty-tab" style="padding: 2rem;">
+                        <i class="fas fa-envelope" style="font-size:2rem; display:block; margin-bottom:.5rem;"></i>
+                        <p>{{ locale === 'lv' ? 'Nav datu par abonementu' : 'No subscription data available' }}</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
         <Transition name="modal">
             <div v-if="showBanConfirm" class="modal-overlay" @click.self="showBanConfirm = false">
                 <div class="modal-container">
@@ -710,6 +796,13 @@ const activeTab = ref('overview');
 .warning-box i, .danger-box i, .success-box i { font-size: 1.4rem; flex-shrink: 0; margin-top: 0.125rem; }
 .warning-box strong, .danger-box strong, .success-box strong { display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
 .warning-box p, .danger-box p, .success-box p { margin: 0; font-size: 0.8rem; opacity: 0.9; }
+
+/* ── Newsletter badges ── */
+.nl-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+.nl-active { background: #d1fae5; color: #065f46; }
+.nl-inactive { background: #fee2e2; color: #991b1b; }
+.text-green-icon { color: #059669; }
+.text-red-icon { color: #dc2626; }
 
 /* ── TRANSITIONS ── */
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }

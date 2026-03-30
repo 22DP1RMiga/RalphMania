@@ -33,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_picture',
         'role_id',
         'is_active',
+        'is_public',
         'last_login_at',
     ];
 
@@ -58,6 +59,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'birth_date' => 'date',
             'is_active' => 'boolean',
+            'is_public' => 'boolean',
             'last_login_at' => 'datetime',
         ];
     }
