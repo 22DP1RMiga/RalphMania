@@ -259,7 +259,7 @@ const getUserAvatar = (user) => {
                     </div>
                     <div class="admin-card-footer" v-if="!admin.is_super_admin">
                         <button @click="openEditPermissionsModal(admin)" class="btn btn-sm btn-outline"><i class="fas fa-edit"></i> {{ t('admin.common.edit') }}</button>
-                        <button @click="openRemoveAdminModal(admin)" class="btn btn-sm btn-danger-outline"><i class="fas fa-trash"></i></button>
+                        <button @click="openRemoveAdminModal(admin)" class="btn btn-sm btn-danger-outline"><i class="fas fa-trash"></i> {{ t('admin.common.remove') }}</button>
                     </div>
                     <div class="admin-card-footer" v-else><span class="protected-label"><i class="fas fa-lock"></i> {{ t('admin.dashboard.protected') }}</span></div>
                 </div>

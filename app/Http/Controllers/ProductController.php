@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,7 +11,6 @@ class ProductController extends Controller
 {
     /**
      * WEB: Shop home page
-     * GET /shop
      */
     public function shopIndex()
     {
@@ -19,7 +19,6 @@ class ProductController extends Controller
 
     /**
      * WEB: Product detail page
-     * GET /shop/product/{slug}
      */
     public function show($slug)
     {
@@ -35,14 +34,32 @@ class ProductController extends Controller
 
     /**
      * API: Get all products
-     * GET /api/v1/products
+     * GET /api/v1/products?category=ID&sort=newest&search=query
+     *
+     * Ja category=ID ir parent kategorija, automātiski iekļauj visus bērnu ID arī.
+     * Piemērs: category=1 (Apģērbi) → atgriež produktus no ID 1 + 10,11,12,13 (T-krekli, Džemperi, utt.)
      */
     public function index(Request $request)
     {
         $query = Product::with('category')->where('is_active', 1);
 
-        if ($request->has('category')) {
-            $query->where('category_id', $request->category);
+        if ($request->filled('category')) {
+            $categoryId = (int) $request->category;
+
+            // Atrodi visus bērnu kategoriju ID (apakškategorijas)
+            $childIds = Category::where('parent_id', $categoryId)
+                ->where('is_active', 1)
+                ->pluck('id')
+                ->toArray();
+
+            if (!empty($childIds)) {
+                // Tas ir parent — filtrē pēc parent ID UN visiem bērnu ID
+                $allCategoryIds = array_merge([$categoryId], $childIds);
+                $query->whereIn('category_id', $allCategoryIds);
+            } else {
+                // Tas ir leaf kategorija (apakškategorija) — filtrē tikai pēc tā ID
+                $query->where('category_id', $categoryId);
+            }
         }
 
         if ($request->filled('search')) {
@@ -68,7 +85,6 @@ class ProductController extends Controller
 
     /**
      * API: Featured products
-     * GET /api/v1/products/featured
      */
     public function featured()
     {
@@ -80,26 +96,25 @@ class ProductController extends Controller
             ->limit(8)
             ->get()
             ->map(fn($p) => [
-                'id'            => $p->id,
-                'name_lv'       => $p->name_lv,
-                'name_en'       => $p->name_en,
-                'slug'          => $p->slug,
-                'price'         => (float) $p->price,
-                'price_ex_vat'  => $p->price_ex_vat,
-                'vat_amount'    => $p->vat_amount,
-                'vat_rate'      => $vatRate,
-                'compare_price' => $p->compare_price ? (float) $p->compare_price : null,
-                'image'         => $p->image,
-                'stock_quantity'=> $p->stock_quantity,
-                'has_sizes'     => (bool) $p->has_sizes,
+                'id'             => $p->id,
+                'name_lv'        => $p->name_lv,
+                'name_en'        => $p->name_en,
+                'slug'           => $p->slug,
+                'price'          => (float) $p->price,
+                'price_ex_vat'   => $p->price_ex_vat,
+                'vat_amount'     => $p->vat_amount,
+                'vat_rate'       => $vatRate,
+                'compare_price'  => $p->compare_price ? (float) $p->compare_price : null,
+                'image'          => $p->image,
+                'stock_quantity' => $p->stock_quantity,
+                'has_sizes'      => (bool) $p->has_sizes,
             ]);
 
         return response()->json(['data' => $products]);
     }
 
     /**
-     * API: Single product
-     * GET /api/v1/products/{slug}
+     * API: Single product by slug
      */
     public function apiShow($slug)
     {
@@ -111,16 +126,11 @@ class ProductController extends Controller
         return response()->json($this->formatProduct($p));
     }
 
-    // ─── PRIVATE HELPER ──────────────────────────────────────────────────────
+    // ─── PRIVATE HELPER ───────────────────────────────────────────
 
-    /**
-     * Standarts produkta masīvs visām atbildēm.
-     * Iekļauj has_sizes lai frontend zina vai rādīt izmēru izvēlni.
-     * Iekļauj PVN (VAT) sadalījumu — cenas datubāzē ir ar PVN iekļautu (bruto).
-     */
     private function formatProduct(Product $p): array
     {
-        $vatRate = Product::vatRate(); // 21.0
+        $vatRate = Product::vatRate();
 
         return [
             'id'                  => $p->id,
@@ -130,18 +140,11 @@ class ProductController extends Controller
             'sku'                 => $p->sku,
             'description_lv'      => $p->description_lv,
             'description_en'      => $p->description_en,
-
-            // ── CENAS ─────────────────────────────────────────────────────
-            // Datubāzē cenas ir BRUTO (ar PVN iekļautu).
-            // Gala cena = price (to klients maksā).
-            // t.sk. PVN = vat_amount, cena bez PVN = price_ex_vat.
-            'price'               => (float) $p->price,               // Gala cena (bruto, ar PVN)
-            'price_ex_vat'        => $p->price_ex_vat,                // Cena bez PVN (neto)
-            'vat_amount'          => $p->vat_amount,                   // PVN summa t.sk.
-            'vat_rate'            => $vatRate,                         // 21.0
+            'price'               => (float) $p->price,
+            'price_ex_vat'        => $p->price_ex_vat,
+            'vat_amount'          => $p->vat_amount,
+            'vat_rate'            => $vatRate,
             'compare_price'       => $p->compare_price ? (float) $p->compare_price : null,
-            // ──────────────────────────────────────────────────────────────
-
             'image'               => $p->image,
             'stock_quantity'      => $p->stock_quantity,
             'low_stock_threshold' => $p->low_stock_threshold,

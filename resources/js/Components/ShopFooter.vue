@@ -230,8 +230,14 @@ onMounted(() => {
                         <a href="https://www.youtube.com/@RoltonsLV" target="_blank" class="shop-social-link shop-social-youtube">
                             <i class="fab fa-youtube"></i>
                         </a>
+                        <a href="https://www.tiktok.com/@realroltonslv" target="_blank" class="shop-social-link social-tiktok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
                         <a href="https://www.instagram.com/ralfsmigals/" target="_blank" class="shop-social-link shop-social-instagram">
                             <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://x.com/RealRoltonsLV" target="_blank" class="shop-social-link social-x-twitter">
+                            <i class="fab fa-x-twitter"></i>
                         </a>
                         <a href="https://www.facebook.com/ralfs.migals.3/" target="_blank" class="shop-social-link shop-social-facebook">
                             <i class="fab fa-facebook"></i>
@@ -426,8 +432,12 @@ onMounted(() => {
 .shop-social-link:hover { transform: translateY(-3px); }
 .shop-social-youtube { background: #FF0000; }
 .shop-social-youtube:hover { box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4); }
+.social-tiktok { background: #000000; }
+.social-tiktok:hover { box-shadow: 0 4px 12px rgba(255, 0, 80, 0.4); }
 .shop-social-instagram { background: linear-gradient(135deg, #405DE6 0%, #E1306C 50%, #FCAF45 100%); }
 .shop-social-instagram:hover { box-shadow: 0 4px 12px rgba(225, 48, 108, 0.4); }
+.social-x-twitter { background: #181a1c; }
+.social-x-twitter:hover { background-color: #222629; }
 .shop-social-facebook { background: #1877F2; }
 .shop-social-facebook:hover { box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4); }
 

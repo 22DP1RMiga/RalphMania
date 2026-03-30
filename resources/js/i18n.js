@@ -78,7 +78,7 @@ const messages = {
             stats: {
                 orders: 'Pasūtījumi',
                 reviews: 'Atsauksmes',
-                favorites: 'Favorīti',
+                comments: 'Komentāri',
                 cart: 'Grozā',
             },
             sections: {
@@ -228,7 +228,7 @@ const messages = {
         },
         shop: {
             hero: {
-                title: 'RalphMania Veikals',
+                title: 'RalphMania veikals',
                 subtitle: 'Atklāj mūsu unikālo produktu kolekciju',
             },
             category: 'Kategorija',
@@ -577,7 +577,7 @@ const messages = {
             details: 'Detaļas',
             category: 'Kategorija',
             availability: 'Pieejamība',
-            related_products: 'Līdzīgi Produkti',
+            related_products: 'Līdzīgi produkti',
             not_found: 'Produkts nav atrasts',
             stock_quantity: 'Krājumu daudzums',
             low_stock: 'Zems krājums',
@@ -1213,7 +1213,10 @@ const messages = {
                 editPermissionsFor: 'Rediģēt atļaujas: {name}',
                 permissionsUpdated: 'Atļaujas veiksmīgi atjauninātas!',
                 updateError: 'Kļūda atjauninot atļaujas',
-                removeAdminConfirm: 'Vai tiešām vēlaties noņemt šo administratoru?',
+                removeAdminTitle: 'Administratora noņemšana',
+                removeWarningTitle: 'Vai tiešām vēlaties noņemt šo administratoru?',
+                removeWarningText: 'Uzklikšķinot uz "Noņemt" noņems administratora tiesības no šī lietotāja',
+                confirmRemove: 'Noņemt',
                 adminRemoved: 'Administrators veiksmīgi noņemts!',
             },
             // jaunā administratora atļauju piešķiršanai
@@ -1451,6 +1454,7 @@ const messages = {
                     paymentStatus: 'Maksājuma statuss',
                     timeline: 'Laika skala',
                     discount: 'Atlaide',
+                    notes: 'Piezīmes',
                 },
                 timeline: {
                     created: 'Izveidots',
@@ -1517,7 +1521,7 @@ const messages = {
                 // Create/Edit
                 create: {
                     title: 'Jauns saturs',
-                    subtitle: 'Izveidojiet jaunu video, emuāru vai ziņu',
+                    subtitle: 'Izveidojiet jaunu video, emuāru, ziņu vai paziņojumu',
                 },
                 edit: {
                     title: 'Rediģēt saturu',
@@ -1571,6 +1575,9 @@ const messages = {
                     dragDropImages: 'Ievelciet attēlu šeit',
                     orClickToSelect: 'vai uzklikšķiniet, lai atlasītu',
                     videoSettings: 'Video iestatījumi',
+                    currentImage: 'Pašreizējais attēls',
+                    created: 'Izveidots',
+                    updated: 'Atjaunināts',
                 },
             },
             reviews: {
@@ -1839,6 +1846,7 @@ const messages = {
                     settings_updated: 'Iestatījumu atjaunināšana',
                     test_email_sent: 'Testa e-pasta nosūtīšana',
                     cache_cleared: 'Kešatmiņa notīrīta',
+                    newsletter_subscribed: 'Abonēšana',
                 },
             },
             administrators: {
@@ -1876,6 +1884,7 @@ const messages = {
                 cancel: 'Atcelt',
                 delete: 'Dzēst',
                 edit: 'Rediģēt',
+                remove: 'Noņemt',
                 view: 'Skatīt',
                 update: 'Atjaunināt',
                 save: 'Saglabāt',
@@ -1983,7 +1992,7 @@ const messages = {
             stats: {
                 orders: 'Orders',
                 reviews: 'Reviews',
-                favorites: 'Favorites',
+                comments: 'Comments',
                 cart: 'In Cart',
             },
             sections: {
@@ -3119,7 +3128,10 @@ const messages = {
                 editPermissionsFor: 'Edit permissions: {name}',
                 permissionsUpdated: 'Permissions successfully updated!',
                 updateError: 'Error updating permissions',
-                removeAdminConfirm: 'Are you sure you want to remove this administrator?',
+                removeAdminTitle: 'Admin Removal',
+                removeWarningTitle: 'Are you sure you want to remove this administrator?',
+                removeWarningText: 'Clicking "Remove" will remove administrator rights from this user',
+                confirmRemove: 'Remove',
                 adminRemoved: 'Administrator successfully removed!',
             },
 
@@ -3357,6 +3369,7 @@ const messages = {
                     paymentStatus: 'Payment status',
                     timeline: 'Timeline',
                     discount: 'Discount',
+                    notes: 'Notes',
                 },
                 timeline: {
                     created: 'Created',
@@ -3423,7 +3436,7 @@ const messages = {
                 // Create/Edit
                 create: {
                     title: 'New Content',
-                    subtitle: 'Create a new video, blog or news',
+                    subtitle: 'Create a new video, blog, news or announcements',
                 },
                 edit: {
                     title: 'Edit Content',
@@ -3477,6 +3490,9 @@ const messages = {
                     dragDropImages: 'Drag and drop image here',
                     orClickToSelect: 'or Click to Select',
                     videoSettings: 'Video Settings',
+                    currentImage: 'Current Image',
+                    created: 'Created',
+                    updated: 'Updated',
                 },
             },
             reviews: {
@@ -3745,6 +3761,7 @@ const messages = {
                     settings_updated: 'Settings Updated',
                     test_email_sent: 'Test Email Sent',
                     cache_cleared: 'Cache Cleared',
+                    newsletter_subscribed: 'Subscription',
                 },
             },
             administrators: {
@@ -3782,6 +3799,7 @@ const messages = {
                 cancel: 'Cancel',
                 delete: 'Delete',
                 edit: 'Edit',
+                remove: 'Remove',
                 view: 'View',
                 update: 'Update',
                 save: 'Save',

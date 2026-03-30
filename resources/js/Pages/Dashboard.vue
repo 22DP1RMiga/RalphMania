@@ -172,12 +172,12 @@ const savePrivacySettings = async () => {
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon stat-icon-favorites">
-                    <i class="fas fa-heart"></i>
+                <div class="stat-icon stat-icon-comments">
+                    <i class="fas fa-comments"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ stats.favorites }}</div>
-                    <div class="stat-label">{{ $t('dashboard.stats.favorites') }}</div>
+                    <div class="stat-value">{{ stats.comments }}</div>
+                    <div class="stat-label">{{ $t('dashboard.stats.comments') }}</div>
                 </div>
             </div>
 
@@ -865,7 +865,7 @@ const savePrivacySettings = async () => {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.stat-icon-favorites {
+.stat-icon-comments {
     background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 

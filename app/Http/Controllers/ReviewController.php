@@ -12,122 +12,159 @@ use Inertia\Response;
 class ReviewController extends Controller
 {
     /**
-     * Get reviews for specific reviewable (API)
+     * API: Iegūst atsauksmes konkrētam objektam (content vai product)
+     * GET /api/v1/reviews/{type}/{id}
+     *
+     * Loģika:
+     * - Apstiprinātas (is_approved=1) atsauksmes redz visi
+     * - Neapstiprinātas (is_approved=0) redz TIKAI pats autors (savējo)
      */
     public function byReviewable(string $type, int $id): JsonResponse
     {
-        $reviewableType = $type === 'content' ? 'App\\Models\\Content' : 'App\\Models\\Product';
+        $reviewableType = match($type) {
+            'product' => 'App\\Models\\Product',
+            'content' => 'App\\Models\\Content',
+            default   => 'App\\Models\\Product',
+        };
 
-        $reviews = Review::where('reviewable_type', $reviewableType)
+        $currentUserId = auth()->id();
+
+        // Iegūst apstiprinātas atsauksmes + savas neapstiprinātas
+        $query = Review::where('reviewable_type', $reviewableType)
             ->where('reviewable_id', $id)
-            ->where('is_approved', true)
             ->with('user:id,username,profile_picture')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        if ($currentUserId) {
+            // Pieteicies lietotājs redz apstiprinātas + savas neapstiprinātas
+            $query->where(function ($q) use ($currentUserId) {
+                $q->where('is_approved', true)
+                    ->orWhere('user_id', $currentUserId);
+            });
+        } else {
+            // Viesis redz tikai apstiprinātas
+            $query->where('is_approved', true);
+        }
+
+        $reviews = $query->get()->map(fn($r) => [
+            'id'             => $r->id,
+            'user_id'        => $r->user_id,
+            'rating'         => $r->rating,
+            'review_text_lv' => $r->review_text_lv,
+            'review_text_en' => $r->review_text_en,
+            // Fallback: ja nav lv teksta, izmanto en un otrādi
+            'review_text'    => $r->review_text_lv ?? $r->review_text_en,
+            'is_approved'    => (bool) $r->is_approved,
+            'created_at'     => $r->created_at,
+            'user'           => $r->user ? [
+                'id'              => $r->user->id,
+                'username'        => $r->user->username,
+                'profile_picture' => $r->user->profile_picture,
+            ] : null,
+        ]);
 
         return response()->json($reviews);
     }
 
     /**
-     * Store a new review (WEB - Inertia)
+     * WEB: Saglabā jaunu atsauksmi
+     * POST /reviews
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'content_id' => 'nullable|exists:content,id',
-            'product_id' => 'nullable|exists:products,id',
-            'rating' => 'required|integer|min:1|max:5',
+            'content_id'  => 'nullable|exists:content,id',
+            'product_id'  => 'nullable|exists:products,id',
+            'rating'      => 'required|integer|min:1|max:5',
             'review_text' => 'nullable|string|max:1000',
         ]);
 
-        // Determine reviewable type
         if (isset($validated['content_id'])) {
             $reviewable_type = 'App\\Models\\Content';
-            $reviewable_id = $validated['content_id'];
+            $reviewable_id   = $validated['content_id'];
         } else {
             $reviewable_type = 'App\\Models\\Product';
-            $reviewable_id = $validated['product_id'];
+            $reviewable_id   = $validated['product_id'];
         }
 
-        // Get locale
-        $locale = app()->getLocale();
-        $review_text_field = $locale === 'lv' ? 'review_text_lv' : 'review_text_en';
+        // Saglabā tekstu abos laukos lai nav lokāles problēmu
+        $reviewText = $validated['review_text'] ?? null;
 
-        // Check if user already reviewed this item
-        $existingReview = Review::where('user_id', auth()->id())
+        $existing = Review::where('user_id', auth()->id())
             ->where('reviewable_type', $reviewable_type)
             ->where('reviewable_id', $reviewable_id)
             ->first();
 
-        if ($existingReview) {
-            // Update existing review
-            $existingReview->update([
-                'rating' => $validated['rating'],
-                $review_text_field => $validated['review_text'] ?? null,
-                'is_approved' => false, // Requires re-approval
+        if ($existing) {
+            $existing->update([
+                'rating'          => $validated['rating'],
+                'review_text_lv'  => $reviewText,
+                'review_text_en'  => $reviewText,
+                'is_approved'     => false,
             ]);
-
             return redirect()->back()->with('success', 'Atsauksme atjaunināta un gaida apstiprinājumu');
         }
 
-        // Create new review
         Review::create([
-            'user_id' => auth()->id(),
+            'user_id'         => auth()->id(),
             'reviewable_type' => $reviewable_type,
-            'reviewable_id' => $reviewable_id,
-            'rating' => $validated['rating'],
-            $review_text_field => $validated['review_text'] ?? null,
-            'is_approved' => false, // Requires admin approval
+            'reviewable_id'   => $reviewable_id,
+            'rating'          => $validated['rating'],
+            'review_text_lv'  => $reviewText,
+            'review_text_en'  => $reviewText,
+            'is_approved'     => false,
         ]);
 
         return redirect()->back()->with('success', 'Atsauksme pievienota un gaida apstiprinājumu');
     }
 
     /**
-     * Update a review
+     * WEB: Atjaunina atsauksmi
+     * PUT /reviews/{id}
      */
     public function update(Request $request, int $id): RedirectResponse
     {
         $review = Review::findOrFail($id);
 
-        // Check if user owns the review
         if ($review->user_id !== auth()->id()) {
             abort(403, 'Unauthorized');
         }
 
         $validated = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
+            'rating'      => 'required|integer|min:1|max:5',
             'review_text' => 'nullable|string|max:1000',
         ]);
 
+        $reviewText = $validated['review_text'] ?? null;
+
         $review->update([
-            'rating' => $validated['rating'],
-            'review_text' => $validated['review_text'] ?? null,
-            'is_approved' => false, // Requires re-approval
+            'rating'         => $validated['rating'],
+            'review_text_lv' => $reviewText,
+            'review_text_en' => $reviewText,
+            'is_approved'    => false,
         ]);
 
         return redirect()->back()->with('success', 'Atsauksme atjaunināta');
     }
 
     /**
-     * Delete a review
+     * WEB: Dzēš atsauksmi
+     * DELETE /reviews/{id}
      */
     public function destroy(int $id): RedirectResponse
     {
         $review = Review::findOrFail($id);
 
-        // Check if user owns the review
         if ($review->user_id !== auth()->id()) {
             abort(403, 'Unauthorized');
         }
 
         $review->delete();
-
         return redirect()->back()->with('success', 'Atsauksme dzēsta');
     }
 
     /**
-     * Admin: List all reviews
+     * Admin: Visu atsauksmju saraksts
      */
     public function adminIndex(): Response
     {
@@ -135,30 +172,24 @@ class ReviewController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('Admin/Reviews/Index', [
-            'reviews' => $reviews,
-        ]);
+        return Inertia::render('Admin/Reviews/Index', ['reviews' => $reviews]);
     }
 
     /**
-     * Admin: Approve review
+     * Admin: Apstiprina atsauksmi
      */
     public function approve(int $id): RedirectResponse
     {
-        $review = Review::findOrFail($id);
-        $review->update(['is_approved' => true]);
-
+        Review::findOrFail($id)->update(['is_approved' => true]);
         return redirect()->back()->with('success', 'Atsauksme apstiprināta');
     }
 
     /**
-     * Admin: Reject review
+     * Admin: Noraida (dzēš) atsauksmi
      */
     public function reject(int $id): RedirectResponse
     {
-        $review = Review::findOrFail($id);
-        $review->delete();
-
+        Review::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Atsauksme noraidīta');
     }
 }

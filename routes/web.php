@@ -74,30 +74,15 @@ Route::prefix('shop')->group(function () {
     // Category Products
     Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('shop.category.show');
 
-    // Shop Contact
+    // Shop Contact — PRASA AUTORIZĀCIJU (lai novērstu anonīmus troļļus)
     Route::get('/contact', function () {
         return Inertia::render('Shop/Contact');
-    })->name('shop.contact');
+    })->middleware('auth')->name('shop.contact');
 
-    // FAQ Page
-    Route::get('/faq', function () {
-        return Inertia::render('Shop/FAQ');
-    })->name('shop.faq');
-
-    // Shipping Info
-    Route::get('/shipping', function () {
-        return Inertia::render('Shop/Shipping');
-    })->name('shop.shipping');
-
-    // Returns Policy
-    Route::get('/returns', function () {
-        return Inertia::render('Shop/Returns');
-    })->name('shop.returns');
-
-    // Shop Contact
-    Route::get('/contact', function () {
-        return Inertia::render('Shop/Contact');
-    })->name('shop.contact');
+    // FAQ, Shipping, Returns — publiski
+    Route::get('/faq',      fn() => Inertia::render('Shop/FAQ'))->name('shop.faq');
+    Route::get('/shipping', fn() => Inertia::render('Shop/Shipping'))->name('shop.shipping');
+    Route::get('/returns',  fn() => Inertia::render('Shop/Returns'))->name('shop.returns');
 });
 
 // Content Pages

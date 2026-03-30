@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Head, useForm, usePage, Link } from '@inertiajs/vue3';
+import { Head, useForm, usePage, Link, router } from '@inertiajs/vue3';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
 import { useI18n } from 'vue-i18n';
@@ -66,12 +66,17 @@ const form = useForm({
     message: '',
 });
 
-// Pre-fill form with user data on mount
+// Nepieteicies lietotājus novirza uz login lapu
 onMounted(() => {
-    if (user.value) {
-        form.name = user.value.username || '';
-        form.email = user.value.email || '';
+    if (!user.value) {
+        router.visit('/login', {
+            onSuccess: () => {},
+        });
+        return;
     }
+    // Aizpilda formu ar lietotāja datiem
+    form.name  = user.value.username || user.value.first_name || '';
+    form.email = user.value.email || '';
 });
 
 // Select country code
@@ -131,7 +136,34 @@ const contactInfo = [
             @close="closeToast"
         />
 
-        <div class="contact-page">
+        <!-- Auth siena — rāda viesiem, ja JS redirect nestrādāja -->
+        <div v-if="!user" class="auth-wall">
+            <div class="auth-wall-inner">
+                <div class="auth-wall-icon"><i class="fas fa-lock"></i></div>
+                <h2 class="auth-wall-title">
+                    {{ t('shop_contact.login_required') || 'Nepieciešams pieteikties' }}
+                </h2>
+                <p class="auth-wall-text">
+                    {{ t('shop_contact.login_required_desc') || 'Lai sazinātos ar mums, lūdzu vispirms piesakies savā kontā.' }}
+                </p>
+                <div class="auth-wall-btns">
+                    <Link href="/login" class="auth-btn-login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        {{ t('auth.login') || 'Pieteikties' }}
+                    </Link>
+                    <Link href="/register" class="auth-btn-register">
+                        <i class="fas fa-user-plus"></i>
+                        {{ t('auth.register') || 'Reģistrēties' }}
+                    </Link>
+                </div>
+                <Link href="/shop" class="auth-back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    {{ t('shop.back_to_shop') || 'Atpakaļ uz veikalu' }}
+                </Link>
+            </div>
+        </div>
+
+        <div v-else class="contact-page">
             <!-- Hero Section -->
             <div class="contact-hero">
                 <div class="hero-content">
@@ -790,4 +822,70 @@ const contactInfo = [
         grid-template-columns: 1fr;
     }
 }
+
+/* ── AUTH SIENA (nepieteicies lietotājiem) ── */
+.auth-wall {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 3rem 1.5rem;
+    background: #f9fafb;
+}
+.auth-wall-inner {
+    text-align: center;
+    max-width: 420px;
+    background: white;
+    border-radius: 1.25rem;
+    padding: 3rem 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,.10);
+}
+.auth-wall-icon {
+    font-size: 3rem;
+    color: #dc2626;
+    margin-bottom: 1.25rem;
+}
+.auth-wall-title {
+    font-size: 1.625rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: .875rem;
+}
+.auth-wall-text {
+    font-size: 1rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+.auth-wall-btns {
+    display: flex;
+    gap: .875rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+.auth-btn-login {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .75rem 1.75rem;
+    background: #dc2626; color: white;
+    border-radius: .625rem; font-weight: 700; font-size: 1rem;
+    text-decoration: none; transition: all .25s;
+}
+.auth-btn-login:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(220,38,38,.3); }
+.auth-btn-register {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .75rem 1.75rem;
+    background: white; color: #374151;
+    border: 2px solid #e5e7eb;
+    border-radius: .625rem; font-weight: 600; font-size: 1rem;
+    text-decoration: none; transition: all .25s;
+}
+.auth-btn-register:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.auth-back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #9ca3af; font-size: .9375rem; text-decoration: none;
+    transition: color .2s;
+}
+.auth-back-link:hover { color: #dc2626; }
+
 </style>
