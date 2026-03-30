@@ -69,7 +69,7 @@ class DashboardController extends Controller
         $stats = [
             'orders'     => Order::where('user_id', $user->id)->count(),
             'reviews'    => Review::where('user_id', $user->id)->count(),
-            'favorites'  => 0, // implementē ja vajag
+            'comments'  => Review::where('user_id', $user->id)->count(),
             'cart_items' => $user->cartItems()->count(),
         ];
 

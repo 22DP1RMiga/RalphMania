@@ -21,7 +21,7 @@ Route::prefix('v1')->group(function () {
 
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
-    Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+    Route::get('/categories/{slug}', [CategoryController::class, 'apiShow']);
 
     // Content
     Route::get('/content', [ContentController::class, 'apiIndex']);

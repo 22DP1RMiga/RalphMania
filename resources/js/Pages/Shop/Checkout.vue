@@ -402,10 +402,6 @@ const placeOrder = async () => {
                                     <div class="payment-content"><i class="fas fa-credit-card"></i><span>{{ locale === 'lv' ? 'Kredītkarte / Debeta karte' : 'Credit / Debit Card' }}</span></div>
                                 </label>
                                 <label class="payment-option">
-                                    <input type="radio" v-model="form.payment_method" value="bank_transfer">
-                                    <div class="payment-content"><i class="fas fa-university"></i><span>{{ locale === 'lv' ? 'Bankas pārskaitījums' : 'Bank Transfer' }}</span></div>
-                                </label>
-                                <label class="payment-option">
                                     <input type="radio" v-model="form.payment_method" value="cash_on_delivery">
                                     <div class="payment-content"><i class="fas fa-money-bill-wave"></i><span>{{ locale === 'lv' ? 'Skaidrā nauda piegādes brīdī' : 'Cash on Delivery' }}</span></div>
                                 </label>

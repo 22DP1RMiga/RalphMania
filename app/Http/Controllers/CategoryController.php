@@ -5,67 +5,108 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
     /**
-     * API: Get all categories with product count
+     * WEB: Category page
+     * GET /shop/category/{slug}
+     */
+    public function show($slug)
+    {
+        return Inertia::render('Shop/Category', [
+            'slug' => $slug,
+        ]);
+    }
+
+    /**
+     * API: Get all categories with RECURSIVE product count
      * GET /api/v1/categories
+     *
+     * Parent kategorijas (piemēram "Apģērbi") rāda KOPĒJO produktu skaitu —
+     * ieskaitot visas apakškategorijas (T-krekli, Džemperi, Cepures utt.).
+     * Apakškategorijas rāda tikai savus tiešos produktus.
      */
     public function index()
     {
+        // Ielādē visas aktīvās kategorijas ar tiešo produktu skaitu
         $categories = Category::where('is_active', 1)
             ->withCount(['products' => function ($query) {
                 $query->where('is_active', 1);
             }])
             ->orderBy('sort_order', 'asc')
-            ->get()
-            ->map(fn($c) => [
-                'id' => $c->id,
-                'name_lv' => $c->name_lv,
-                'name_en' => $c->name_en,
-                'slug' => $c->slug,
+            ->get();
+
+        // Aprēķina rekursīvo skaitu parent kategorijām
+        // (tiešie produkti + visu bērnu produkti)
+        $result = $categories->map(function ($c) use ($categories) {
+            $count = $c->products_count;
+
+            // Ja šī ir parent kategorija, pievienot bērnu produktu skaitus
+            if (!$c->parent_id) {
+                $childIds = $categories
+                    ->where('parent_id', $c->id)
+                    ->pluck('id');
+
+                foreach ($childIds as $childId) {
+                    $child = $categories->firstWhere('id', $childId);
+                    if ($child) {
+                        $count += $child->products_count;
+                    }
+                }
+            }
+
+            return [
+                'id'             => $c->id,
+                'name_lv'        => $c->name_lv,
+                'name_en'        => $c->name_en,
+                'slug'           => $c->slug,
                 'description_lv' => $c->description_lv,
                 'description_en' => $c->description_en,
-                'icon' => $c->icon ?? 'fas fa-tag',
-                'product_count' => $c->products_count,
-            ]);
+                'parent_id'      => $c->parent_id,
+                'sort_order'     => $c->sort_order,
+                'icon'           => $c->icon ?? null,
+                'product_count'  => $count,
+            ];
+        });
 
-        return response()->json($categories);
+        return response()->json($result->values());
     }
 
     /**
-     * API: Get category with products
+     * API: Get single category metadata
      * GET /api/v1/categories/{slug}
      */
-    public function show($slug)
+    public function apiShow($slug)
     {
         $category = Category::where('slug', $slug)
             ->where('is_active', 1)
             ->firstOrFail();
 
-        $products = Product::where('category_id', $category->id)
+        // Rekursīvais skaits arī šeit
+        $directCount = Product::where('category_id', $category->id)
             ->where('is_active', 1)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn($p) => [
-                'id' => $p->id,
-                'name_lv' => $p->name_lv,
-                'name_en' => $p->name_en,
-                'slug' => $p->slug,
-                'price' => (float) $p->price,
-                'compare_price' => $p->compare_price ? (float) $p->compare_price : null,
-                'image' => $p->image,
-                'stock_quantity' => $p->stock_quantity,
-                'low_stock_threshold' => $p->low_stock_threshold,
-            ]);
+            ->count();
+
+        $childIds = Category::where('parent_id', $category->id)
+            ->where('is_active', 1)
+            ->pluck('id');
+
+        $childCount = $childIds->isNotEmpty()
+            ? Product::whereIn('category_id', $childIds)->where('is_active', 1)->count()
+            : 0;
 
         return response()->json([
-            'id' => $category->id,
-            'name_lv' => $category->name_lv,
-            'name_en' => $category->name_en,
-            'slug' => $category->slug,
-            'products' => $products,
+            'id'             => $category->id,
+            'name_lv'        => $category->name_lv,
+            'name_en'        => $category->name_en,
+            'slug'           => $category->slug,
+            'description_lv' => $category->description_lv,
+            'description_en' => $category->description_en,
+            'parent_id'      => $category->parent_id,
+            'icon'           => $category->icon ?? null,
+            'product_count'  => $directCount + $childCount,
         ]);
     }
 }
