@@ -3,8 +3,30 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     messages: Object,
@@ -60,19 +82,29 @@ const hasFilters = computed(() => {
 
 // Mark as read
 const markAsRead = (id) => {
+    if (!can('contacts.view')) {
+        openUnauthorized('contacts.view');
+        return;
+    }
     processingId.value = id;
     router.put(`/admin/contacts/${id}/read`, {}, {
         preserveScroll: true,
+        onSuccess: () => showToast(locale.value === 'lv' ? 'Ziņojums atzīmēts kā lasīts!' : 'Message marked as read!'),
         onFinish: () => processingId.value = null,
     });
 };
 
 // Delete message
 const deleteMessage = (id) => {
+    if (!can('contacts.delete')) {
+        openUnauthorized('contacts.delete');
+        return;
+    }
     if (confirm(t('admin.contacts.confirmDelete'))) {
         processingId.value = id;
         router.delete(`/admin/contacts/${id}`, {
             preserveScroll: true,
+            onSuccess: () => showToast(locale.value === 'lv' ? 'Ziņojums dzēsts!' : 'Message deleted!'),
             onFinish: () => processingId.value = null,
         });
     }
@@ -80,6 +112,10 @@ const deleteMessage = (id) => {
 
 // Open reply modal
 const openReplyModal = (message) => {
+    if (!can('contacts.reply')) {
+        openUnauthorized('contacts.reply');
+        return;
+    }
     selectedMessage.value = message;
     replyText.value = '';
     showReplyModal.value = true;
@@ -95,7 +131,7 @@ const closeReplyModal = () => {
 // Submit reply
 const submitReply = () => {
     if (!replyText.value.trim() || replyText.value.length < 10) {
-        alert(t('admin.contacts.replyMinLength'));
+        showToast(t('admin.contacts.replyMinLength') || (locale.value === 'lv' ? 'Atbildei jābūt vismaz 10 simboli' : 'Reply must be at least 10 characters'), 'error');
         return;
     }
 
@@ -106,6 +142,7 @@ const submitReply = () => {
         preserveScroll: true,
         onSuccess: () => {
             closeReplyModal();
+            showToast(locale.value === 'lv' ? 'Atbilde nosūtīta!' : 'Reply sent!');
         },
         onFinish: () => {
             isSubmitting.value = false;
@@ -156,6 +193,14 @@ const getStatusInfo = (message) => {
 
     <AdminLayout>
         <template #title>{{ t('admin.contacts.index.title') }}</template>
+
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
 
         <!-- Stats Cards -->
         <div class="stats-row">
@@ -309,8 +354,12 @@ const getStatusInfo = (message) => {
                     <!-- Actions -->
                     <div class="message-actions">
                         <Link
-                            :href="`/admin/contacts/${message.id}`"
+                            :href="can('contacts.view') ? `/admin/contacts/${message.id}` : '#'"
                             class="btn btn-view"
+                            :class="actionBtnClass(can('contacts.view'))"
+                            :style="actionBtnStyle(can('contacts.view'))"
+                            :title="!can('contacts.view') ? noPermTitle : ''"
+                            @click.prevent="!can('contacts.view') && openUnauthorized('contacts.view')"
                         >
                             <i class="fas fa-eye"></i>
                             {{ t('admin.common.view') }}
@@ -320,6 +369,9 @@ const getStatusInfo = (message) => {
                             v-if="!message.is_replied"
                             @click="openReplyModal(message)"
                             class="btn btn-reply"
+                            :class="actionBtnClass(can('contacts.reply'))"
+                            :style="actionBtnStyle(can('contacts.reply'))"
+                            :title="!can('contacts.reply') ? noPermTitle : ''"
                         >
                             <i class="fas fa-reply"></i>
                             {{ t('admin.contacts.reply') }}
@@ -329,7 +381,10 @@ const getStatusInfo = (message) => {
                             v-if="!message.is_read"
                             @click="markAsRead(message.id)"
                             class="btn btn-mark-read"
+                            :class="actionBtnClass(can('contacts.view'))"
+                            :style="actionBtnStyle(can('contacts.view'))"
                             :disabled="processingId === message.id"
+                            :title="!can('contacts.view') ? noPermTitle : ''"
                         >
                             <i :class="processingId === message.id ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
                             {{ t('admin.contacts.markAsRead') }}
@@ -338,7 +393,10 @@ const getStatusInfo = (message) => {
                         <button
                             @click="deleteMessage(message.id)"
                             class="btn btn-delete"
+                            :class="actionBtnClass(can('contacts.delete'))"
+                            :style="actionBtnStyle(can('contacts.delete'))"
                             :disabled="processingId === message.id"
+                            :title="!can('contacts.delete') ? noPermTitle : ''"
                         >
                             <i :class="processingId === message.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
                         </button>
@@ -430,6 +488,14 @@ const getStatusInfo = (message) => {
                 </div>
             </div>
         </Teleport>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -839,7 +905,7 @@ const getStatusInfo = (message) => {
     color: #1e40af;
 }
 
-.btn-view:hover {
+.btn-view:hover:not(.btn-no-permission) {
     background: #bfdbfe;
 }
 
@@ -848,7 +914,7 @@ const getStatusInfo = (message) => {
     color: #065f46;
 }
 
-.btn-reply:hover {
+.btn-reply:hover:not(.btn-no-permission) {
     background: #a7f3d0;
 }
 
@@ -857,7 +923,7 @@ const getStatusInfo = (message) => {
     color: #92400e;
 }
 
-.btn-mark-read:hover:not(:disabled) {
+.btn-mark-read:hover:not(:disabled):not(.btn-no-permission) {
     background: #fde68a;
 }
 
@@ -867,8 +933,24 @@ const getStatusInfo = (message) => {
     padding: 0.5rem 0.625rem;
 }
 
-.btn-delete:hover:not(:disabled) {
+.btn-delete:hover:not(:disabled):not(.btn-no-permission) {
     background: #fecaca;
+}
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Pagination */

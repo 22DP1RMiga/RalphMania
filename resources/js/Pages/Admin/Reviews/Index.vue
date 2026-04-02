@@ -4,8 +4,30 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import debounce from 'lodash/debounce';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     reviews: Object,
@@ -53,10 +75,15 @@ const hasFilters = computed(() => {
 
 // Approve review
 const approveReview = (id) => {
+    if (!can('reviews.moderate')) {
+        openUnauthorized('reviews.moderate');
+        return;
+    }
     if (confirm(t('admin.reviews.confirmApprove'))) {
         processingId.value = id;
         router.put(`/admin/reviews/${id}/approve`, {}, {
             preserveScroll: true,
+            onSuccess: () => showToast(t('admin.reviews.approveSuccess') || (locale.value === 'lv' ? 'Atsauksme apstiprināta!' : 'Review approved!')),
             onFinish: () => processingId.value = null,
         });
     }
@@ -64,10 +91,15 @@ const approveReview = (id) => {
 
 // Reject review
 const rejectReview = (id) => {
+    if (!can('reviews.delete')) {
+        openUnauthorized('reviews.delete');
+        return;
+    }
     if (confirm(t('admin.reviews.confirmReject'))) {
         processingId.value = id;
         router.put(`/admin/reviews/${id}/reject`, {}, {
             preserveScroll: true,
+            onSuccess: () => showToast(t('admin.reviews.rejectSuccess') || (locale.value === 'lv' ? 'Atsauksme noraidīta!' : 'Review rejected!')),
             onFinish: () => processingId.value = null,
         });
     }
@@ -162,6 +194,14 @@ const contentTypeIcons = {
 
     <AdminLayout>
         <template #title>{{ t('admin.reviews.index.title') }}</template>
+
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
 
         <!-- Stats Cards -->
         <div class="stats-row">
@@ -363,7 +403,10 @@ const contentTypeIcons = {
                             v-if="!review.is_approved"
                             @click="approveReview(review.id)"
                             class="btn btn-approve"
+                            :class="actionBtnClass(can('reviews.moderate'))"
+                            :style="actionBtnStyle(can('reviews.moderate'))"
                             :disabled="processingId === review.id"
+                            :title="!can('reviews.moderate') ? noPermTitle : ''"
                         >
                             <i :class="processingId === review.id ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
                             {{ t('admin.reviews.approve') }}
@@ -371,7 +414,10 @@ const contentTypeIcons = {
                         <button
                             @click="rejectReview(review.id)"
                             class="btn btn-reject"
+                            :class="actionBtnClass(can('reviews.delete'))"
+                            :style="actionBtnStyle(can('reviews.delete'))"
                             :disabled="processingId === review.id"
+                            :title="!can('reviews.delete') ? noPermTitle : ''"
                         >
                             <i :class="processingId === review.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
                             {{ t('admin.reviews.reject') }}
@@ -400,6 +446,14 @@ const contentTypeIcons = {
                 </div>
             </div>
         </div>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -864,7 +918,7 @@ const contentTypeIcons = {
     color: #065f46;
 }
 
-.btn-approve:hover:not(:disabled) {
+.btn-approve:hover:not(:disabled):not(.btn-no-permission) {
     background: #a7f3d0;
 }
 
@@ -873,8 +927,24 @@ const contentTypeIcons = {
     color: #991b1b;
 }
 
-.btn-reject:hover:not(:disabled) {
+.btn-reject:hover:not(:disabled):not(.btn-no-permission) {
     background: #fecaca;
+}
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Pagination */

@@ -236,6 +236,7 @@ const isActiveRoute = (url) => {
                         'active': isActiveRoute(item.url),
                         'super-admin-item': item.superAdminOnly
                     }"
+                    :title="!isSidebarOpen ? t(item.nameKey) : undefined"
                     @click="closeMobileSidebar"
                 >
                     <!-- Icon wrapper — holds the dot badge when collapsed -->
@@ -473,6 +474,74 @@ const isActiveRoute = (url) => {
 
 .sidebar-collapsed .sidebar-nav-item span {
     display: none;
+}
+
+/* ── COLLAPSED: icon-only mode ────────────────────────────────── */
+.sidebar-collapsed .sidebar-nav-item {
+    justify-content: center;
+    padding: 0.75rem;
+    position: relative;
+}
+
+/* Native tooltip is enough for simple use, but add a CSS tooltip for polish */
+.sidebar-collapsed .sidebar-nav-item::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 0.625rem);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1e293b;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: translateY(-50%) translateX(-4px);
+    z-index: 200;
+}
+
+.sidebar-collapsed .sidebar-nav-item:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Arrow pointer */
+.sidebar-collapsed .sidebar-nav-item::before {
+    content: '';
+    position: absolute;
+    left: calc(100% + 0.375rem);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #1e293b;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 200;
+}
+
+.sidebar-collapsed .sidebar-nav-item:hover::before {
+    opacity: 1;
+}
+
+/* Keep icon centered and sized correctly when collapsed */
+.sidebar-collapsed .nav-icon-wrap {
+    width: auto;
+}
+
+.sidebar-collapsed .sidebar-nav-item i {
+    font-size: 1.1rem;
+}
+
+/* Sidebar footer back btn collapsed */
+.sidebar-collapsed .sidebar-back {
+    justify-content: center;
+    padding: 0.75rem;
 }
 
 /* ── NAV BADGE SYSTEM ─────────────────────────────────────────────── */

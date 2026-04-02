@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import axios from 'axios';
 
 const { t } = useI18n();
 const page = usePage();
@@ -16,6 +17,22 @@ defineProps({
 });
 
 const user = page.props.auth.user;
+
+// ── E-pasta verifikācija ──────────────────────────────────────────
+const isSendingVerification = ref(false);
+const verificationSent = ref(false);
+
+const resendVerification = async () => {
+    isSendingVerification.value = true;
+    try {
+        await axios.post(route('verification.send'));
+        verificationSent.value = true;
+    } catch (e) {
+        // klusī ignorē
+    } finally {
+        isSendingVerification.value = false;
+    }
+};
 
 // Profile info form (without photo)
 const form = useForm({
@@ -580,14 +597,19 @@ const submit = () => {
                 <i class="fas fa-exclamation-triangle"></i>
                 <div>
                     <p>{{ t('profile.email_unverified') }}</p>
-                    <Link
-                        :href="route('verification.send')"
-                        method="post"
-                        as="button"
+                    <span v-if="verificationSent" class="verify-sent-inline">
+                        <i class="fas fa-check-circle"></i>
+                        {{ t('locale') === 'lv' ? 'E-pasts nosūtīts! Pārbaudiet pastkasti.' : 'Email sent! Check your inbox.' }}
+                    </span>
+                    <button
+                        v-else
+                        @click="resendVerification"
                         class="alert-link"
+                        :disabled="isSendingVerification"
                     >
-                        {{ t('profile.resend_verification') }}
-                    </Link>
+                        <i :class="isSendingVerification ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+                        {{ isSendingVerification ? '...' : t('profile.resend_verification') }}
+                    </button>
                 </div>
             </div>
 
@@ -828,6 +850,9 @@ const submit = () => {
 }
 
 .alert-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
     color: #dc2626;
     text-decoration: underline;
     background: none;
@@ -836,7 +861,26 @@ const submit = () => {
     font-weight: 600;
     padding: 0;
     margin-top: 0.5rem;
+    transition: opacity 0.2s;
 }
+
+.alert-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.verify-sent-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: #059669;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.verify-sent-inline i { color: #10b981; }
 
 .form-actions {
     display: flex;

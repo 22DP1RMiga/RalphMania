@@ -69,7 +69,16 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $user,
+                // Nodod lietotāja datus ar administratora atļaujām
+                // Tas ir nepieciešams useAdminPermission.js composable darbībai
+                'user' => $user ? array_merge($user->toArray(), [
+                    // Pievieno administrator.permissions tieši user objektam
+                    // lai useAdminPermission.js var piekļūt: user.administrator.permissions
+                    'administrator' => $user->administrator ? [
+                        'permissions'   => $user->administrator->permissions ?? [],
+                        'is_super_admin'=> $user->administrator->is_super_admin ?? false,
+                    ] : null,
+                ]) : null,
             ],
             'adminBadges' => $adminBadges,
         ];

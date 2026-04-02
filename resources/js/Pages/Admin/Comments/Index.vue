@@ -3,8 +3,30 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     comments: Object,
@@ -60,10 +82,15 @@ const hasFilters = computed(() => {
 
 // Approve comment
 const approveComment = (id) => {
+    if (!can('comments.moderate')) {
+        openUnauthorized('comments.moderate');
+        return;
+    }
     if (confirm(t('admin.comments.confirmApprove'))) {
         processingId.value = id;
         router.put(`/admin/comments/${id}/approve`, {}, {
             preserveScroll: true,
+            onSuccess: () => showToast(t('admin.comments.approveSuccess') || (locale.value === 'lv' ? 'Komentārs apstiprināts!' : 'Comment approved!')),
             onFinish: () => processingId.value = null,
         });
     }
@@ -71,10 +98,15 @@ const approveComment = (id) => {
 
 // Reject comment
 const rejectComment = (id) => {
+    if (!can('comments.delete')) {
+        openUnauthorized('comments.delete');
+        return;
+    }
     if (confirm(t('admin.comments.confirmReject'))) {
         processingId.value = id;
         router.put(`/admin/comments/${id}/reject`, {}, {
             preserveScroll: true,
+            onSuccess: () => showToast(t('admin.comments.rejectSuccess') || (locale.value === 'lv' ? 'Komentārs noraidīts!' : 'Comment rejected!')),
             onFinish: () => processingId.value = null,
         });
     }
@@ -147,6 +179,14 @@ const truncateText = (text, length = 150) => {
 
     <AdminLayout>
         <template #title>{{ t('admin.comments.index.title') }}</template>
+
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
 
         <!-- Stats Cards -->
         <div class="stats-row">
@@ -340,7 +380,10 @@ const truncateText = (text, length = 150) => {
                             v-if="!comment.is_approved"
                             @click="approveComment(comment.id)"
                             class="btn btn-approve"
+                            :class="actionBtnClass(can('comments.moderate'))"
+                            :style="actionBtnStyle(can('comments.moderate'))"
                             :disabled="processingId === comment.id"
+                            :title="!can('comments.moderate') ? noPermTitle : ''"
                         >
                             <i :class="processingId === comment.id ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
                             {{ t('admin.comments.approve') }}
@@ -348,7 +391,10 @@ const truncateText = (text, length = 150) => {
                         <button
                             @click="rejectComment(comment.id)"
                             class="btn btn-reject"
+                            :class="actionBtnClass(can('comments.delete'))"
+                            :style="actionBtnStyle(can('comments.delete'))"
                             :disabled="processingId === comment.id"
+                            :title="!can('comments.delete') ? noPermTitle : ''"
                         >
                             <i :class="processingId === comment.id ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
                             {{ t('admin.comments.reject') }}
@@ -377,6 +423,14 @@ const truncateText = (text, length = 150) => {
                 </div>
             </div>
         </div>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -851,7 +905,7 @@ const truncateText = (text, length = 150) => {
     color: #065f46;
 }
 
-.btn-approve:hover:not(:disabled) {
+.btn-approve:hover:not(:disabled):not(.btn-no-permission) {
     background: #a7f3d0;
 }
 
@@ -860,8 +914,24 @@ const truncateText = (text, length = 150) => {
     color: #991b1b;
 }
 
-.btn-reject:hover:not(:disabled) {
+.btn-reject:hover:not(:disabled):not(.btn-no-permission) {
     background: #fecaca;
+}
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Pagination */

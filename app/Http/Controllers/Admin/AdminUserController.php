@@ -248,6 +248,28 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Send a specified user an email.
+     */
+    public function sendEmail(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'subject' => 'required|string|max:255',
+            'message' => 'nullable|string|max:5000',
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+
+        \Mail::raw($validated['message'] ?? '', function ($mail) use ($user, $validated) {
+            $mail->to($user->email)
+                ->subject($validated['subject'])
+                ->from(config('mail.from.address'), config('mail.from.name'));
+        });
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Remove the specified user.
      */
     public function destroy($id)

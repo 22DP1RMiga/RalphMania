@@ -3,8 +3,30 @@ import { ref, watch, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     orders: {
@@ -72,10 +94,15 @@ const getStatusInfo = (status) => {
 
 // Update order status
 const updateStatus = (orderId, newStatus) => {
+    if (!can('orders.edit')) {
+        openUnauthorized('orders.edit');
+        return;
+    }
     router.put(`/admin/orders/${orderId}/status`, {
         status: newStatus,
     }, {
         preserveScroll: true,
+        onSuccess: () => showToast(locale.value === 'lv' ? 'Statuss atjaunināts!' : 'Status updated!'),
     });
 };
 
@@ -107,16 +134,17 @@ const deliveredCount = computed(() => props.orders.data.filter(o => o.status ===
 const isDownloadingPdf = ref(null); // null vai order.id
 
 const downloadPdf = (orderId) => {
+    if (!can('orders.view')) {
+        openUnauthorized('orders.view');
+        return;
+    }
     isDownloadingPdf.value = orderId;
-
-    // Izveidot paslēpto saiti un aktivizēt lejupielādi
     const link = document.createElement('a');
     link.href = `/admin/orders/${orderId}/invoice/pdf`;
     link.download = `invoice-${orderId}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
     setTimeout(() => {
         isDownloadingPdf.value = null;
     }, 1000);
@@ -128,6 +156,14 @@ const downloadPdf = (orderId) => {
 
     <AdminLayout>
         <template #title>{{ t('admin.orders.index.title') }}</template>
+
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
 
         <!-- Header -->
         <div class="page-header">
@@ -250,7 +286,10 @@ const downloadPdf = (orderId) => {
                         <select
                             :value="order.status"
                             @change="updateStatus(order.id, $event.target.value)"
-                            :class="['status-select', `status-${getStatusInfo(order.status).color}`]"
+                            :class="['status-select', `status-${getStatusInfo(order.status).color}`, actionBtnClass(can('orders.edit'))]"
+                            :style="actionBtnStyle(can('orders.edit'))"
+                            :disabled="!can('orders.edit')"
+                            :title="!can('orders.edit') ? noPermTitle : ''"
                         >
                             <option v-for="status in statusOptions" :key="status.value" :value="status.value">
                                 {{ t(status.labelKey) }}
@@ -260,25 +299,33 @@ const downloadPdf = (orderId) => {
                     <td>
                         <div class="action-buttons">
                             <Link
-                                :href="`/admin/orders/${order.id}`"
+                                :href="can('orders.view') ? `/admin/orders/${order.id}` : '#'"
                                 class="btn-icon btn-icon-view"
-                                :title="t('admin.orders.viewDetails')"
+                                :class="actionBtnClass(can('orders.view'))"
+                                :style="actionBtnStyle(can('orders.view'))"
+                                :title="!can('orders.view') ? noPermTitle : t('admin.orders.viewDetails')"
+                                @click.prevent="!can('orders.view') && openUnauthorized('orders.view')"
                             >
                                 <i class="fas fa-eye"></i>
                             </Link>
                             <button
                                 @click="downloadPdf(order.id)"
                                 class="btn-icon btn-icon-pdf"
-                                :title="t('admin.orders.downloadPdf')"
+                                :class="actionBtnClass(can('orders.view'))"
+                                :style="actionBtnStyle(can('orders.view'))"
+                                :title="!can('orders.view') ? noPermTitle : t('admin.orders.downloadPdf')"
                                 :disabled="isDownloadingPdf === order.id"
                             >
                                 <i :class="isDownloadingPdf === order.id ? 'fas fa-spinner fa-spin' : 'fas fa-file-pdf'"></i>
                             </button>
                             <a
-                                :href="`/admin/orders/${order.id}/invoice/print`"
+                                :href="can('orders.view') ? `/admin/orders/${order.id}/invoice/print` : '#'"
                                 target="_blank"
                                 class="btn-icon btn-icon-print"
-                                :title="t('admin.orders.print')"
+                                :class="actionBtnClass(can('orders.view'))"
+                                :style="actionBtnStyle(can('orders.view'))"
+                                :title="!can('orders.view') ? noPermTitle : t('admin.orders.print')"
+                                @click.prevent="!can('orders.view') && openUnauthorized('orders.view')"
                             >
                                 <i class="fas fa-print"></i>
                             </a>
@@ -307,7 +354,10 @@ const downloadPdf = (orderId) => {
                         <select
                             :value="order.status"
                             @change="updateStatus(order.id, $event.target.value)"
-                            :class="['status-select', `status-${getStatusInfo(order.status).color}`]"
+                            :class="['status-select', `status-${getStatusInfo(order.status).color}`, actionBtnClass(can('orders.edit'))]"
+                            :style="actionBtnStyle(can('orders.edit'))"
+                            :disabled="!can('orders.edit')"
+                            :title="!can('orders.edit') ? noPermTitle : ''"
                         >
                             <option v-for="status in statusOptions" :key="status.value" :value="status.value">
                                 {{ t(status.labelKey) }}
@@ -339,13 +389,21 @@ const downloadPdf = (orderId) => {
                     </div>
 
                     <div class="order-card-footer">
-                        <Link :href="`/admin/orders/${order.id}`" class="btn btn-sm btn-primary">
+                        <Link
+                            :href="can('orders.view') ? `/admin/orders/${order.id}` : '#'"
+                            class="btn btn-sm btn-primary"
+                            :class="actionBtnClass(can('orders.view'))"
+                            :style="actionBtnStyle(can('orders.view'))"
+                            @click.prevent="!can('orders.view') && openUnauthorized('orders.view')"
+                        >
                             <i class="fas fa-eye"></i>
                             {{ t('admin.common.view') }}
                         </Link>
                         <button
                             @click="downloadPdf(order.id)"
                             class="btn btn-sm btn-secondary"
+                            :class="actionBtnClass(can('orders.view'))"
+                            :style="actionBtnStyle(can('orders.view'))"
                             :disabled="isDownloadingPdf === order.id"
                         >
                             <i :class="isDownloadingPdf === order.id ? 'fas fa-spinner fa-spin' : 'fas fa-file-pdf'"></i>
@@ -371,6 +429,14 @@ const downloadPdf = (orderId) => {
                 />
             </div>
         </div>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -625,7 +691,7 @@ const downloadPdf = (orderId) => {
     color: #2563eb;
 }
 
-.btn-icon-view:hover {
+.btn-icon-view:hover:not(.btn-no-permission) {
     background: #2563eb;
     color: white;
 }
@@ -635,7 +701,7 @@ const downloadPdf = (orderId) => {
     color: #374151;
 }
 
-.btn-icon-print:hover {
+.btn-icon-print:hover:not(.btn-no-permission) {
     background: #374151;
     color: white;
 }
@@ -716,7 +782,7 @@ const downloadPdf = (orderId) => {
     color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(.btn-no-permission) {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
@@ -725,8 +791,24 @@ const downloadPdf = (orderId) => {
     color: #374151;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(.btn-no-permission) {
     background: #e5e7eb;
+}
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Mobile Cards - Hidden by default */
@@ -890,7 +972,7 @@ const downloadPdf = (orderId) => {
     color: #dc2626;
 }
 
-.btn-icon-pdf:hover:not(:disabled) {
+.btn-icon-pdf:hover:not(:disabled):not(.btn-no-permission) {
     background: #dc2626;
     color: white;
 }
@@ -905,7 +987,7 @@ const downloadPdf = (orderId) => {
     color: #374151;
 }
 
-.btn-icon-print:hover {
+.btn-icon-print:hover:not(.btn-no-permission) {
     background: #374151;
     color: white;
 }

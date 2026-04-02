@@ -4,7 +4,27 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
+// ════════════════════════════════════════════════════════════════
+// [JAUNS] Importē atļauju composable un modāli
+// Logs lapā nav darbību pogu, bet eksports prasa logs.view
+// ════════════════════════════════════════════════════════════════
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
+
 const { locale } = useI18n({ useScope: 'global' });
+
+// ════════════════════════════════════════════════════════════════
+// [JAUNS] Inicializē — logs lapai vajag tikai can('logs.view')
+// ════════════════════════════════════════════════════════════════
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
 
 const props = defineProps({
     logs: Object,
@@ -96,7 +116,16 @@ const isPrivacyChange = (log) =>
     (log.description && /privāt|is_public|privacy/i.test(log.description));
 
 // ── Export ────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// [IZMAINĪTS] Eksports pārbauda logs.view atļauju.
+// Parasti logs.view jau ir nodrošināts ar Laravel middleware,
+// bet frontend arī bloķē pogu vizuāli.
+// ════════════════════════════════════════════════════════════════
 const exportLogs = () => {
+    if (!can('logs.view')) {
+        openUnauthorized('logs.view');
+        return;
+    }
     const params = new URLSearchParams();
     if (typeFilter.value)  params.set('activity_type', typeFilter.value);
     if (userFilter.value)  params.set('user_id', userFilter.value);
@@ -156,7 +185,20 @@ const exportLogs = () => {
                         <i class="fas fa-times"></i>
                         {{ locale === 'lv' ? 'Notīrīt' : 'Clear' }}
                     </button>
-                    <button @click="exportLogs" class="btn btn-export">
+                    <!--
+                        ════════════════════════════════════════════════
+                        [IZMAINĪTS] CSV eksporta poga:
+                        - Ja nav logs.view → pelēcīga, kursors not-allowed
+                        - actionBtnStyle() → opacity + grayscale
+                        ════════════════════════════════════════════════
+                    -->
+                    <button
+                        @click="exportLogs"
+                        class="btn btn-export"
+                        :class="!can('logs.view') ? 'btn-no-permission' : ''"
+                        :style="actionBtnStyle(can('logs.view'))"
+                        :title="!can('logs.view') ? noPermTitle : 'Eksportēt CSV'"
+                    >
                         <i class="fas fa-download"></i>
                         CSV
                     </button>
@@ -278,6 +320,15 @@ const exportLogs = () => {
                 </div>
             </div>
         </div>
+        <!-- ════════════════════════════════════════════════════════════
+             [JAUNS] UnauthorizedModal — pievieno PIRMS </AdminLayout>
+             ════════════════════════════════════════════════════════════ -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -327,7 +378,22 @@ const exportLogs = () => {
 .btn-secondary { background: #f3f4f6; color: #374151; }
 .btn-secondary:hover { background: #e5e7eb; }
 .btn-export { background: #d1fae5; color: #065f46; }
-.btn-export:hover { background: #a7f3d0; }
+.btn-export:hover:not(.btn-no-permission) { background: #a7f3d0; }
+
+/* ════════════════════════════════════════════════════════════════
+   [JAUNS] Disabled/no-permission stils (tāds pats kā Products)
+   ════════════════════════════════════════════════════════════════ */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover { transform: none !important; }
 
 /* ── Table ── */
 .table-card {

@@ -108,6 +108,33 @@ const getStatusLabel = (status) => {
     return labels[currentLocale.value][status] || status;
 };
 
+// ── E-pasta verifikācija ──────────────────────────────────────────
+const isSendingVerification = ref(false);
+const verificationSent = ref(false);
+
+const resendVerification = async () => {
+    isSendingVerification.value = true;
+    try {
+        await axios.post(route('verification.send'));
+        verificationSent.value = true;
+        showToast(
+            currentLocale.value === 'lv'
+                ? 'Apstiprinājuma e-pasts nosūtīts! Pārbaudiet savu pastkasti.'
+                : 'Verification email sent! Please check your inbox.',
+            'success'
+        );
+    } catch (error) {
+        showToast(
+            currentLocale.value === 'lv'
+                ? 'Neizdevās nosūtīt e-pastu. Mēģiniet vēlreiz.'
+                : 'Failed to send email. Please try again.',
+            'error'
+        );
+    } finally {
+        isSendingVerification.value = false;
+    }
+};
+
 // Privacy settings
 const isPrivateProfile = ref(!user.value.is_public); // Invert is_public
 const savingSettings = ref(false);
@@ -166,6 +193,42 @@ const savePrivacySettings = async () => {
                 <span class="locale-other">{{ currentLocale === 'lv' ? 'EN' : 'LV' }}</span>
             </button>
         </div>
+
+        <!-- ── E-pasta verifikācijas brīdinājums ── -->
+        <Transition name="verify-banner">
+            <div v-if="user.email_verified_at === null" class="verify-banner">
+                <div class="verify-banner-icon">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <div class="verify-banner-content">
+                    <strong>{{ currentLocale === 'lv' ? 'E-pasts nav apstiprināts!' : 'Email not verified!' }}</strong>
+                    <span>{{ currentLocale === 'lv'
+                        ? 'Apstipriniet savu e-pasta adresi, lai piekļūtu visām funkcijām.'
+                        : 'Verify your email address to unlock all features.' }}</span>
+                </div>
+                <div class="verify-banner-actions">
+                    <span v-if="verificationSent" class="verify-sent-msg">
+                        <i class="fas fa-check-circle"></i>
+                        {{ currentLocale === 'lv' ? 'E-pasts nosūtīts!' : 'Email sent!' }}
+                    </span>
+                    <button
+                        v-else
+                        @click="resendVerification"
+                        class="verify-banner-btn"
+                        :disabled="isSendingVerification"
+                    >
+                        <i :class="isSendingVerification ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+                        {{ isSendingVerification
+                        ? (currentLocale === 'lv' ? 'Sūta...' : 'Sending...')
+                        : (currentLocale === 'lv' ? 'Nosūtīt apstiprinājumu' : 'Send Verification') }}
+                    </button>
+                    <Link href="/profile/edit" class="verify-banner-link">
+                        <i class="fas fa-user-cog"></i>
+                        {{ currentLocale === 'lv' ? 'Konta iestatījumi' : 'Account Settings' }}
+                    </Link>
+                </div>
+            </div>
+        </Transition>
 
         <!-- Dashboard Stats -->
         <div class="dashboard-stats">
@@ -777,6 +840,123 @@ const savePrivacySettings = async () => {
 </template>
 
 <style scoped>
+/* ── E-pasta verifikācijas brīdinājums ─────────────────────────── */
+.verify-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1px solid #fcd34d;
+    border-left: 4px solid #f59e0b;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.verify-banner-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: #fef3c7;
+    border: 2px solid #fcd34d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d97706;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.verify-banner-content {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.verify-banner-content strong {
+    color: #92400e;
+    font-size: 0.9rem;
+}
+
+.verify-banner-content span {
+    color: #78350f;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.verify-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.verify-banner-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.verify-banner-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.verify-banner-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.verify-banner-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    background: rgba(245, 158, 11, 0.12);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.verify-banner-link:hover {
+    background: rgba(245, 158, 11, 0.22);
+    color: #78350f;
+}
+
+.verify-sent-msg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: #059669;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.verify-sent-msg i { color: #10b981; }
+
+/* Banner transition */
+.verify-banner-enter-active, .verify-banner-leave-active { transition: all 0.3s ease; }
+.verify-banner-enter-from, .verify-banner-leave-to { opacity: 0; transform: translateY(-8px); }
+
 /* ========== DASHBOARD CONTAINER ========== */
 .dashboard {
     min-height: 100vh;

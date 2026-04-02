@@ -30,7 +30,7 @@ class VerifyEmailMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Apstiprini savu e-pasta adresi - RalphMania',
+            subject: 'Apstipriniet savu e-pasta adresi - RalphMania',
         );
     }
 

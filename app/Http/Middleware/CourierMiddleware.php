@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Inertia\Inertia;
 
 class CourierMiddleware
 {
@@ -12,6 +13,7 @@ class CourierMiddleware
     {
         $user = $request->user();
 
+        // Nav autentificēts
         if (!$user) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Nepieciešama autentifikācija.'], 401);
@@ -19,23 +21,28 @@ class CourierMiddleware
             return redirect()->route('login');
         }
 
-        // Load role if not loaded
         $user->loadMissing('role');
 
-        // Check if user has courier role (role_id = 4, name = 'courier')
+        // Nav kurjera loma
         if (!$user->role || $user->role->name !== 'courier') {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Piekļuve liegta. Jums nav kurjera tiesību.'], 403);
             }
-            abort(403, 'Piekļuve liegta. Jums nav kurjera tiesību.');
+
+            return Inertia::render('Courier/Unauthorized', [
+                'returnUrl' => url()->previous() ?: '/login',
+            ])->toResponse($request)->setStatusCode(403);
         }
 
-        // Check if courier account is active
+        // Konts deaktivizēts
         if (!$user->is_active) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Jūsu konts ir deaktivizēts.'], 403);
             }
-            abort(403, 'Jūsu konts ir deaktivizēts.');
+
+            return Inertia::render('Courier/Unauthorized', [
+                'returnUrl' => url()->previous() ?: '/login',
+            ])->toResponse($request)->setStatusCode(403);
         }
 
         return $next($request);
