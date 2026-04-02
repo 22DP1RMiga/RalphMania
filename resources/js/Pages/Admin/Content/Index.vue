@@ -3,8 +3,30 @@ import { ref, watch, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     content: {
@@ -127,20 +149,35 @@ const getSecondaryTitle = (item) => {
 
 // Delete content
 const deleteContent = (id, title) => {
+    if (!can('content.delete')) {
+        openUnauthorized('content.delete');
+        return;
+    }
     if (confirm(t('admin.content.deleteConfirm', { name: title }))) {
         router.delete(`/admin/content/${id}`, {
             preserveScroll: true,
+            onSuccess: () => showToast(locale.value === 'lv' ? 'Saturs dzēsts!' : 'Content deleted!'),
+            onError: () => showToast(locale.value === 'lv' ? 'Kļūda dzēšot saturu' : 'Error deleting content', 'error'),
         });
     }
 };
 
 // Toggle publish status
 const togglePublish = (content) => {
+    if (!can('content.publish')) {
+        openUnauthorized('content.publish');
+        return;
+    }
     router.put(`/admin/content/${content.id}`, {
         ...content,
         is_published: !content.is_published,
     }, {
         preserveScroll: true,
+        onSuccess: () => showToast(
+            content.is_published
+                ? (locale.value === 'lv' ? 'Saturs pārcelts uz melnrakstu' : 'Content moved to draft')
+                : (locale.value === 'lv' ? 'Saturs publicēts!' : 'Content published!')
+        ),
     });
 };
 
@@ -166,15 +203,37 @@ const getTypeCount = (type) => {
     <AdminLayout>
         <template #title>{{ t('admin.content.index.title') }}</template>
 
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
+
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
                 <p class="header-subtitle">{{ t('admin.content.index.subtitle') }}</p>
             </div>
-            <Link href="/admin/content/create" class="btn btn-primary">
+            <Link
+                v-if="can('content.create')"
+                href="/admin/content/create"
+                class="btn btn-primary"
+            >
                 <i class="fas fa-plus"></i>
                 <span class="btn-text">{{ t('admin.content.index.newContent') }}</span>
             </Link>
+            <button
+                v-else
+                class="btn btn-primary"
+                :style="actionBtnStyle(false)"
+                :title="noPermTitle"
+                @click="openUnauthorized('content.create')"
+            >
+                <i class="fas fa-plus"></i>
+                <span class="btn-text">{{ t('admin.content.index.newContent') }}</span>
+            </button>
         </div>
 
         <!-- Quick Stats -->
@@ -275,8 +334,9 @@ const getTypeCount = (type) => {
                     <div class="content-footer">
                         <button
                             @click="togglePublish(item)"
-                            :class="['status-toggle', item.is_published ? 'published' : 'draft']"
-                            :title="item.is_published ? t('admin.content.clickToDraft') : t('admin.content.clickToPublish')"
+                            :class="['status-toggle', item.is_published ? 'published' : 'draft', actionBtnClass(can('content.publish'))]"
+                            :style="actionBtnStyle(can('content.publish'))"
+                            :title="!can('content.publish') ? noPermTitle : (item.is_published ? t('admin.content.clickToDraft') : t('admin.content.clickToPublish'))"
                         >
                             <i :class="item.is_published ? 'fas fa-check' : 'fas fa-edit'"></i>
                             {{ item.is_published ? t('admin.content.status.published') : t('admin.content.status.draft') }}
@@ -292,16 +352,21 @@ const getTypeCount = (type) => {
                                 <i class="fas fa-external-link-alt"></i>
                             </Link>
                             <Link
-                                :href="`/admin/content/${item.id}/edit`"
+                                :href="can('content.edit') ? `/admin/content/${item.id}/edit` : '#'"
                                 class="btn-icon btn-icon-edit"
-                                :title="t('admin.common.edit')"
+                                :class="actionBtnClass(can('content.edit'))"
+                                :style="actionBtnStyle(can('content.edit'))"
+                                :title="!can('content.edit') ? noPermTitle : t('admin.common.edit')"
+                                @click.prevent="!can('content.edit') && openUnauthorized('content.edit')"
                             >
                                 <i class="fas fa-edit"></i>
                             </Link>
                             <button
                                 @click="deleteContent(item.id, getTitle(item))"
                                 class="btn-icon btn-icon-delete"
-                                :title="t('admin.common.delete')"
+                                :class="actionBtnClass(can('content.delete'))"
+                                :style="actionBtnStyle(can('content.delete'))"
+                                :title="!can('content.delete') ? noPermTitle : t('admin.common.delete')"
                             >
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -314,10 +379,14 @@ const getTypeCount = (type) => {
             <div v-if="content.data.length === 0" class="empty-state">
                 <i class="fas fa-newspaper"></i>
                 <p>{{ t('admin.content.noContent') }}</p>
-                <Link href="/admin/content/create" class="btn btn-primary">
+                <Link v-if="can('content.create')" href="/admin/content/create" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
                     {{ t('admin.content.addFirstContent') }}
                 </Link>
+                <button v-else class="btn btn-primary" :style="actionBtnStyle(false)" :title="noPermTitle" @click="openUnauthorized('content.create')">
+                    <i class="fas fa-plus"></i>
+                    {{ t('admin.content.addFirstContent') }}
+                </button>
             </div>
         </div>
 
@@ -331,6 +400,14 @@ const getTypeCount = (type) => {
                 v-html="link.label"
             />
         </div>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -702,7 +779,7 @@ const getTypeCount = (type) => {
     color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(.btn-no-permission) {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     transform: translateY(-1px);
 }
@@ -734,7 +811,7 @@ const getTypeCount = (type) => {
     color: #2563eb;
 }
 
-.btn-icon-view:hover {
+.btn-icon-view:hover:not(.btn-no-permission) {
     background: #2563eb;
     color: white;
 }
@@ -744,7 +821,7 @@ const getTypeCount = (type) => {
     color: #d97706;
 }
 
-.btn-icon-edit:hover {
+.btn-icon-edit:hover:not(.btn-no-permission) {
     background: #d97706;
     color: white;
 }
@@ -754,9 +831,25 @@ const getTypeCount = (type) => {
     color: #dc2626;
 }
 
-.btn-icon-delete:hover {
+.btn-icon-delete:hover:not(.btn-no-permission) {
     background: #dc2626;
     color: white;
+}
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* Responsive */

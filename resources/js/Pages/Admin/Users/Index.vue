@@ -3,8 +3,34 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
+import axios from 'axios';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
+
+// Galvenā super admina e-pasts — šim lietotājam nevar rādīt dzēšanas/bloķēšanas pogas
+const SUPER_ADMIN_EMAIL = 'ralphmania.roltonslv@gmail.com';
 
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
@@ -117,30 +143,46 @@ const closeModals = () => {
     errorMessage.value = '';
 };
 
-// Send email (opens default email client)
-const sendEmail = () => {
+// Send email via backend (POST, nevis mailto)
+const isSendingEmail = ref(false);
+const sendEmail = async () => {
     if (!emailForm.value.subject.trim()) {
         errorMessage.value = t('admin.users.emailSubjectRequired');
         return;
     }
-    const mailtoUrl = `mailto:${selectedUser.value.email}?subject=${encodeURIComponent(emailForm.value.subject)}&body=${encodeURIComponent(emailForm.value.message)}`;
-    window.open(mailtoUrl, '_blank');
-    successMessage.value = t('admin.users.emailOpened');
-    closeModals();
-    setTimeout(() => successMessage.value = '', 3000);
+    isSendingEmail.value = true;
+    errorMessage.value = '';
+    try {
+        await axios.post('/admin/users/send-email', {
+            user_id: selectedUser.value.id,
+            subject: emailForm.value.subject,
+            message: emailForm.value.message,
+        });
+        closeModals();
+        showToast(locale.value === 'lv' ? 'E-pasts veiksmīgi nosūtīts!' : 'Email sent successfully!');
+    } catch (err) {
+        errorMessage.value = err.response?.data?.message
+            || (locale.value === 'lv' ? 'Kļūda sūtot e-pastu' : 'Error sending email');
+    } finally {
+        isSendingEmail.value = false;
+    }
 };
 
 // Toggle user active status (ban/unban)
 const toggleActive = () => {
+    if (!can('users.ban')) {
+        openUnauthorized('users.ban');
+        return;
+    }
     isLoading.value = true;
     router.put(`/admin/users/${selectedUser.value.id}/toggle-active`, {}, {
         preserveScroll: true,
         onSuccess: () => {
-            successMessage.value = selectedUser.value.is_active
+            const msg = selectedUser.value.is_active
                 ? t('admin.users.userBanned')
                 : t('admin.users.userUnbanned');
             closeModals();
-            setTimeout(() => successMessage.value = '', 3000);
+            showToast(msg);
         },
         onError: (errors) => {
             errorMessage.value = Object.values(errors)[0] || t('admin.users.banError');
@@ -151,14 +193,18 @@ const toggleActive = () => {
 
 // Quick toggle (without modal)
 const quickToggleActive = (user) => {
+    if (!can('users.ban')) {
+        openUnauthorized('users.ban');
+        return;
+    }
     if (confirm(user.is_active ? t('admin.users.confirmBan') : t('admin.users.confirmUnban'))) {
         router.put(`/admin/users/${user.id}/toggle-active`, {}, {
             preserveScroll: true,
             onSuccess: () => {
-                successMessage.value = user.is_active
+                showToast(user.is_active
                     ? t('admin.users.userBanned')
-                    : t('admin.users.userUnbanned');
-                setTimeout(() => successMessage.value = '', 3000);
+                    : t('admin.users.userUnbanned')
+                );
             },
         });
     }
@@ -166,13 +212,16 @@ const quickToggleActive = (user) => {
 
 // Delete user
 const deleteUser = () => {
+    if (!can('users.delete')) {
+        openUnauthorized('users.delete');
+        return;
+    }
     isLoading.value = true;
     router.delete(`/admin/users/${selectedUser.value.id}`, {
         preserveScroll: true,
         onSuccess: () => {
-            successMessage.value = t('admin.users.userDeleted');
             closeModals();
-            setTimeout(() => successMessage.value = '', 3000);
+            showToast(t('admin.users.userDeleted'));
         },
         onError: (errors) => {
             errorMessage.value = Object.values(errors)[0] || t('admin.users.deleteError');
@@ -181,15 +230,12 @@ const deleteUser = () => {
     });
 };
 
-// Check if can modify user
+// Check if can modify user (ban/delete)
 const canModifyUser = (user) => {
     // Cannot modify self
     if (user.id === currentUser.value?.id) return false;
-    // Cannot modify super admin
-    if (user.role?.name === 'administrator') {
-        // Check if user is super admin (would need additional check from backend)
-        return true; // For now allow, backend will prevent
-    }
+    // Cannot modify super admin by e-mail
+    if (user.email === SUPER_ADMIN_EMAIL) return false;
     return true;
 };
 </script>
@@ -200,13 +246,13 @@ const canModifyUser = (user) => {
     <AdminLayout>
         <template #title>{{ t('admin.users.index.title') }}</template>
 
-        <!-- Success/Error Messages -->
-        <Transition name="slide-down">
-            <div v-if="successMessage" class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                {{ successMessage }}
-            </div>
-        </Transition>
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
 
         <!-- Stats Cards -->
         <div class="stats-row">
@@ -338,7 +384,14 @@ const canModifyUser = (user) => {
                             <Link :href="`/admin/users/${user.id}`" class="btn-icon btn-view" :title="t('admin.common.view')">
                                 <i class="fas fa-eye"></i>
                             </Link>
-                            <Link :href="`/admin/users/${user.id}/edit`" class="btn-icon btn-edit" :title="t('admin.common.edit')">
+                            <Link
+                                :href="can('users.edit') ? `/admin/users/${user.id}/edit` : '#'"
+                                class="btn-icon btn-edit"
+                                :class="actionBtnClass(can('users.edit'))"
+                                :style="actionBtnStyle(can('users.edit'))"
+                                :title="!can('users.edit') ? noPermTitle : t('admin.common.edit')"
+                                @click.prevent="!can('users.edit') && openUnauthorized('users.edit')"
+                            >
                                 <i class="fas fa-edit"></i>
                             </Link>
                             <button @click="openEmailModal(user)" class="btn-icon btn-email" :title="t('admin.users.sendEmail')">
@@ -346,17 +399,19 @@ const canModifyUser = (user) => {
                             </button>
                             <button
                                 v-if="canModifyUser(user)"
-                                @click="openBanModal(user)"
-                                :class="['btn-icon', user.is_active ? 'btn-ban' : 'btn-unban']"
-                                :title="user.is_active ? t('admin.users.ban') : t('admin.users.unban')"
+                                @click="can('users.ban') ? openBanModal(user) : openUnauthorized('users.ban')"
+                                :class="['btn-icon', user.is_active ? 'btn-ban' : 'btn-unban', actionBtnClass(can('users.ban'))]"
+                                :style="actionBtnStyle(can('users.ban'))"
+                                :title="!can('users.ban') ? noPermTitle : (user.is_active ? t('admin.users.ban') : t('admin.users.unban'))"
                             >
                                 <i :class="user.is_active ? 'fas fa-ban' : 'fas fa-unlock'"></i>
                             </button>
                             <button
                                 v-if="canModifyUser(user)"
-                                @click="openDeleteModal(user)"
-                                class="btn-icon btn-delete"
-                                :title="t('admin.common.delete')"
+                                @click="can('users.delete') ? openDeleteModal(user) : openUnauthorized('users.delete')"
+                                :class="['btn-icon', 'btn-delete', actionBtnClass(can('users.delete'))]"
+                                :style="actionBtnStyle(can('users.delete'))"
+                                :title="!can('users.delete') ? noPermTitle : t('admin.common.delete')"
                             >
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -410,7 +465,13 @@ const canModifyUser = (user) => {
                             <i class="fas fa-eye"></i>
                             <span>{{ t('admin.common.view') }}</span>
                         </Link>
-                        <Link :href="`/admin/users/${user.id}/edit`" class="btn btn-action btn-edit">
+                        <Link
+                            :href="can('users.edit') ? `/admin/users/${user.id}/edit` : '#'"
+                            class="btn btn-action btn-edit"
+                            :class="actionBtnClass(can('users.edit'))"
+                            :style="actionBtnStyle(can('users.edit'))"
+                            @click.prevent="!can('users.edit') && openUnauthorized('users.edit')"
+                        >
                             <i class="fas fa-edit"></i>
                             <span>{{ t('admin.common.edit') }}</span>
                         </Link>
@@ -420,16 +481,18 @@ const canModifyUser = (user) => {
                         </button>
                         <button
                             v-if="canModifyUser(user)"
-                            @click="openBanModal(user)"
-                            :class="['btn', 'btn-action', user.is_active ? 'btn-ban' : 'btn-unban']"
+                            @click="can('users.ban') ? openBanModal(user) : openUnauthorized('users.ban')"
+                            :class="['btn', 'btn-action', user.is_active ? 'btn-ban' : 'btn-unban', actionBtnClass(can('users.ban'))]"
+                            :style="actionBtnStyle(can('users.ban'))"
                         >
                             <i :class="user.is_active ? 'fas fa-ban' : 'fas fa-unlock'"></i>
                             <span>{{ user.is_active ? t('admin.users.ban') : t('admin.users.unban') }}</span>
                         </button>
                         <button
                             v-if="canModifyUser(user)"
-                            @click="openDeleteModal(user)"
-                            class="btn btn-action btn-delete"
+                            @click="can('users.delete') ? openDeleteModal(user) : openUnauthorized('users.delete')"
+                            :class="['btn', 'btn-action', 'btn-delete', actionBtnClass(can('users.delete'))]"
+                            :style="actionBtnStyle(can('users.delete'))"
                         >
                             <i class="fas fa-trash"></i>
                             <span>{{ t('admin.common.delete') }}</span>
@@ -489,9 +552,11 @@ const canModifyUser = (user) => {
                     </div>
                     <div class="modal-footer">
                         <button @click="closeModals" class="btn btn-secondary">{{ t('admin.common.cancel') }}</button>
-                        <button @click="sendEmail" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i>
-                            {{ t('admin.users.openEmailClient') }}
+                        <button @click="sendEmail" class="btn btn-primary" :disabled="isSendingEmail">
+                            <i :class="isSendingEmail ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+                            {{ isSendingEmail
+                            ? (locale === 'lv' ? 'Sūta...' : 'Sending...')
+                            : (locale === 'lv' ? 'Nosūtīt' : 'Send') }}
                         </button>
                     </div>
                 </div>
@@ -597,6 +662,14 @@ const canModifyUser = (user) => {
                 </div>
             </div>
         </Transition>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -674,7 +747,7 @@ const canModifyUser = (user) => {
 .status-toggle { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border: none; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .status-toggle.active { background: #d1fae5; color: #065f46; }
 .status-toggle.inactive { background: #fee2e2; color: #991b1b; }
-.status-toggle:hover:not(:disabled) { transform: scale(1.05); }
+.status-toggle:hover:not(:disabled):not(.btn-no-permission) { transform: scale(1.05); }
 .status-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Action Buttons */
@@ -682,17 +755,33 @@ const canModifyUser = (user) => {
 .btn-icon { width: 2rem; height: 2rem; border: none; border-radius: 0.375rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; text-decoration: none; font-size: 0.8rem; }
 .btn-icon:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-view { background: #dbeafe; color: #2563eb; }
-.btn-view:hover { background: #2563eb; color: white; }
+.btn-view:hover:not(.btn-no-permission) { background: #2563eb; color: white; }
 .btn-edit { background: #fef3c7; color: #d97706; }
-.btn-edit:hover { background: #d97706; color: white; }
+.btn-edit:hover:not(.btn-no-permission) { background: #d97706; color: white; }
 .btn-email { background: #e0e7ff; color: #4f46e5; }
 .btn-email:hover { background: #4f46e5; color: white; }
 .btn-ban { background: #fed7aa; color: #c2410c; }
-.btn-ban:hover { background: #c2410c; color: white; }
+.btn-ban:hover:not(.btn-no-permission) { background: #c2410c; color: white; }
 .btn-unban { background: #d1fae5; color: #059669; }
-.btn-unban:hover { background: #059669; color: white; }
+.btn-unban:hover:not(.btn-no-permission) { background: #059669; color: white; }
 .btn-delete { background: #fee2e2; color: #dc2626; }
-.btn-delete:hover:not(:disabled) { background: #dc2626; color: white; }
+.btn-delete:hover:not(:disabled):not(.btn-no-permission) { background: #dc2626; color: white; }
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
 
 /* Mobile Cards - Hidden by default */
 .mobile-cards { display: none; }
@@ -709,7 +798,7 @@ const canModifyUser = (user) => {
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; font-size: 0.875rem; }
 .btn-primary { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; }
-.btn-primary:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(220,38,38,0.3); transform: translateY(-1px); }
+.btn-primary:hover:not(:disabled):not(.btn-no-permission) { box-shadow: 0 4px 12px rgba(220,38,38,0.3); transform: translateY(-1px); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-secondary { background: #f3f4f6; color: #374151; }
 .btn-secondary:hover { background: #e5e7eb; }

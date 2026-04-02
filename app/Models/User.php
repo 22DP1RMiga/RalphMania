@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
+use App\Notifications\VerifyEmailNotification;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -302,5 +303,14 @@ class User extends Authenticatable implements MustVerifyEmail
         if ($this->administrator) {
             $this->administrator->updateLastLogin();
         }
+    }
+
+    /**
+     * Izmanto custom VerifyEmailNotification ar verify-email.blade.php veidni,
+     * nevis Laravel noklusējuma teksta e-pastu.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification());
     }
 }

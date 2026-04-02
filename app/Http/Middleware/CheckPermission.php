@@ -5,42 +5,48 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Inertia\Inertia;
 
 class CheckPermission
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Ja lietotājam nav vajadzīgās atļaujas, atgriež Inertia lapu
+     * Admin/Unauthorized — nevis abort(403).
+     * Lapa pielāgojas pie locale un izskatās kā UnauthorizedModal.
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         $user = $request->user();
 
-        // Check if user is authenticated
         if (!$user) {
             return redirect()->route('login');
         }
 
-        // Super admins have all permissions
+        // Super admin vienmēr cauri
         if ($user->is_super_admin) {
             return $next($request);
         }
 
-        // Check if user is admin and has specific permission
+        // Pārbauda atļauju
         if ($user->administrator) {
             $permissions = $user->administrator->permissions ?? [];
-
             if (in_array($permission, $permissions)) {
                 return $next($request);
             }
         }
 
-        // Permission denied
+        // JSON / API pieprasījumi
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json([
+                'message'    => 'Forbidden',
+                'permission' => $permission,
+            ], 403);
         }
 
-        abort(403, 'You do not have permission to access this resource.');
+        // Inertia lapa ar 403 HTTP statusu
+        return Inertia::render('Admin/Unauthorized', [
+            'requiredPermission' => $permission,
+            'returnUrl'          => url()->previous() ?: '/admin/dashboard',
+        ])->toResponse($request)->setStatusCode(403);
     }
 }

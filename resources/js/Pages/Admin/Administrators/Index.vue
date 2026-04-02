@@ -16,7 +16,7 @@ const props = defineProps({
     permissionGroups: Object,
     availableUsers: Array,
 });
-
+cd
 // Same permissions config as Dashboard.vue
 const permissionsConfig = computed(() => ({
     [t('admin.permissions.products')]: [

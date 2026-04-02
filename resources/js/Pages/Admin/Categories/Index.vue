@@ -3,8 +3,30 @@ import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
+
+// ── Toast helper ─────────────────────────────────────────────────
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     categories: {
@@ -44,6 +66,10 @@ const getCategoryDescription = (category) => {
 
 // Open create modal
 const openCreateModal = () => {
+    if (!can('categories.create')) {
+        openUnauthorized('categories.create');
+        return;
+    }
     isEditing.value = false;
     editingCategory.value = null;
     form.value = {
@@ -62,6 +88,10 @@ const openCreateModal = () => {
 
 // Open edit modal
 const openEditModal = (category) => {
+    if (!can('categories.edit')) {
+        openUnauthorized('categories.edit');
+        return;
+    }
     isEditing.value = true;
     editingCategory.value = category;
     form.value = {
@@ -107,6 +137,11 @@ const saveCategory = () => {
         preserveScroll: true,
         onSuccess: () => {
             closeModal();
+            showToast(
+                isEditing.value
+                    ? (locale.value === 'lv' ? 'Kategorija atjaunināta!' : 'Category updated!')
+                    : (locale.value === 'lv' ? 'Kategorija pievienota!' : 'Category added!')
+            );
         },
         onError: (errs) => {
             errors.value = errs;
@@ -119,10 +154,16 @@ const saveCategory = () => {
 
 // Delete category
 const deleteCategory = (category) => {
+    if (!can('categories.delete')) {
+        openUnauthorized('categories.delete');
+        return;
+    }
     const name = getCategoryName(category);
     if (confirm(t('admin.categories.deleteConfirm', { name }))) {
         router.delete(`/admin/categories/${category.id}`, {
             preserveScroll: true,
+            onSuccess: () => showToast(locale.value === 'lv' ? 'Kategorija dzēsta!' : 'Category deleted!'),
+            onError: () => showToast(locale.value === 'lv' ? 'Nevar dzēst — kategorijā ir produkti' : 'Cannot delete — category has products', 'error'),
         });
     }
 };
@@ -160,12 +201,26 @@ const modalTitle = computed(() => {
     <AdminLayout>
         <template #title>{{ t('admin.categories.index.title') }}</template>
 
+        <!-- Toast Notification -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
+
         <!-- Header -->
         <div class="page-header">
             <div class="header-info">
                 <p class="header-subtitle">{{ t('admin.categories.index.subtitle') }}</p>
             </div>
-            <button @click="openCreateModal" class="btn btn-primary">
+            <button
+                @click="openCreateModal"
+                class="btn btn-primary"
+                :class="actionBtnClass(can('categories.create'))"
+                :style="actionBtnStyle(can('categories.create'))"
+                :title="!can('categories.create') ? noPermTitle : ''"
+            >
                 <i class="fas fa-plus"></i>
                 {{ t('admin.categories.index.newCategory') }}
             </button>
@@ -185,14 +240,18 @@ const modalTitle = computed(() => {
                         <button
                             @click="openEditModal(category)"
                             class="btn-icon btn-icon-edit"
-                            :title="t('admin.common.edit')"
+                            :class="actionBtnClass(can('categories.edit'))"
+                            :style="actionBtnStyle(can('categories.edit'))"
+                            :title="!can('categories.edit') ? noPermTitle : t('admin.common.edit')"
                         >
                             <i class="fas fa-edit"></i>
                         </button>
                         <button
                             @click="deleteCategory(category)"
                             class="btn-icon btn-icon-delete"
-                            :title="t('admin.common.delete')"
+                            :class="actionBtnClass(can('categories.delete'))"
+                            :style="actionBtnStyle(can('categories.delete'))"
+                            :title="!can('categories.delete') ? noPermTitle : t('admin.common.delete')"
                         >
                             <i class="fas fa-trash"></i>
                         </button>
@@ -232,14 +291,18 @@ const modalTitle = computed(() => {
                                 <button
                                     @click="openEditModal(sub)"
                                     class="btn-icon-sm"
-                                    :title="t('admin.common.edit')"
+                                    :class="actionBtnClass(can('categories.edit'))"
+                                    :style="actionBtnStyle(can('categories.edit'))"
+                                    :title="!can('categories.edit') ? noPermTitle : t('admin.common.edit')"
                                 >
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button
                                     @click="deleteCategory(sub)"
                                     class="btn-icon-sm btn-icon-sm-delete"
-                                    :title="t('admin.common.delete')"
+                                    :class="actionBtnClass(can('categories.delete'))"
+                                    :style="actionBtnStyle(can('categories.delete'))"
+                                    :title="!can('categories.delete') ? noPermTitle : t('admin.common.delete')"
                                 >
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -396,6 +459,14 @@ const modalTitle = computed(() => {
                 </div>
             </div>
         </Transition>
+
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -572,16 +643,6 @@ const modalTitle = computed(() => {
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-}
-
-.btn-icon-sm:hover {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-.btn-icon-sm-delete:hover {
-    background: #fee2e2;
-    color: #dc2626;
 }
 
 /* Empty State */
@@ -793,10 +854,10 @@ const modalTitle = computed(() => {
 
 .btn-primary {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: white;
+    color: black;
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled):not(.btn-no-permission) {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     transform: translateY(-1px);
 }
@@ -832,7 +893,7 @@ const modalTitle = computed(() => {
     color: #d97706;
 }
 
-.btn-icon-edit:hover {
+.btn-icon-edit:hover:not(.btn-no-permission) {
     background: #d97706;
     color: white;
 }
@@ -842,9 +903,36 @@ const modalTitle = computed(() => {
     color: #dc2626;
 }
 
-.btn-icon-delete:hover {
+.btn-icon-delete:hover:not(.btn-no-permission) {
     background: #dc2626;
     color: white;
+}
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* btn-icon-sm hover fixes */
+.btn-icon-sm:hover:not(.btn-no-permission) {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-icon-sm-delete:hover:not(.btn-no-permission) {
+    background: #fee2e2;
+    color: #dc2626;
 }
 
 /* Modal Animation */

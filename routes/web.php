@@ -295,6 +295,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/{id}', [AdminUserController::class, 'update'])->name('update');
         Route::put('/{id}/toggle-active', [AdminUserController::class, 'toggleActive'])->name('toggle-active');
         Route::put('/{id}/reset-password', [AdminUserController::class, 'resetPassword'])->name('reset-password');
+        Route::post('/send-email', [AdminUserController::class, 'sendEmail'])->name('send-email');
         Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
 

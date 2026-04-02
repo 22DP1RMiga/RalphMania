@@ -4,9 +4,23 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 import axios from 'axios';
 
 const { locale } = useI18n();
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
 
 const props = defineProps({
     couriers:         { type: Object,  default: () => ({ data: [] }) },
@@ -30,6 +44,10 @@ const isSubmitting   = ref(false);
 const newCourier = ref({ user_id: null, full_name: '', phone: '', vehicle_type: '', delivery_area: '', hired_at: '' });
 
 const submitAddCourier = () => {
+    if (!can('couriers.create') && !can('users.create')) {
+        openUnauthorized('users.create');
+        return;
+    }
     isSubmitting.value = true;
     router.post('/admin/couriers', newCourier.value, {
         onSuccess: () => { showAddModal.value = false; showToast('Kurjers pievienots!'); },
@@ -44,6 +62,10 @@ const assignData = ref({ courier_id: null, order_id: null, notes: '' });
 const assigning = ref(false);
 
 const openAssignModal = (courierId = null) => {
+    if (!can('orders.edit')) {
+        openUnauthorized('orders.edit');
+        return;
+    }
     assignData.value = { courier_id: courierId, order_id: null, notes: '' };
     showAssignModal.value = true;
 };
@@ -64,6 +86,10 @@ const submitAssign = async () => {
 
 // ─── TOGGLE ACTIVE ────────────────────────────────────────────────────────────
 const toggleCourier = async (courierId) => {
+    if (!can('users.ban')) {
+        openUnauthorized('users.ban');
+        return;
+    }
     try {
         const { data } = await axios.put(`/admin/couriers/${courierId}/toggle-active`);
         showToast(data.message);
@@ -75,6 +101,13 @@ const toggleCourier = async (courierId) => {
 
 // ─── REMOVE COURIER ───────────────────────────────────────────────────────────
 const confirmRemove = ref(null);
+const openConfirmRemove = (courierId) => {
+    if (!can('users.delete')) {
+        openUnauthorized('users.delete');
+        return;
+    }
+    confirmRemove.value = courierId;
+};
 const removeConfirmed = () => {
     router.delete(`/admin/couriers/${confirmRemove.value}`, {
         onSuccess: () => { confirmRemove.value = null; showToast('Kurjers noņemts!'); },
@@ -88,6 +121,10 @@ const isEditing      = ref(false);
 const editCourier = ref({ id: null, full_name: '', phone: '', vehicle_type: '', delivery_area: '', hired_at: '', username: '' });
 
 const openEditModal = (c) => {
+    if (!can('users.edit')) {
+        openUnauthorized('users.edit');
+        return;
+    }
     editCourier.value = {
         id:            c.id,
         full_name:     c.full_name,
@@ -134,11 +171,23 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                     <p class="page-subtitle">{{ locale === 'lv' ? 'Kurjeru pārvaldība un pasūtījumu piešķiršana' : 'Manage couriers and order assignments' }}</p>
                 </div>
                 <div class="header-actions">
-                    <button @click="openAssignModal()" class="btn btn-outline">
+                    <button
+                        @click="openAssignModal()"
+                        class="btn btn-outline"
+                        :class="actionBtnClass(can('orders.edit'))"
+                        :style="actionBtnStyle(can('orders.edit'))"
+                        :title="!can('orders.edit') ? noPermTitle : ''"
+                    >
                         <i class="fas fa-link"></i>
                         {{ locale === 'lv' ? 'Piešķirt pasūtījumu' : 'Assign Order' }}
                     </button>
-                    <button @click="showAddModal = true" class="btn btn-primary">
+                    <button
+                        @click="can('users.create') ? (showAddModal = true) : openUnauthorized('users.create')"
+                        class="btn btn-primary"
+                        :class="actionBtnClass(can('users.create'))"
+                        :style="actionBtnStyle(can('users.create'))"
+                        :title="!can('users.create') ? noPermTitle : ''"
+                    >
                         <i class="fas fa-plus"></i>
                         {{ locale === 'lv' ? 'Pievienot kurjeru' : 'Add Courier' }}
                     </button>
@@ -212,12 +261,36 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                         <td>
                             <div class="action-btns">
                                 <Link :href="`/admin/couriers/${c.id}`" class="icon-btn" title="Skatīt"><i class="fas fa-eye"></i></Link>
-                                <button @click="openEditModal(c)" class="icon-btn" title="Rediģēt"><i class="fas fa-edit"></i></button>
-                                <button @click="openAssignModal(c.id)" class="icon-btn" title="Piešķirt pasūtījumu"><i class="fas fa-link"></i></button>
-                                <button @click="toggleCourier(c.id)" class="icon-btn" :title="c.is_active ? 'Deaktivizēt' : 'Aktivizēt'">
+                                <button
+                                    @click="openEditModal(c)"
+                                    class="icon-btn"
+                                    :class="actionBtnClass(can('users.edit'))"
+                                    :style="actionBtnStyle(can('users.edit'))"
+                                    :title="!can('users.edit') ? noPermTitle : 'Rediģēt'"
+                                ><i class="fas fa-edit"></i></button>
+                                <button
+                                    @click="openAssignModal(c.id)"
+                                    class="icon-btn"
+                                    :class="actionBtnClass(can('orders.edit'))"
+                                    :style="actionBtnStyle(can('orders.edit'))"
+                                    :title="!can('orders.edit') ? noPermTitle : 'Piešķirt pasūtījumu'"
+                                ><i class="fas fa-link"></i></button>
+                                <button
+                                    @click="toggleCourier(c.id)"
+                                    class="icon-btn"
+                                    :class="actionBtnClass(can('users.ban'))"
+                                    :style="actionBtnStyle(can('users.ban'))"
+                                    :title="!can('users.ban') ? noPermTitle : (c.is_active ? 'Deaktivizēt' : 'Aktivizēt')"
+                                >
                                     <i :class="c.is_active ? 'fas fa-pause-circle' : 'fas fa-play-circle'"></i>
                                 </button>
-                                <button @click="confirmRemove = c.id" class="icon-btn danger" title="Noņemt"><i class="fas fa-trash"></i></button>
+                                <button
+                                    @click="openConfirmRemove(c.id)"
+                                    class="icon-btn danger"
+                                    :class="actionBtnClass(can('users.delete'))"
+                                    :style="actionBtnStyle(can('users.delete'))"
+                                    :title="!can('users.delete') ? noPermTitle : 'Noņemt'"
+                                ><i class="fas fa-trash"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -391,6 +464,13 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                 </div>
             </div>
         </div>
+        <!-- UnauthorizedModal -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -442,7 +522,7 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
 
 .action-btns { display: flex; gap: 6px; }
 .icon-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #6b7280; text-decoration: none; transition: all 0.15s; }
-.icon-btn:hover { background: #f9fafb; color: #1f2937; border-color: #d1d5db; }
+.icon-btn:hover:not(.btn-no-permission) { background: #f9fafb; color: #1f2937; border-color: #d1d5db; }
 .icon-btn.danger:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
 
 .empty-state { text-align: center; padding: 60px; color: #9ca3af; }
@@ -452,12 +532,28 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.15s; }
 .btn-primary { background: #dc2626; color: white; }
-.btn-primary:hover:not(:disabled) { background: #b91c1c; }
+.btn-primary:hover:not(:disabled):not(.btn-no-permission) { background: #b91c1c; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-outline { background: white; color: #374151; border: 1px solid #d1d5db; }
-.btn-outline:hover { background: #f3f4f6; }
+.btn-outline:hover:not(.btn-no-permission) { background: #f3f4f6; }
 .btn-danger { background: #dc2626; color: white; }
-.btn-danger:hover { background: #b91c1c; }
+.btn-danger:hover:not(.btn-no-permission) { background: #b91c1c; }
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; }

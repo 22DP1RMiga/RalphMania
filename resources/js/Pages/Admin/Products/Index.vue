@@ -4,9 +4,23 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
+import { useAdminPermission } from '@/Composables/useAdminPermission.js';
+import UnauthorizedModal from '@/Components/UnauthorizedModal.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
 const page = usePage();
+
+// ── Atļauju sistēma ───────────────────────────────────────────────
+const {
+    can,
+    showUnauthorized,
+    requiredPermission,
+    openUnauthorized,
+    closeUnauthorized,
+    actionBtnClass,
+    actionBtnStyle,
+    noPermTitle,
+} = useAdminPermission();
 
 const props = defineProps({
     products: { type: Object, default: () => ({ data: [], links: [], meta: {} }) },
@@ -84,6 +98,11 @@ const hasFilters = computed(() => search.value || categoryFilter.value || status
 
 // Open delete modal
 const openDeleteModal = (product) => {
+    // Pārbauda products.delete atļauju
+    if (!can('products.delete')) {
+        openUnauthorized('products.delete');
+        return;
+    }
     productToDelete.value = product;
     showDeleteModal.value = true;
 };
@@ -117,6 +136,11 @@ const confirmDelete = () => {
 
 // Toggle product status
 const toggleStatus = (product) => {
+    // Pārbauda products.edit atļauju
+    if (!can('products.edit')) {
+        openUnauthorized('products.edit');
+        return;
+    }
     router.put(`/admin/products/${product.id}/toggle-status`, {}, {
         preserveScroll: true,
         onSuccess: () => {
@@ -182,10 +206,25 @@ const getProductImage = (product) => {
             <div class="header-info">
                 <p class="header-subtitle">{{ t('admin.products.index.subtitle') }}</p>
             </div>
-            <Link href="/admin/products/create" class="btn btn-primary">
+            <!-- Poga rāda tikai ja ir products.create atļauja, citādi pelēka -->
+            <Link
+                v-if="can('products.create')"
+                href="/admin/products/create"
+                class="btn btn-primary"
+            >
                 <i class="fas fa-plus"></i>
                 <span>{{ t('admin.products.index.newProduct') }}</span>
             </Link>
+            <button
+                v-else
+                class="btn btn-primary btn-no-permission"
+                :style="actionBtnStyle(false)"
+                :title="noPermTitle"
+                @click="openUnauthorized('products.create')"
+            >
+                <i class="fas fa-plus"></i>
+                <span>{{ t('admin.products.index.newProduct') }}</span>
+            </button>
         </div>
 
         <!-- Filters -->
@@ -260,20 +299,42 @@ const getProductImage = (product) => {
                             </span>
                     </td>
                     <td>
-                        <button @click="toggleStatus(product)" :class="['status-toggle', product.is_active ? 'active' : 'inactive']">
+                        <!-- Status toggle — prasa products.edit -->
+                        <button
+                            @click="toggleStatus(product)"
+                            :class="['status-toggle', product.is_active ? 'active' : 'inactive', actionBtnClass(can('products.edit'))]"
+                            :style="actionBtnStyle(can('products.edit'))"
+                            :title="!can('products.edit') ? noPermTitle : ''"
+                        >
                             <i :class="product.is_active ? 'fas fa-check' : 'fas fa-times'"></i>
                             {{ product.is_active ? t('admin.products.status.active') : t('admin.products.status.inactive') }}
                         </button>
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <!-- Skatīt — vienmēr pieejams -->
                             <Link :href="`/shop/product/${product.slug}`" class="btn-icon btn-view" :title="t('admin.common.view')" target="_blank">
                                 <i class="fas fa-eye"></i>
                             </Link>
-                            <Link :href="`/admin/products/${product.id}/edit`" class="btn-icon btn-edit" :title="t('admin.common.edit')">
+                            <!-- Rediģēt — prasa products.edit -->
+                            <Link
+                                :href="can('products.edit') ? `/admin/products/${product.id}/edit` : '#'"
+                                class="btn-icon btn-edit"
+                                :class="actionBtnClass(can('products.edit'))"
+                                :style="actionBtnStyle(can('products.edit'))"
+                                :title="can('products.edit') ? t('admin.common.edit') : noPermTitle"
+                                @click.prevent="!can('products.edit') && openUnauthorized('products.edit')"
+                            >
                                 <i class="fas fa-edit"></i>
                             </Link>
-                            <button @click="openDeleteModal(product)" class="btn-icon btn-delete" :title="t('admin.common.delete')">
+                            <!-- Dzēst — prasa products.delete -->
+                            <button
+                                @click="openDeleteModal(product)"
+                                class="btn-icon btn-delete"
+                                :class="actionBtnClass(can('products.delete'))"
+                                :style="actionBtnStyle(can('products.delete'))"
+                                :title="can('products.delete') ? t('admin.common.delete') : noPermTitle"
+                            >
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -341,11 +402,24 @@ const getProductImage = (product) => {
                         <i class="fas fa-eye"></i>
                         <span>{{ t('admin.common.view') }}</span>
                     </Link>
-                    <Link :href="`/admin/products/${product.id}/edit`" class="btn btn-action btn-edit">
+                    <!-- Rediģēt — prasa products.edit -->
+                    <Link
+                        :href="can('products.edit') ? `/admin/products/${product.id}/edit` : '#'"
+                        class="btn btn-action btn-edit"
+                        :class="actionBtnClass(can('products.edit'))"
+                        :style="actionBtnStyle(can('products.edit'))"
+                        @click.prevent="!can('products.edit') && openUnauthorized('products.edit')"
+                    >
                         <i class="fas fa-edit"></i>
                         <span>{{ t('admin.common.edit') }}</span>
                     </Link>
-                    <button @click="openDeleteModal(product)" class="btn btn-action btn-delete">
+                    <!-- Dzēst — prasa products.delete -->
+                    <button
+                        @click="openDeleteModal(product)"
+                        class="btn btn-action btn-delete"
+                        :class="actionBtnClass(can('products.delete'))"
+                        :style="actionBtnStyle(can('products.delete'))"
+                    >
                         <i class="fas fa-trash"></i>
                         <span>{{ t('admin.common.delete') }}</span>
                     </button>
@@ -398,6 +472,14 @@ const getProductImage = (product) => {
                 </div>
             </Transition>
         </Teleport>
+
+        <!-- UnauthorizedModal — parādās kad darbība tiek bloķēta -->
+        <UnauthorizedModal
+            :show="showUnauthorized"
+            :required-permission="requiredPermission"
+            @close="closeUnauthorized"
+        />
+
     </AdminLayout>
 </template>
 
@@ -455,7 +537,7 @@ const getProductImage = (product) => {
 .status-toggle { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border: none; border-radius: 1rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .status-toggle.active { background: #d1fae5; color: #065f46; }
 .status-toggle.inactive { background: #f3f4f6; color: #6b7280; }
-.status-toggle:hover { transform: scale(1.05); }
+.status-toggle:hover:not(.btn-no-permission) { transform: scale(1.05); }
 
 /* Action Buttons */
 .action-buttons { display: flex; gap: 0.5rem; }
@@ -463,9 +545,22 @@ const getProductImage = (product) => {
 .btn-view { background: #dbeafe; color: #2563eb; }
 .btn-view:hover { background: #2563eb; color: white; }
 .btn-edit { background: #fef3c7; color: #d97706; }
-.btn-edit:hover { background: #d97706; color: white; }
+.btn-edit:hover:not(.btn-no-permission) { background: #d97706; color: white; }
 .btn-delete { background: #fee2e2; color: #dc2626; }
-.btn-delete:hover { background: #dc2626; color: white; }
+.btn-delete:hover:not(.btn-no-permission) { background: #dc2626; color: white; }
+
+/* Disabled / no-permission pogas */
+.btn-no-permission {
+    cursor: not-allowed !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.04) 3px,
+        rgba(0, 0, 0, 0.04) 6px
+    ) !important;
+}
+.btn-no-permission:hover { transform: none !important; box-shadow: none !important; }
 
 /* Empty State */
 .empty-state { text-align: center; padding: 3rem !important; color: #6b7280; }
