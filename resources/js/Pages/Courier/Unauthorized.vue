@@ -1,37 +1,148 @@
 <script setup>
 import { computed } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 
 const { locale } = useI18n({ useScope: 'global' });
+const page = usePage();
 
 const props = defineProps({
     requiredPermission: { type: String, default: null },
-    returnUrl: { type: String, default: '/courier/dashboard' },
+    returnUrl:          { type: String, default: null },
+    // 'admin' | 'courier' | 'none' — padod middleware
+    // ja nav padots, automātiski nosaka pēc lomas
+    context:            { type: String, default: null },
 });
 
-const lv = {
-    pageTitle: 'Piekļuve liegta',
-    title: 'Piekļuve liegta',
-    subtitle: 'Jums nav atļaujas piekļūt šai lapai.',
-    detail: 'Jūsu kurjera konts šobrīd neietver atļauju piekļūt šai lapai. Ja uzskatāt, ka tas ir kļūda, lūdzu sazinieties ar administratoru.',
-    permission: 'Nepieciešamā atļauja',
-    goBack: 'Atpakaļ',
-    goDashboard: 'Uz vadības paneli',
-};
-const en = {
-    pageTitle: 'Access Denied',
-    title: 'Access Denied',
-    subtitle: 'You do not have permission to access this page.',
-    detail: 'Your courier account does not have permission to access this page. If you believe this is a mistake, please contact an administrator.',
-    permission: 'Required permission',
-    goBack: 'Go Back',
-    goDashboard: 'Go to Dashboard',
-};
+// Nosaka lietotāja lomu
+const userRole = computed(() => page.props.auth?.user?.role?.name || null);
 
-const tx = computed(() => locale.value === 'lv' ? lv : en);
+// Vai lietotājam ir admin vai kurjera loma
+const isAdmin   = computed(() => userRole.value === 'administrator');
+const isCourier = computed(() => userRole.value === 'courier');
+const hasRole   = computed(() => isAdmin.value || isCourier.value);
 
-const goBack = () => router.visit(props.returnUrl);
+// Konteksts (no kura middleware nāk pieprasījums)
+const ctx = computed(() => {
+    if (props.context) return props.context;
+    if (isAdmin.value)   return 'admin';
+    if (isCourier.value) return 'courier';
+    return 'none';
+});
+
+// Teksti latviski
+const lv = computed(() => {
+    if (ctx.value === 'admin' && props.requiredPermission) {
+        return {
+            pageTitle: 'Piekļuve liegta',
+            title:     'Piekļuve liegta',
+            subtitle:  'Jums nav atļaujas veikt šo darbību.',
+            detail:    'Jūsu administratora konts šobrīd neietver šo atļauju. Ja uzskatāt, ka tas ir kļūda, lūdzu sazinieties ar Super Administratoru.',
+            permission: 'Nepieciešamā atļauja',
+            goBack:     'Atpakaļ',
+            goDashboard: 'Uz admin paneli',
+            dashboardUrl: '/admin/dashboard',
+        };
+    }
+    if (ctx.value === 'admin') {
+        return {
+            pageTitle: 'Piekļuve liegta',
+            title:     'Piekļuve liegta',
+            subtitle:  'Jums nav administratora tiesību.',
+            detail:    'Šī sadaļa ir pieejama tikai administratoriem. Ja uzskatāt, ka tas ir kļūda, lūdzu sazinieties ar platformas pārvaldnieku.',
+            permission: null,
+            goBack:     'Atpakaļ',
+            goDashboard: 'Uz administratoru paneli',
+            dashboardUrl: '/admin/dashboard',
+        };
+    }
+    if (ctx.value === 'courier') {
+        return {
+            pageTitle: 'Piekļuve liegta',
+            title:     'Piekļuve liegta',
+            subtitle:  'Jums nav kurjera tiesību.',
+            detail:    'Šī sadaļa ir pieejama tikai kurjeriem. Ja uzskatāt, ka tas ir kļūda, lūdzu sazinieties ar administratoru.',
+            permission: null,
+            goBack:     'Atpakaļ',
+            goDashboard: 'Uz kurjera paneli',
+            dashboardUrl: '/courier/dashboard',
+        };
+    }
+    // Parasts lietotājs mēģina piekļūt aizsargātai sadaļai
+    return {
+        pageTitle: 'Piekļuve liegta',
+        title:     'Piekļuve liegta',
+        subtitle:  'Jums nav tiesību piekļūt šai lapai.',
+        detail:    'Šī sadaļa ir pieejama tikai autorizētiem lietotājiem ar atbilstošu lomu. Lūdzu atgriezieties sākumlapā vai piesakieties ar atbilstošu kontu.',
+        permission: null,
+        goBack:     'Atpakaļ',
+        goDashboard: null,
+        dashboardUrl: null,
+    };
+});
+
+// Teksti angliski
+const en = computed(() => {
+    if (ctx.value === 'admin' && props.requiredPermission) {
+        return {
+            pageTitle: 'Access Denied',
+            title:     'Access Denied',
+            subtitle:  'You do not have permission to perform this action.',
+            detail:    'Your administrator account does not currently include this permission. If you believe this is a mistake, please contact the Super Administrator.',
+            permission: 'Required permission',
+            goBack:     'Go Back',
+            goDashboard: 'Admin Dashboard',
+            dashboardUrl: '/admin/dashboard',
+        };
+    }
+    if (ctx.value === 'admin') {
+        return {
+            pageTitle: 'Access Denied',
+            title:     'Access Denied',
+            subtitle:  'You do not have administrator privileges.',
+            detail:    'This section is only accessible to administrators. If you believe this is a mistake, please contact the platform manager.',
+            permission: null,
+            goBack:     'Go Back',
+            goDashboard: 'Admin Dashboard',
+            dashboardUrl: '/admin/dashboard',
+        };
+    }
+    if (ctx.value === 'courier') {
+        return {
+            pageTitle: 'Access Denied',
+            title:     'Access Denied',
+            subtitle:  'You do not have courier privileges.',
+            detail:    'This section is only accessible to couriers. If you believe this is a mistake, please contact an administrator.',
+            permission: null,
+            goBack:     'Go Back',
+            goDashboard: 'Courier Dashboard',
+            dashboardUrl: '/courier/dashboard',
+        };
+    }
+    return {
+        pageTitle: 'Access Denied',
+        title:     'Access Denied',
+        subtitle:  'You do not have access to this page.',
+        detail:    'This section is only available to authorised users with the appropriate role. Please go back or sign in with a suitable account.',
+        permission: null,
+        goBack:     'Go Back',
+        goDashboard: null,
+        dashboardUrl: null,
+    };
+});
+
+const tx = computed(() => locale.value === 'lv' ? lv.value : en.value);
+
+// "Atpakaļ" — browser history vai returnUrl
+const goBack = () => {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else if (props.returnUrl) {
+        router.visit(props.returnUrl);
+    } else {
+        router.visit('/');
+    }
+};
 </script>
 
 <template>
@@ -51,16 +162,22 @@ const goBack = () => router.visit(props.returnUrl);
             <h1 class="unauth-title">{{ tx.title }}</h1>
             <p class="unauth-subtitle">{{ tx.subtitle }}</p>
             <p class="unauth-detail">{{ tx.detail }}</p>
-            <div v-if="requiredPermission" class="perm-chip">
+            <div v-if="requiredPermission && tx.permission" class="perm-chip">
                 <i class="fas fa-key"></i>
                 <span class="perm-label">{{ tx.permission }}:</span>
                 <code class="perm-code">{{ requiredPermission }}</code>
             </div>
             <div class="unauth-actions">
+                <!-- "Atpakaļ" — vienmēr rāda, izmanto browser history -->
                 <button @click="goBack" class="btn-back">
                     <i class="fas fa-arrow-left"></i> {{ tx.goBack }}
                 </button>
-                <Link href="/courier/dashboard" class="btn-dashboard">
+                <!-- "Uz vadības paneli" — tikai admin vai kurjeram -->
+                <Link
+                    v-if="hasRole && tx.dashboardUrl"
+                    :href="tx.dashboardUrl"
+                    class="btn-dashboard"
+                >
                     <i class="fas fa-tachometer-alt"></i> {{ tx.goDashboard }}
                 </Link>
             </div>

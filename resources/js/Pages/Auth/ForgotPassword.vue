@@ -1,31 +1,32 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const { locale } = useI18n({ useScope: 'global' });
 const currentLocale = ref(localStorage.getItem('lang') || 'lv');
 
-// Sync Vue i18n locale with stored value on mount
 locale.value = currentLocale.value;
 
-// Reactively change locale when button clicked
 watch(currentLocale, (newLang) => {
     locale.value = newLang;
     localStorage.setItem('lang', newLang);
 });
 
-// Toggle locale function
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
 };
 
-defineProps({
-    status: String,
-});
+defineProps({ status: String });
 
-const form = useForm({
-    email: '',
+const form = useForm({ email: '' });
+
+// Tāds pats pieļaujamo domēnu RegEx kā reģistrēšanās lapā
+const ALLOWED_EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@(gmail\.com|outlook\.com|outlook\.lv|hotmail\.com|hotmail\.lv|hotmail\.co\.uk|live\.com|live\.lv|yahoo\.com|yahoo\.co\.uk|yahoo\.lv|icloud\.com|me\.com|mac\.com|proton\.me|protonmail\.com|protonmail\.ch|zoho\.com|tutanota\.com|tuta\.io|gmx\.com|gmx\.net|gmx\.de|inbox\.com|aol\.com|yandex\.com|yandex\.ru|ya\.ru|inbox\.lv|apollo\.lv|tvnet\.lv|one\.lv|e-apollo\.lv)$/i;
+
+const emailDomainValid = computed(() => {
+    if (!form.email.includes('@')) return null;
+    return ALLOWED_EMAIL_REGEX.test(form.email);
 });
 
 const submit = () => {
@@ -90,11 +91,24 @@ const submit = () => {
                             type="email"
                             v-model="form.email"
                             class="form-input"
-                            :class="{ 'input-error': form.errors.email }"
+                            :class="{
+                                'input-error':   form.errors.email || emailDomainValid === false,
+                                'input-success': emailDomainValid === true
+                            }"
                             required
                             autofocus
                             autocomplete="email"
                         />
+                        <div v-if="emailDomainValid === false && !form.errors.email" class="hint-row hint-fail">
+                            <i class="fas fa-times-circle"></i>
+                            {{ currentLocale === 'lv'
+                            ? 'Lūdzu izmantojiet atpazīstamu e-pasta pakalpojumu (Gmail, Outlook, iCloud u.c.)'
+                            : 'Please use a recognised email provider (Gmail, Outlook, iCloud, etc.)' }}
+                        </div>
+                        <div v-else-if="emailDomainValid === true" class="hint-row hint-pass">
+                            <i class="fas fa-check-circle"></i>
+                            {{ currentLocale === 'lv' ? 'E-pasta formāts ir derīgs' : 'Email format is valid' }}
+                        </div>
                         <div v-if="form.errors.email" class="error-message">
                             {{ form.errors.email }}
                         </div>
@@ -345,10 +359,25 @@ const submit = () => {
     border-color: #ef4444;
 }
 
+.form-input.input-success {
+    border-color: #10b981;
+}
+
 .error-message {
     font-size: 0.875rem;
     color: #ef4444;
 }
+
+.hint-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+.hint-pass { color: #059669; }
+.hint-fail { color: #dc2626; }
 
 .btn-submit {
     width: 100%;
