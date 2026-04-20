@@ -17,21 +17,21 @@ class ContactController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'username' => 'required|string|max:100',
-            'email' => 'required|email|max:100',
+            'name'         => 'required|string|max:100',
+            'email'        => 'required|email|max:100',
             'country_code' => 'required|string|max:5',
-            'phone' => 'required|string|max:20',
-            'subject' => 'required|string|max:200',
-            'message' => 'required|string|max:1000',
+            'phone'        => 'required|string|max:20',
+            'subject'      => 'required|string|max:200',
+            'message'      => 'required|string|max:1000',
         ], [
-            'name.required' => 'Vārds ir obligāts.',
-            'email.required' => 'E-pasts ir obligāts.',
-            'email.email' => 'Ievadiet derīgu e-pasta adresi.',
+            'name.required'         => 'Vārds ir obligāts.',
+            'email.required'        => 'E-pasts ir obligāts.',
+            'email.email'           => 'Ievadiet derīgu e-pasta adresi.',
             'country_code.required' => 'Valsts kods ir obligāts.',
-            'phone.required' => 'Tālruņa numurs ir obligāts.',
-            'subject.required' => 'Tēma ir obligāta.',
-            'message.required' => 'Ziņojums ir obligāts.',
-            'message.max' => 'Ziņojums nedrīkst pārsniegt 1000 rakstzīmes.',
+            'phone.required'        => 'Tālruņa numurs ir obligāts.',
+            'subject.required'      => 'Tēma ir obligāta.',
+            'message.required'      => 'Ziņojums ir obligāts.',
+            'message.max'           => 'Ziņojums nedrīkst pārsniegt 1000 rakstzīmes.',
         ]);
 
         // Get authenticated user
@@ -39,15 +39,15 @@ class ContactController extends Controller
 
         // Create contact message
         $contactMessage = ContactMessage::create([
-            'user_id' => $user->id,
-            'name' => $validated['username'],
-            'email' => $validated['email'],
+            'user_id'      => $user->id,
+            'name'         => $validated['name'],
+            'email'        => $validated['email'],
             'country_code' => $validated['country_code'],
-            'phone' => $validated['phone'],
-            'subject' => $validated['subject'],
-            'message' => $validated['message'],
-            'is_read' => false,
-            'is_replied' => false,
+            'phone'        => $validated['phone'],
+            'subject'      => $validated['subject'],
+            'message'      => $validated['message'],
+            'is_read'      => false,
+            'is_replied'   => false,
         ]);
 
         // Send email notification to admin

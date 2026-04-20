@@ -27,9 +27,10 @@ class ReviewController extends Controller
             default   => 'App\\Models\\Product',
         };
 
-        $currentUserId = auth()->id();
+        // API routes pēc noklusējuma izmanto 'api' guard — bet sesija ir 'web' guard.
+        // Mēģina 'web' guard vispirms (Inertia lietotnes sesija), tad noklusēto.
+        $currentUserId = auth('web')->id() ?? auth()->id();
 
-        // Iegūst apstiprinātas atsauksmes + savas neapstiprinātas
         $query = Review::where('reviewable_type', $reviewableType)
             ->where('reviewable_id', $id)
             ->with('user:id,username,profile_picture')
