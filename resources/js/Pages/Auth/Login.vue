@@ -1,38 +1,37 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const { locale } = useI18n({ useScope: 'global' });
 const currentLocale = ref(localStorage.getItem('lang') || 'lv');
 
-// Sync Vue i18n locale with stored value on mount
 locale.value = currentLocale.value;
 
-// Reactively change locale when button clicked
 watch(currentLocale, (newLang) => {
     locale.value = newLang;
     localStorage.setItem('lang', newLang);
 });
 
-// Toggle locale function
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
 };
 
 defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
+    canResetPassword: { type: Boolean },
+    status: { type: String },
 });
 
 const form = useForm({
     login: '',
     password: '',
     remember: false,
+});
+
+// Pārbauda vai kļūdas ziņojums norāda uz aizliegtu kontu
+const isBanned = computed(() => {
+    const msg = (form.errors.login || '').toLowerCase();
+    return msg.includes('deaktiv') || msg.includes('suspended') || msg.includes('aizl') || msg.includes('blocked');
 });
 
 const submit = () => {
@@ -83,7 +82,19 @@ const submit = () => {
 
                 <!-- Status Message -->
                 <div v-if="status" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
                     {{ status }}
+                </div>
+
+                <!-- Aizliegts konts brīdinājums -->
+                <div v-if="isBanned" class="alert alert-banned">
+                    <i class="fas fa-ban"></i>
+                    <div>
+                        <strong>{{ currentLocale === 'lv' ? 'Konts ir aizliegts' : 'Account Suspended' }}</strong>
+                        <p>{{ currentLocale === 'lv'
+                            ? 'Jūsu konts ir deaktivizēts. Sazinieties ar administratoru, ja uzskatāt, ka tas ir kļūda.'
+                            : 'Your account has been suspended. Please contact an administrator if you believe this is a mistake.' }}</p>
+                    </div>
                 </div>
 
                 <form @submit.prevent="submit" class="auth-form">
@@ -103,7 +114,8 @@ const submit = () => {
                             autofocus
                             autocomplete="username"
                         />
-                        <div v-if="form.errors.login" class="error-message">
+                        <div v-if="form.errors.login && !isBanned" class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
                             {{ form.errors.login }}
                         </div>
                     </div>
@@ -124,6 +136,7 @@ const submit = () => {
                             autocomplete="current-password"
                         />
                         <div v-if="form.errors.password" class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
                             {{ form.errors.password }}
                         </div>
                     </div>
@@ -339,18 +352,31 @@ const submit = () => {
     text-align: center;
 }
 
-/* Alert */
 .alert {
     padding: 1rem;
     border-radius: 0.5rem;
     margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
 }
+
+.alert i { margin-top: 0.125rem; flex-shrink: 0; }
 
 .alert-success {
     background-color: #d1fae5;
     color: #065f46;
     border: 1px solid #10b981;
 }
+
+.alert-banned {
+    background-color: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #fda4af;
+}
+
+.alert-banned strong { display: block; font-weight: 700; margin-bottom: 0.25rem; }
+.alert-banned p { margin: 0; font-size: 0.85rem; opacity: 0.9; }
 
 /* Form */
 .auth-form {
@@ -392,6 +418,9 @@ const submit = () => {
 .error-message {
     font-size: 0.875rem;
     color: #ef4444;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
 }
 
 /* Form Options */

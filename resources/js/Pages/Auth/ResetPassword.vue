@@ -1,21 +1,18 @@
 <script setup>
 import {Head, Link, useForm} from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const { locale } = useI18n({ useScope: 'global' });
 const currentLocale = ref(localStorage.getItem('lang') || 'lv');
 
-// Sync Vue i18n locale with stored value on mount
 locale.value = currentLocale.value;
 
-// Reactively change locale when button clicked
 watch(currentLocale, (newLang) => {
     locale.value = newLang;
     localStorage.setItem('lang', newLang);
 });
 
-// Toggle locale function
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
 };
@@ -25,13 +22,31 @@ const props = defineProps({
     token: String,
 });
 
-
 const form = useForm({
     token: props.token,
     email: props.email,
     password: '',
     password_confirmation: '',
 });
+
+// ── Paroles prasību pārbaude ──────────────────────────────────────
+const passwordChecks = computed(() => ({
+    length: form.password.length >= 8,
+    lower:  /[a-z]/.test(form.password),
+    upper:  /[A-Z]/.test(form.password),
+    number: /[0-9]/.test(form.password),
+    symbol: /[^a-zA-Z0-9]/.test(form.password),
+    match:  form.password.length > 0 && form.password === form.password_confirmation,
+}));
+
+const passwordStrength = computed(() => {
+    const passed = Object.values(passwordChecks.value).filter(Boolean).length;
+    if (passed <= 2) return 'weak';
+    if (passed <= 4) return 'medium';
+    return 'strong';
+});
+
+const showPasswordHints = computed(() => form.password.length > 0);
 
 const submit = () => {
     form.post(route('password.store'), {
@@ -116,6 +131,44 @@ const submit = () => {
                         <div v-if="form.errors.password" class="error-message">
                             {{ form.errors.password }}
                         </div>
+
+                        <!-- Stipruma josla -->
+                        <div v-if="showPasswordHints" class="password-strength-bar">
+                            <div class="strength-track">
+                                <div class="strength-fill" :class="`strength-${passwordStrength}`"></div>
+                            </div>
+                            <span class="strength-label" :class="`strength-${passwordStrength}`">
+                                {{ passwordStrength === 'weak'
+                                ? (currentLocale === 'lv' ? 'Vāja' : 'Weak')
+                                : passwordStrength === 'medium'
+                                    ? (currentLocale === 'lv' ? 'Vidēja' : 'Medium')
+                                    : (currentLocale === 'lv' ? 'Stipra' : 'Strong') }}
+                            </span>
+                        </div>
+
+                        <!-- Prasību saraksts -->
+                        <ul v-if="showPasswordHints" class="password-requirements">
+                            <li :class="passwordChecks.length ? 'req-pass' : 'req-fail'">
+                                <i :class="passwordChecks.length ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+                                {{ currentLocale === 'lv' ? 'Vismaz 8 simboli' : 'At least 8 characters' }}
+                            </li>
+                            <li :class="passwordChecks.lower ? 'req-pass' : 'req-fail'">
+                                <i :class="passwordChecks.lower ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+                                {{ currentLocale === 'lv' ? 'Vismaz 1 mazais burts (a–z)' : 'At least 1 lowercase letter (a–z)' }}
+                            </li>
+                            <li :class="passwordChecks.upper ? 'req-pass' : 'req-fail'">
+                                <i :class="passwordChecks.upper ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+                                {{ currentLocale === 'lv' ? 'Vismaz 1 lielais burts (A–Z)' : 'At least 1 uppercase letter (A–Z)' }}
+                            </li>
+                            <li :class="passwordChecks.number ? 'req-pass' : 'req-fail'">
+                                <i :class="passwordChecks.number ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+                                {{ currentLocale === 'lv' ? 'Vismaz 1 cipars (0–9)' : 'At least 1 number (0–9)' }}
+                            </li>
+                            <li :class="passwordChecks.symbol ? 'req-pass' : 'req-fail'">
+                                <i :class="passwordChecks.symbol ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+                                {{ currentLocale === 'lv' ? 'Vismaz 1 speciālais simbols (!, @, #, $ …)' : 'At least 1 special character (!, @, #, $ …)' }}
+                            </li>
+                        </ul>
                     </div>
 
                     <!-- Confirm Password Field -->
@@ -128,10 +181,21 @@ const submit = () => {
                             type="password"
                             v-model="form.password_confirmation"
                             class="form-input"
-                            :class="{ 'input-error': form.errors.password_confirmation }"
+                            :class="{
+                                'input-error':   form.errors.password_confirmation || (form.password_confirmation.length > 0 && !passwordChecks.match),
+                                'input-success': passwordChecks.match
+                            }"
                             required
                             autocomplete="new-password"
                         />
+                        <div v-if="form.password_confirmation.length > 0 && !passwordChecks.match && !form.errors.password_confirmation" class="hint-row hint-fail">
+                            <i class="fas fa-times-circle"></i>
+                            {{ currentLocale === 'lv' ? 'Paroles nesakrīt' : 'Passwords do not match' }}
+                        </div>
+                        <div v-else-if="passwordChecks.match" class="hint-row hint-pass">
+                            <i class="fas fa-check-circle"></i>
+                            {{ currentLocale === 'lv' ? 'Paroles sakrīt' : 'Passwords match' }}
+                        </div>
                         <div v-if="form.errors.password_confirmation" class="error-message">
                             {{ form.errors.password_confirmation }}
                         </div>
@@ -354,10 +418,39 @@ const submit = () => {
     border-color: #ef4444;
 }
 
+.form-input.input-success {
+    border-color: #10b981;
+}
+
 .error-message {
     font-size: 0.875rem;
     color: #ef4444;
 }
+
+/* ── Hints ── */
+.hint-row { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:500; margin-top:4px; }
+.hint-pass { color:#059669; }
+.hint-fail { color:#dc2626; }
+
+/* ── Paroles stipruma josla ── */
+.password-strength-bar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.strength-track { flex:1; height:5px; background:#e5e7eb; border-radius:9999px; overflow:hidden; }
+.strength-fill { height:100%; border-radius:9999px; transition:width 0.3s ease, background 0.3s ease; }
+.strength-fill.strength-weak   { width:33%;  background:#ef4444; }
+.strength-fill.strength-medium { width:66%;  background:#f59e0b; }
+.strength-fill.strength-strong { width:100%; background:#10b981; }
+.strength-label { font-size:11px; font-weight:700; white-space:nowrap; }
+.strength-label.strength-weak   { color:#ef4444; }
+.strength-label.strength-medium { color:#f59e0b; }
+.strength-label.strength-strong { color:#10b981; }
+
+/* ── Prasību saraksts ── */
+.password-requirements { list-style:none; padding:8px 0 0 0; margin:0; display:flex; flex-direction:column; gap:4px; }
+.password-requirements li { display:flex; align-items:center; gap:7px; font-size:12px; transition:color 0.2s; }
+.req-pass { color:#059669; }
+.req-fail { color:#9ca3af; }
+.req-pass i { color:#10b981; }
+.req-fail i { color:#d1d5db; font-size:10px; }
 
 .btn-submit {
     width: 100%;

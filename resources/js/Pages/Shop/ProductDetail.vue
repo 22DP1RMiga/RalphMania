@@ -132,6 +132,10 @@ const hoverStar        = ref(0);
 const isSubmitting     = ref(false);
 const showReviewForm   = ref(false);
 
+// Reģistrē ja tikko iesniegta atsauksme — garantē "gaida apstiprinājumu"
+// rādīšanu pat ja API to neatgriež (web guard / session auth API problēmas)
+const justSubmittedReview = ref(false);
+
 const reviewStats = computed(() => {
     if (!reviews.value.length) return { avg: 0, count: 0, dist: { 5:0,4:0,3:0,2:0,1:0 } };
     const total = reviews.value.length;
@@ -141,13 +145,14 @@ const reviewStats = computed(() => {
     return { avg: (sum / total).toFixed(1), count: total, dist };
 });
 
-// Vai lietotājs jau ir iesniedzis atsauksmi (arī neapstiprinātu)
-const userReview = computed(() =>
-    authUser.value
-        ? reviews.value.find(r => Number(r.user_id) === Number(authUser.value.id) ||
-            Number(r.user?.id) === Number(authUser.value.id))
-        : null
-);
+// Vai lietotājs jau ir iesniedzis atsauksmi (apstiprinātu VAI neapstiprinātu)
+const userReview = computed(() => {
+    if (!authUser.value) return null;
+    return reviews.value.find(r =>
+        Number(r.user_id) === Number(authUser.value.id) ||
+        Number(r.user?.id) === Number(authUser.value.id)
+    ) || (justSubmittedReview.value ? { is_approved: false, _pending: true } : null);
+});
 
 const fetchReviews = async (productId) => {
     isLoadingReviews.value = true;
@@ -181,6 +186,7 @@ const submitReview = async () => {
         );
         reviewForm.value = { rating: 0, review_text: '' };
         showReviewForm.value = false;
+        justSubmittedReview.value = true;  // garantē "gaida apstiprinājumu" rādīšanu
         await fetchReviews(productData.value.id);
     } catch (error) {
         displayToast(
@@ -198,6 +204,7 @@ const deleteReview = async (reviewId) => {
     try {
         await axios.delete(`/reviews/${reviewId}`);
         reviews.value = reviews.value.filter(r => r.id !== reviewId);
+        justSubmittedReview.value = false;
         displayToast(locale.value === 'lv' ? 'Atsauksme dzēsta' : 'Review deleted', 'success');
     } catch {
         displayToast(locale.value === 'lv' ? 'Kļūda dzēšot!' : 'Delete error!', 'error');

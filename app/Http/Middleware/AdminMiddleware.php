@@ -5,19 +5,15 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Inertia\Inertia;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next, ?string $permission = null): Response
     {
         $user = $request->user();
 
-        // Check if user is authenticated
+        // Nav autentificēts
         if (!$user) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Nepieciešama autentifikācija.'], 401);
@@ -25,20 +21,33 @@ class AdminMiddleware
             return redirect()->route('login');
         }
 
-        // Check if user is an administrator
+        // Nav administratora loma
         if (!$user->isAdministrator()) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Piekļuve liegta. Jums nav administratora tiesību.'], 403);
             }
-            abort(403, 'Piekļuve liegta. Jums nav administratora tiesību.');
+
+            return Inertia::render('Admin/Unauthorized', [
+                'requiredPermission' => null,
+                'context'            => 'admin',
+                'returnUrl'          => url()->previous() ?: '/dashboard',
+            ])->toResponse($request)->setStatusCode(403);
         }
 
-        // If specific permission is required, check it
+        // Konkrēta atļauja nepieciešama
         if ($permission && !$user->hasAdminPermission($permission)) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Piekļuve liegta. Jums nav nepieciešamo tiesību.'], 403);
+                return response()->json([
+                    'message'    => 'Piekļuve liegta. Jums nav nepieciešamo tiesību.',
+                    'permission' => $permission,
+                ], 403);
             }
-            abort(403, 'Piekļuve liegta. Jums nav nepieciešamo tiesību.');
+
+            return Inertia::render('Admin/Unauthorized', [
+                'requiredPermission' => $permission,
+                'context'            => 'admin',
+                'returnUrl'          => url()->previous() ?: '/admin/dashboard',
+            ])->toResponse($request)->setStatusCode(403);
         }
 
         return $next($request);

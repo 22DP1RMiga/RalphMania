@@ -79,6 +79,9 @@ Route::prefix('shop')->group(function () {
         return Inertia::render('Shop/Contact');
     })->middleware('auth')->name('shop.contact');
 
+    // Shop Contact Form Submission
+    Route::post('/contact', [ContactController::class, 'store'])->middleware('auth')->name('shop.contact.store');
+
     // FAQ, Shipping, Returns — publiski
     Route::get('/faq',      fn() => Inertia::render('Shop/FAQ'))->name('shop.faq');
     Route::get('/shipping', fn() => Inertia::render('Shop/Shipping'))->name('shop.shipping');

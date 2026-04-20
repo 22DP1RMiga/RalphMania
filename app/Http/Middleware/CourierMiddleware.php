@@ -13,7 +13,6 @@ class CourierMiddleware
     {
         $user = $request->user();
 
-        // Nav autentificēts
         if (!$user) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Nepieciešama autentifikācija.'], 401);
@@ -30,6 +29,7 @@ class CourierMiddleware
             }
 
             return Inertia::render('Courier/Unauthorized', [
+                'context'   => 'courier',
                 'returnUrl' => url()->previous() ?: '/login',
             ])->toResponse($request)->setStatusCode(403);
         }
@@ -41,6 +41,7 @@ class CourierMiddleware
             }
 
             return Inertia::render('Courier/Unauthorized', [
+                'context'   => 'courier',
                 'returnUrl' => url()->previous() ?: '/login',
             ])->toResponse($request)->setStatusCode(403);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -11,29 +12,30 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
-     */
     public function rules(): array
     {
         return [
-            'login' => ['required', 'string'], // Can be email or username
+            'login'    => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Kļūdu ziņojumi atkarībā no valodas.
+     */
+    private function msg(string $lv, string $en): string
+    {
+        $locale = app()->getLocale();
+        return $locale === 'lv' ? $lv : $en;
+    }
+
+    /**
+     * Autentificē pieprasījumu ar detalizētiem kļūdu ziņojumiem.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -41,28 +43,52 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // Determine if login is email or username
-        $loginType = filter_var($this->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $isEmail   = filter_var($this->login, FILTER_VALIDATE_EMAIL);
+        $loginType = $isEmail ? 'email' : 'username';
 
-        $credentials = [
-            $loginType => $this->login,
-            'password' => $this->password,
-        ];
+        // ── 1. Pārbauda vai lietotājs vispār eksistē ─────────────────
+        $user = User::where($loginType, $this->login)->first();
 
-        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+        if (!$user) {
             RateLimiter::hit($this->throttleKey());
 
+            $errorKey = $isEmail ? 'login' : 'login';
+            $message  = $isEmail
+                ? $this->msg(
+                    'Lietotājs ar šādu e-pasta adresi netika atrasts.',
+                    'No account found with this email address.'
+                )
+                : $this->msg(
+                    'Lietotājs ar šādu lietotājvārdu netika atrasts.',
+                    'No account found with this username.'
+                );
+
             throw ValidationException::withMessages([
-                'login' => trans('auth.failed'),
+                'login' => $message,
             ]);
         }
 
-        // Check if user is active
-        if (Auth::user() && !Auth::user()->is_active) {
-            Auth::logout();
+        // ── 2. Pārbauda vai konts nav aizliegts PIRMS paroles pārbaudes ──
+        if (!$user->is_active) {
+            RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'login' => 'Your account has been deactivated. Please contact support.',
+                'login' => $this->msg(
+                    'Jūsu konts ir deaktivizēts. Sazinieties ar administratoru, ja uzskatāt, ka tas ir kļūda.',
+                    'Your account has been suspended. Please contact an administrator if you believe this is a mistake.'
+                ),
+            ]);
+        }
+
+        // ── 3. Pārbauda paroli ────────────────────────────────────────
+        if (!Auth::attempt([$loginType => $this->login, 'password' => $this->password], $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'password' => $this->msg(
+                    'Nepareiza parole. Lūdzu pārbaudiet un mēģiniet vēlreiz.',
+                    'Incorrect password. Please check and try again.'
+                ),
             ]);
         }
 
@@ -70,33 +96,31 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Ensure the login request is not rate limited.
+     * Rate limiting ar lokalizētiem ziņojumiem.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
         event(new Lockout($this));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
+        $minutes = ceil($seconds / 60);
 
         throw ValidationException::withMessages([
-            'login' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'login' => $this->msg(
+                "Pārāk daudz pieteikšanās mēģinājumu. Lūdzu mēģiniet vēlreiz pēc {$minutes} min.",
+                "Too many login attempts. Please try again in {$minutes} minute(s)."
+            ),
         ]);
     }
 
-    /**
-     * Get the rate limiting throttle key for the request.
-     */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')) . '|' . $this->ip());
     }
 }

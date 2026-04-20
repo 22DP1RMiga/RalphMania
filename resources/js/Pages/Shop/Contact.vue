@@ -229,7 +229,7 @@ const contactInfo = [
                                 <!-- Phone with Country Code & Subject -->
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label">{{ t('shop_contact.phone') }}</label>
+                                        <label class="form-label">{{ t('shop_contact.phone') }} <span class="required">*</span></label>
                                         <div class="phone-input-wrapper">
                                             <!-- Country Code Selector -->
                                             <div class="country-selector" @click.stop>
