@@ -14,7 +14,7 @@ class CommentController extends Controller
         try {
             $comments = Comment::where('content_id', $contentId)
                 ->where('is_approved', true)
-                ->with('user:id,username,first_name,last_name,profile_picture')
+                ->with('user:id,username,first_name,last_name,profile_picture,role_id', 'user.role:id,name,display_name_lv,display_name_en')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($comment) {
@@ -43,6 +43,11 @@ class CommentController extends Controller
                             'username' => $comment->user->username,
                             'name' => $displayName,
                             'profile_picture' => $profilePicture,
+                            'role' => $comment->user->role ? [
+                                'name'            => $comment->user->role->name,
+                                'display_name_lv' => $comment->user->role->display_name_lv,
+                                'display_name_en' => $comment->user->role->display_name_en,
+                            ] : null,
                         ],
                     ];
                 });

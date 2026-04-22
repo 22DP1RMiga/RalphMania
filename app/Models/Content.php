@@ -53,7 +53,7 @@ class Content extends Model
      */
     const TYPE_VIDEO = 'video';
     const TYPE_BLOG = 'blog';
-    const TYPE_NEWS = 'news';
+    const TYPE_NEWS = 'post';
     const TYPE_ANNOUNCEMENT = 'announcement';
 
     /**
@@ -77,7 +77,7 @@ class Content extends Model
         return [
             self::TYPE_VIDEO => ['lv' => 'Video', 'en' => 'Video'],
             self::TYPE_BLOG => ['lv' => 'Blogs', 'en' => 'Blog'],
-            self::TYPE_NEWS => ['lv' => 'Ziņas', 'en' => 'News'],
+            self::TYPE_NEWS => ['lv' => 'Ziņas', 'en' => 'Posts'],
             self::TYPE_ANNOUNCEMENT => ['lv' => 'Paziņojums', 'en' => 'Announcement'],
         ];
     }
@@ -123,63 +123,64 @@ class Content extends Model
     // =====================================================
 
     /**
-     * Get thumbnail URL based on content type
-     * Videos: /img/thumbnails/{filename}
-     * Others: /img/Blogs/{filename} or /img/thumbnails/{filename}
+     * Universāls attēla URL aprēķins.
+     * Apstrādā: http/https URL, /absolūts ceļš, storage/... relatīvs, tikai faila nosaukums.
      */
-    public function getThumbnailUrlAttribute(): ?string
+    private function resolveImageUrl(?string $path, string $legacyDir = '/img/thumbnails'): ?string
+    {
+        if (!$path) return null;
+        if (str_starts_with($path, 'http')) return $path;
+        if (str_starts_with($path, '/'))   return $path;
+        if (str_starts_with($path, 'storage/')) return '/' . $path;
+        return $legacyDir . '/' . $path;
+    }
+
+    /**
+     * Thumbnail URL — video: /img/thumbnails/, citi: /storage/blogs/ vai /img/Blogs/
+     */
+    public function getThumbnailUrlAttribute(): string
     {
         if (!$this->thumbnail) {
-            return '/img/thumbnails/no-content-placeholder.png';
+            return '/img/no-content-placeholder.png';
         }
-
-        // Already a full URL
-        if (str_starts_with($this->thumbnail, 'http') || str_starts_with($this->thumbnail, '/')) {
-            return $this->thumbnail;
-        }
-
-        // Video thumbnails in /img/thumbnails/
-        return '/img/thumbnails/' . $this->thumbnail;
+        $dir = match($this->type) {
+            'video'        => '/img/thumbnails',
+            'blog'         => '/img/Blogs',
+            'post'         => '/img/Posts',
+            'announcement' => '/img/Announcements',
+            default        => '/img/thumbnails',
+        };
+        return $this->resolveImageUrl($this->thumbnail, $dir) ?? '/img/no-content-placeholder.png';
     }
 
     /**
-     * Get featured image URL (for blogs, news, announcements)
-     * Located in /img/Blogs/
+     * Featured image URL — blog, post, announcement
      */
-    public function getFeaturedImageUrlAttribute(): ?string
+    public function getFeaturedImageUrlAttribute(): string
     {
         if (!$this->featured_image) {
-            // Return placeholder for non-video types
-            if ($this->type !== self::TYPE_VIDEO) {
-                return '/img/Blogs/no-content-placeholder.png';
-            }
-            return null;
+            return '/img/no-content-placeholder.png';
         }
-
-        // Already a full URL
-        if (str_starts_with($this->featured_image, 'http') || str_starts_with($this->featured_image, '/')) {
-            return $this->featured_image;
-        }
-
-        // Blog/news images in /img/Blogs/
-        return '/img/Blogs/' . $this->featured_image;
+        $dir = match($this->type) {
+            'blog'         => '/img/Blogs',
+            'post'         => '/img/Posts',
+            'announcement' => '/img/Announcements',
+            default        => '/img/Blogs',
+        };
+        return $this->resolveImageUrl($this->featured_image, $dir) ?? '/img/no-content-placeholder.png';
     }
 
     /**
-     * Get full URLs for all blog images
+     * Blog/post attēlu URL masīvs
      */
     public function getBlogImageUrlsAttribute(): array
     {
         if (!$this->blog_images || !is_array($this->blog_images)) {
             return [];
         }
-
-        return array_map(function ($image) {
-            if (str_starts_with($image, 'http') || str_starts_with($image, '/')) {
-                return $image;
-            }
-            return '/img/Blogs/' . $image;
-        }, $this->blog_images);
+        return array_filter(array_map(function ($image) {
+            return $this->resolveImageUrl($image, '/img/Blogs');
+        }, $this->blog_images));
     }
 
     /**

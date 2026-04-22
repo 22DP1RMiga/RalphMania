@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Content;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AdminContentController extends Controller
@@ -79,60 +79,70 @@ class AdminContentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:video,blog,news,announcement',
-            'title_lv' => 'required|string|max:255',
-            'title_en' => 'nullable|string|max:255',
-            'slug' => 'required|string|max:255|unique:content,slug',
-            'category' => 'nullable|string|max:100',
-            'description_lv' => 'nullable|string',
-            'description_en' => 'nullable|string',
-            'content_body_lv' => 'nullable|string',
-            'content_body_en' => 'nullable|string',
-            'video_url' => 'nullable|url',
-            'video_platform' => 'nullable|in:youtube,vimeo,other',
-            'duration' => 'nullable|integer|min:0',
-            'thumbnail' => 'nullable|image|max:5120',
-            'featured_image' => 'nullable|image|max:5120',
-            'blog_images' => 'nullable|array',
-            'blog_images.*' => 'image|max:5120',
-            'is_published' => 'boolean',
-            'is_featured' => 'boolean',
-            'published_at' => 'nullable|date',
+            'type'             => 'required|in:video,blog,post,announcement',
+            'title_lv'         => 'required|string|max:255',
+            'title_en'         => 'nullable|string|max:255',
+            'slug'             => 'required|string|max:255|unique:content,slug',
+            'category'         => 'nullable|string|max:100',
+            'description_lv'   => 'nullable|string',
+            'description_en'   => 'nullable|string',
+            'content_body_lv'  => 'nullable|string',
+            'content_body_en'  => 'nullable|string',
+            'video_url'        => 'nullable|url',
+            'video_platform'   => 'nullable|in:YouTube,TikTok,Instagram,Facebook,X,Vimeo,Other',
+            'duration'         => 'nullable|integer|min:0',
+            'thumbnail'        => 'nullable|image|max:5120',
+            'featured_image'   => 'nullable|image|max:5120',
+            'blog_images'      => 'nullable|array',
+            'blog_images.*'    => 'image|max:5120',
+            'is_published'     => 'boolean',
+            'is_featured'      => 'boolean',
+            'published_at'     => 'nullable|date',
         ]);
 
-        // Handle thumbnail upload (videos)
+        $type = $validated['type'];
+
+        // ── Attēlu saglabāšana zem public/img/ ─────────────────────
+
+        // Sīktēls (tikai video)
         if ($request->hasFile('thumbnail')) {
-            $file = $request->file('thumbnail');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $file     = $request->file('thumbnail');
+            $filename = time() . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('img/thumbnails'), $filename);
-            $validated['thumbnail'] = $filename;
+            $validated['thumbnail'] = '/img/thumbnails/' . $filename;
         }
 
-        // Handle featured image upload (blogs, news, announcements)
+        // Galvenais attēls (blog, post, announcement)
         if ($request->hasFile('featured_image')) {
-            $file = $request->file('featured_image');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('img/Blogs'), $filename);
-            $validated['featured_image'] = $filename;
+            $file     = $request->file('featured_image');
+            $filename = time() . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $dir      = $this->getContentImgDir($type);
+            $file->move(public_path($dir), $filename);
+            $validated['featured_image'] = '/' . $dir . '/' . $filename;
         }
 
-        // Handle multiple blog images
+        // Ne-video tips: featured_image darbojas arī kā thumbnail (sīktēls katalogā)
+        if ($type !== 'video' && !empty($validated['featured_image'])) {
+            $validated['thumbnail'] = $validated['featured_image'];
+        }
+
+        // Vairāki attēli (blog, post)
         if ($request->hasFile('blog_images')) {
             $blogImages = [];
+            $dir = $this->getContentImgDir($type);
             foreach ($request->file('blog_images') as $file) {
-                $filename = time() . '_' . uniqid() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('img/Blogs'), $filename);
-                $blogImages[] = $filename;
+                $filename = time() . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path($dir), $filename);
+                $blogImages[] = '/' . $dir . '/' . $filename;
             }
             $validated['blog_images'] = $blogImages;
         }
 
-        // Set published_at if publishing and not set
-        if ($validated['is_published'] && empty($validated['published_at'])) {
+        // Publicēšanas laiks
+        if (!empty($validated['is_published']) && empty($validated['published_at'])) {
             $validated['published_at'] = now();
         }
 
-        // Set created_by
         $validated['created_by'] = auth()->id();
 
         Content::create($validated);
@@ -161,125 +171,148 @@ class AdminContentController extends Controller
         $content = Content::findOrFail($id);
 
         $validated = $request->validate([
-            'type' => 'required|in:video,blog,news,announcement',
-            'title_lv' => 'required|string|max:255',
-            'title_en' => 'nullable|string|max:255',
-            'slug' => 'required|string|max:255|unique:content,slug,' . $id,
-            'category' => 'nullable|string|max:100',
-            'description_lv' => 'nullable|string',
-            'description_en' => 'nullable|string',
-            'content_body_lv' => 'nullable|string',
-            'content_body_en' => 'nullable|string',
-            'video_url' => 'nullable|url',
-            'video_platform' => 'nullable|in:youtube,vimeo,other',
-            'duration' => 'nullable|integer|min:0',
-            'thumbnail' => 'nullable|image|max:5120',
-            'featured_image' => 'nullable|image|max:5120',
-            'blog_images' => 'nullable|array',
-            'blog_images.*' => 'image|max:5120',
-            'is_published' => 'boolean',
-            'is_featured' => 'boolean',
-            'published_at' => 'nullable|date',
-            '_remove_thumbnail' => 'boolean',
-            '_remove_featured_image' => 'boolean',
-            '_remove_blog_images' => 'nullable|array',
+            'type'                    => 'required|in:video,blog,post,announcement',
+            'title_lv'                => 'required|string|max:255',
+            'title_en'                => 'nullable|string|max:255',
+            'slug'                    => 'required|string|max:255|unique:content,slug,' . $id,
+            'category'                => 'nullable|string|max:100',
+            'description_lv'          => 'nullable|string',
+            'description_en'          => 'nullable|string',
+            'content_body_lv'         => 'nullable|string',
+            'content_body_en'         => 'nullable|string',
+            'video_url'               => 'nullable|url',
+            'video_platform'          => 'nullable|in:YouTube,TikTok,Instagram,Facebook,X,Vimeo,Other',
+            'duration'                => 'nullable|integer|min:0',
+            'thumbnail'               => 'nullable|image|max:5120',
+            'featured_image'          => 'nullable|image|max:5120',
+            'blog_images'             => 'nullable|array',
+            'blog_images.*'           => 'image|max:5120',
+            'is_published'            => 'boolean',
+            'is_featured'             => 'boolean',
+            'published_at'            => 'nullable|date',
+            '_remove_thumbnail'       => 'boolean',
+            '_remove_featured_image'  => 'boolean',
+            '_remove_blog_images'     => 'nullable|array',
         ]);
 
-        // Handle thumbnail removal
+        $type = $validated['type'];
+
+        // ── Sīktēla noņemšana (video) ──────────────────────────────
         if ($request->boolean('_remove_thumbnail') && $content->thumbnail) {
-            $oldPath = public_path('img/thumbnails/' . $content->thumbnail);
-            if (File::exists($oldPath)) {
-                File::delete($oldPath);
-            }
+            $this->deleteStorageFile($content->thumbnail);
             $validated['thumbnail'] = null;
         }
 
-        // Handle thumbnail upload
+        // ── Sīktēla augšupielāde (video) ───────────────────────────
         if ($request->hasFile('thumbnail')) {
-            // Delete old thumbnail
-            if ($content->thumbnail) {
-                $oldPath = public_path('img/thumbnails/' . $content->thumbnail);
-                if (File::exists($oldPath)) {
-                    File::delete($oldPath);
-                }
-            }
-
-            $file = $request->file('thumbnail');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $this->deleteStorageFile($content->thumbnail);
+            $file     = $request->file('thumbnail');
+            $filename = time() . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('img/thumbnails'), $filename);
-            $validated['thumbnail'] = $filename;
+            $validated['thumbnail'] = '/img/thumbnails/' . $filename;
         }
 
-        // Handle featured image removal
+        // ── Galvenā attēla noņemšana (ne-video) ────────────────────
         if ($request->boolean('_remove_featured_image') && $content->featured_image) {
-            $oldPath = public_path('img/Blogs/' . $content->featured_image);
-            if (File::exists($oldPath)) {
-                File::delete($oldPath);
-            }
+            $this->deleteStorageFile($content->featured_image);
             $validated['featured_image'] = null;
-        }
-
-        // Handle featured image upload
-        if ($request->hasFile('featured_image')) {
-            // Delete old featured image
-            if ($content->featured_image) {
-                $oldPath = public_path('img/Blogs/' . $content->featured_image);
-                if (File::exists($oldPath)) {
-                    File::delete($oldPath);
-                }
+            // Ja tas bija arī sīktēls — notīra arī thumbnail
+            if ($content->thumbnail === $content->featured_image) {
+                $validated['thumbnail'] = null;
             }
-
-            $file = $request->file('featured_image');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('img/Blogs'), $filename);
-            $validated['featured_image'] = $filename;
         }
 
-        // Handle blog images removal
+        // ── Galvenā attēla augšupielāde (ne-video) ──────────────────
+        if ($request->hasFile('featured_image')) {
+            $this->deleteStorageFile($content->featured_image);
+            $file     = $request->file('featured_image');
+            $filename = time() . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $dir = $this->getContentImgDir($type);
+            $file->move(public_path($dir), $filename);
+            $validated['featured_image'] = '/' . $dir . '/' . $filename;
+        }
+
+        // Ne-video: featured_image = thumbnail
+        if ($type !== 'video' && !empty($validated['featured_image'])) {
+            $validated['thumbnail'] = $validated['featured_image'];
+        }
+
+        // ── Galerijas attēlu dzēšana ─────────────────────────────────
         if ($request->has('_remove_blog_images') && is_array($request->_remove_blog_images)) {
-            $currentImages = $content->blog_images ?? [];
-            $removeIndices = $request->_remove_blog_images;
+            $currentImages  = $content->blog_images ?? [];
+            $removeIndices  = $request->_remove_blog_images;
 
             foreach ($removeIndices as $index) {
                 if (isset($currentImages[$index])) {
-                    $oldPath = public_path('img/Blogs/' . $currentImages[$index]);
-                    if (File::exists($oldPath)) {
-                        File::delete($oldPath);
-                    }
+                    $this->deleteStorageFile($currentImages[$index]);
                     unset($currentImages[$index]);
                 }
             }
-
             $validated['blog_images'] = array_values($currentImages);
         }
 
-        // Handle new blog images upload
+        // ── Galerijas attēlu augšupielāde ───────────────────────────
         if ($request->hasFile('blog_images')) {
             $existingImages = $validated['blog_images'] ?? $content->blog_images ?? [];
 
             foreach ($request->file('blog_images') as $file) {
-                $filename = time() . '_' . uniqid() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('img/Blogs'), $filename);
-                $existingImages[] = $filename;
+                $filename = time() . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $dir = $this->getContentImgDir($type);
+                $file->move(public_path($dir), $filename);
+                $existingImages[] = '/' . $dir . '/' . $filename;
             }
-
             $validated['blog_images'] = $existingImages;
         }
 
-        // Set published_at if publishing for first time
-        if ($validated['is_published'] && !$content->published_at) {
+        // Publicēšanas laiks
+        if (!empty($validated['is_published']) && !$content->published_at) {
             $validated['published_at'] = now();
         }
 
-        // Remove internal fields
-        unset($validated['_remove_thumbnail']);
-        unset($validated['_remove_featured_image']);
-        unset($validated['_remove_blog_images']);
+        // Noņem iekšējos laukus
+        unset($validated['_remove_thumbnail'], $validated['_remove_featured_image'], $validated['_remove_blog_images']);
 
         $content->update($validated);
 
         return redirect()->route('admin.content.index')
             ->with('success', 'Saturs veiksmīgi atjaunināts!');
+    }
+
+    /**
+     * Dzēš failu no storage (pieņem gan 'storage/...' gan '/storage/...' ceļus).
+     * Veco /img/ ceļus ignorē — tos nedrīkst dzēst automātiski.
+     */
+    /**
+     * Nosaka attēlu mapi pēc satura tipa.
+     * video → img/thumbnails, blog → img/Blogs, post → img/Posts, announcement → img/Announcements
+     */
+    private function getContentImgDir(string $type): string
+    {
+        return match($type) {
+            'blog'         => 'img/Blogs',
+            'post'         => 'img/Posts',
+            'announcement' => 'img/Announcements',
+            default        => 'img/thumbnails',
+        };
+    }
+
+    private function deleteStorageFile(?string $path): void
+    {
+        if (!$path) return;
+        $relative = ltrim($path, '/');
+        // /img/ ceļi — dzēš no public/
+        if (str_starts_with($relative, 'img/')) {
+            $full = public_path($relative);
+            if (file_exists($full)) @unlink($full);
+            return;
+        }
+        // storage/ ceļi
+        if (str_starts_with($relative, 'storage/')) {
+            $storagePath = str_replace('storage/', 'public/', $relative);
+            if (Storage::exists($storagePath)) {
+                Storage::delete($storagePath);
+            }
+        }
     }
 
     /**
@@ -289,29 +322,14 @@ class AdminContentController extends Controller
     {
         $content = Content::findOrFail($id);
 
-        // Delete thumbnail
-        if ($content->thumbnail) {
-            $path = public_path('img/thumbnails/' . $content->thumbnail);
-            if (File::exists($path)) {
-                File::delete($path);
-            }
+        $this->deleteStorageFile($content->thumbnail);
+        // featured_image var sakrist ar thumbnail — dzēš tikai ja atšķiras
+        if ($content->featured_image && $content->featured_image !== $content->thumbnail) {
+            $this->deleteStorageFile($content->featured_image);
         }
-
-        // Delete featured image
-        if ($content->featured_image) {
-            $path = public_path('img/Blogs/' . $content->featured_image);
-            if (File::exists($path)) {
-                File::delete($path);
-            }
-        }
-
-        // Delete blog images
         if ($content->blog_images && is_array($content->blog_images)) {
             foreach ($content->blog_images as $image) {
-                $path = public_path('img/Blogs/' . $image);
-                if (File::exists($path)) {
-                    File::delete($path);
-                }
+                $this->deleteStorageFile($image);
             }
         }
 

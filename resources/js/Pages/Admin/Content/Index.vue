@@ -73,10 +73,10 @@ const resetFilters = () => {
 
 // Content types with translation keys
 const contentTypes = computed(() => [
-    { value: 'video', labelKey: 'admin.content.types.video', icon: 'fas fa-video' },
-    { value: 'blog', labelKey: 'admin.content.types.blog', icon: 'fas fa-blog' },
-    { value: 'news', labelKey: 'admin.content.types.news', icon: 'fas fa-newspaper' },
-    { value: 'announcement', labelKey: 'admin.content.types.announcement', icon: 'fas fa-bullhorn' },
+    { value: 'video', labelKey: 'admin.content.types.videos', icon: 'fas fa-video' },
+    { value: 'blog', labelKey: 'admin.content.types.blogs', icon: 'fas fa-blog' },
+    { value: 'post', labelKey: 'admin.content.types.posts', icon: 'fas fa-bullhorn' },
+    { value: 'announcement', labelKey: 'admin.content.types.announcements', icon: 'fas fa-bullhorn' },
 ]);
 
 const getTypeInfo = (type) => {
@@ -90,47 +90,40 @@ const getTypeInfo = (type) => {
  * - Blogs: /img/Blogs/{featured_image} or placeholder
  * - Others: /img/thumbnails/{thumbnail} or placeholder
  */
+// Universāls attēla URL aprēķins
+const resolveImg = (path, fallbackDir = '/img/thumbnails') => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    if (path.startsWith('storage/')) return '/' + path;
+    return `${fallbackDir}/${path}`;
+};
+
+// Iegūst attēla mapi pēc satura tipa
+const getTypeDir = (type) => {
+    const map = { video: '/img/thumbnails', blog: '/img/Blogs', post: '/img/Posts', announcement: '/img/Announcements' };
+    return map[type] || '/img/thumbnails';
+};
+
 const getThumbnailUrl = (item) => {
-    const placeholder = '/img/thumbnails/no-content-placeholder.png';
+    const dir = getTypeDir(item.type);
 
-    if (item.type === 'blog') {
-        // Blogs use featured_image from /img/Blogs/
-        if (item.featured_image) {
-            // Check if it's already a full path or URL
-            if (item.featured_image.startsWith('http') || item.featured_image.startsWith('/')) {
-                return item.featured_image;
-            }
-            return `/img/Blogs/${item.featured_image}`;
-        }
-        return '/img/Blogs/no-content-placeholder.png';
-    }
-
-    if (item.type === 'video') {
-        // Videos use thumbnail from /img/thumbnails/
-        if (item.thumbnail) {
-            if (item.thumbnail.startsWith('http') || item.thumbnail.startsWith('/')) {
-                return item.thumbnail;
-            }
-            return `/img/thumbnails/${item.thumbnail}`;
-        }
-        return placeholder;
-    }
-
-    // News, announcements, etc. - use thumbnail or featured_image
     if (item.thumbnail) {
-        if (item.thumbnail.startsWith('http') || item.thumbnail.startsWith('/')) {
-            return item.thumbnail;
-        }
-        return `/img/thumbnails/${item.thumbnail}`;
-    }
-    if (item.featured_image) {
-        if (item.featured_image.startsWith('http') || item.featured_image.startsWith('/')) {
-            return item.featured_image;
-        }
-        return `/img/thumbnails/${item.featured_image}`;
+        const url = resolveImg(item.thumbnail, dir);
+        if (url) return url;
     }
 
-    return placeholder;
+    // YouTube automātiskais sīktēls
+    if (item.type === 'video' && item.video_url) {
+        const match = item.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+        if (match) return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+    }
+
+    if (item.featured_image) {
+        const url = resolveImg(item.featured_image, dir);
+        if (url) return url;
+    }
+
+    return '/img/no-content-placeholder.png';
 };
 
 /**
@@ -286,7 +279,7 @@ const getTypeCount = (type) => {
                     <img
                         :src="getThumbnailUrl(item)"
                         :alt="getTitle(item)"
-                        @error="$event.target.src = '/img/thumbnails/no-content-placeholder.png'"
+                        @error="$event.target.src = '/img/no-content-placeholder.png'"
                     >
                     <!-- Video duration badge -->
                     <span v-if="item.type === 'video' && item.duration" class="duration-badge">
@@ -575,7 +568,7 @@ const getTypeCount = (type) => {
 
 .type-video { background: rgba(239, 68, 68, 0.9); color: white; }
 .type-blog { background: rgba(59, 130, 246, 0.9); color: white; }
-.type-news { background: rgba(16, 185, 129, 0.9); color: white; }
+.type-post { background: rgba(16, 185, 129, 0.9); color: white; }
 .type-announcement { background: rgba(245, 158, 11, 0.9); color: white; }
 
 .duration-badge {

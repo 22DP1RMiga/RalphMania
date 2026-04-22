@@ -3,8 +3,16 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// Toast
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 // Form data
 const form = useForm({
@@ -18,7 +26,7 @@ const form = useForm({
     content_body_lv: '',
     content_body_en: '',
     video_url: '',
-    video_platform: 'youtube',
+    video_platform: 'YouTube',
     duration: null,
     thumbnail: null,
     featured_image: null,
@@ -40,15 +48,19 @@ const isDraggingBlogImages = ref(false);
 const contentTypes = computed(() => [
     { value: 'video', labelKey: 'admin.content.types.video', icon: 'fas fa-video' },
     { value: 'blog', labelKey: 'admin.content.types.blog', icon: 'fas fa-blog' },
-    { value: 'news', labelKey: 'admin.content.types.news', icon: 'fas fa-newspaper' },
+    { value: 'post', labelKey: 'admin.content.types.post', icon: 'fas fa-bullhorn' },
     { value: 'announcement', labelKey: 'admin.content.types.announcement', icon: 'fas fa-bullhorn' },
 ]);
 
 // Video platforms
 const videoPlatforms = [
-    { value: 'youtube', label: 'YouTube' },
-    { value: 'vimeo', label: 'Vimeo' },
-    { value: 'other', label: 'Cits' },
+    { value: 'YouTube', label: 'YouTube' },
+    { value: 'TikTok', label: 'TikTok' },
+    { value: 'Instagram', label: 'Instagram' },
+    { value: 'Facebook', label: 'Facebook' },
+    { value: 'X', label: 'X / Twitter' },
+    { value: 'Vimeo', label: 'Vimeo' },
+    { value: 'Other', label: 'Cits' },
 ];
 
 // Auto-generate slug from title
@@ -176,16 +188,24 @@ const activeTab = ref('lv');
 // Submit form
 const submit = () => {
     form.post('/admin/content', {
-        preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
-            // Redirect happens automatically
+            showToast(locale.value === 'lv' ? 'Saturs veiksmīgi izveidots!' : 'Content created successfully!', 'success');
+            setTimeout(() => router.visit('/admin/content'), 1200);
+        },
+        onError: (errors) => {
+            const first = Object.values(errors)[0];
+            showToast(first || (locale.value === 'lv' ? 'Lūdzu pārbaudiet ievadītos datus.' : 'Please check your input.'), 'error');
         },
     });
 };
 
 // Check if video type
 const isVideoType = computed(() => form.type === 'video');
-const isBlogType = computed(() => form.type === 'blog');
+const isBlogType  = computed(() => form.type === 'blog');
+const isPostType  = computed(() => form.type === 'post');
+// Blog un post abi atbalsta attēlu galeriju
+const hasGallery  = computed(() => form.type === 'blog' || form.type === 'post');
 </script>
 
 <template>
@@ -193,6 +213,13 @@ const isBlogType = computed(() => form.type === 'blog');
 
     <AdminLayout>
         <template #title>{{ t('admin.content.create.title') }}</template>
+
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
 
         <!-- Header -->
         <div class="page-header">
@@ -466,12 +493,14 @@ const isBlogType = computed(() => form.type === 'blog');
                         </div>
                     </div>
 
-                    <!-- Blog Images (only for blog type) -->
-                    <div v-if="isBlogType" class="card">
+                    <!-- Attēlu galerija (blog un post tipam) -->
+                    <div v-if="hasGallery" class="card">
                         <div class="card-header">
                             <h3 class="card-title">
                                 <i class="fas fa-images"></i>
-                                {{ t('admin.content.form.blogImages') || 'Bloga attēli' }}
+                                {{ isPostType
+                                ? (locale === 'lv' ? 'Ziņas attēli (var būt vairāki)' : 'Post Images (can be multiple)')
+                                : (t('admin.content.form.blogImages') || 'Bloga attēli') }}
                             </h3>
                         </div>
                         <div class="card-body">

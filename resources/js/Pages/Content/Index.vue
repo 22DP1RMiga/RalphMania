@@ -20,7 +20,7 @@ const sortBy = ref('newest');
 const searchQuery = ref('');
 const searchResults = ref([]);
 const isSearching = ref(false);
-const displayedItems = ref(3);
+const displayedItems = ref(12);
 const allContent = ref(props.content.data || []);
 
 // Available platforms & categories (dynamic from data)
@@ -38,7 +38,7 @@ const categories = computed(() => {
 const filteredContent = computed(() => {
     let filtered = [...allContent.value];
 
-    // Filter by type
+    // Filter by type — tikai 'post', nav vairs 'news' aizstājvārds
     if (activeType.value) {
         filtered = filtered.filter(item => item.type === activeType.value);
     }
@@ -84,17 +84,17 @@ const hasMore = computed(() => {
 // Methods
 const setType = (type) => {
     activeType.value = type;
-    displayedItems.value = 3;
+    displayedItems.value = 12;
 };
 
 const setPlatform = (platform) => {
     activePlatform.value = activePlatform.value === platform ? null : platform;
-    displayedItems.value = 3;
+    displayedItems.value = 12;
 };
 
 const setCategory = (category) => {
     activeCategory.value = activeCategory.value === category ? null : category;
-    displayedItems.value = 3;
+    displayedItems.value = 12;
 };
 
 const loadMore = () => {
@@ -109,20 +109,37 @@ const getDescription = (item) => {
     return locale.value === 'lv' ? item.description_lv : (item.description_en || item.description_lv);
 };
 
-const getThumbnail = (item) => {
-    if (item.thumbnail && !item.thumbnail.includes('img.thumbnails')) {
-        return item.thumbnail;
-    }
+// Universāls attēla URL aprēķins
+const resolveImg = (path, fallbackDir = '/img/thumbnails') => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    if (path.startsWith('storage/')) return '/' + path;
+    return `${fallbackDir}/${path}`;
+};
 
-    // YouTube thumbnail fallback
+// Iegūst attēla mapi pēc satura tipa
+const getTypeDir = (type) => {
+    const map = { video: '/img/thumbnails', blog: '/img/Blogs', post: '/img/Posts', announcement: '/img/Announcements' };
+    return map[type] || '/img/thumbnails';
+};
+
+const getThumbnail = (item) => {
+    // Thumbnail lauks
+    if (item.thumbnail) {
+        const url = resolveImg(item.thumbnail, getTypeDir(item.type));
+        if (url) return url;
+    }
+    // YouTube automātiskais sīktēls
     if (item.video_url && item.video_platform === 'YouTube') {
         const match = item.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-        if (match) {
-            return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
-        }
+        if (match) return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
     }
-
-    return '/img/default-content.jpg';
+    // featured_image kā rezerve
+    if (item.featured_image) {
+        const url = resolveImg(item.featured_image, getTypeDir(item.type));
+        if (url) return url;
+    }
+    return '/img/no-content-placeholder.png';
 };
 
 const formatViews = (count) => {
@@ -181,7 +198,7 @@ watch(searchQuery, handleSearch);
 
 // Reset displayed items when filters change
 watch([activeType, activePlatform, activeCategory, sortBy], () => {
-    displayedItems.value = 3;
+    displayedItems.value = 12;
 });
 </script>
 
@@ -268,14 +285,14 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     <span>{{ t('content.blogs') }}</span>
                 </button>
 
-                <!-- NEWS-->
+                <!-- POST / ZIŅAS -->
                 <button
-                    @click="setType('news')"
+                    @click="setType('post')"
                     class="filter-tab"
-                    :class="{ 'filter-tab-active': activeType === 'news' }"
+                    :class="{ 'filter-tab-active': activeType === 'post' }"
                 >
                     <i class="fas fa-bullhorn"></i>
-                    <span>{{ t('content.news') }}</span>
+                    <span>{{ locale === 'lv' ? 'Ziņas' : 'Posts' }}</span>
                 </button>
 
                 <!-- ANNOUNCEMENTS-->
@@ -360,9 +377,27 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     <Link :href="`/content/${item.slug}`" class="content-thumbnail">
                         <img :src="getThumbnail(item)" :alt="getTitle(item)">
 
-                        <!-- Video Badge -->
-                        <div v-if="item.type === 'video'" class="video-badge">
-                            <i class="fas fa-play"></i>
+                        <!-- Type Badge — visiem tipiem -->
+                        <div class="type-badge" :class="`type-badge--${item.type}`">
+                            <i :class="{
+                                'fas fa-play':           item.type === 'video',
+                                'fas fa-pen-nib':        item.type === 'blog',
+                                'fas fa-bullhorn':       item.type === 'news' || item.type === 'post',
+                                'fas fa-bell':           item.type === 'announcement',
+                            }"></i>
+                        </div>
+
+                        <!-- Platform badge (tikai video) -->
+                        <div v-if="item.type === 'video' && item.video_platform" class="platform-badge">
+                            <i :class="{
+                                'fab fa-youtube':   item.video_platform === 'YouTube',
+                                'fab fa-tiktok':    item.video_platform === 'TikTok',
+                                'fab fa-instagram': item.video_platform === 'Instagram',
+                                'fab fa-facebook':  item.video_platform === 'Facebook',
+                                'fab fa-x-twitter': item.video_platform === 'X' || item.video_platform === 'Twitter',
+                                'fas fa-video':     !['YouTube','TikTok','Instagram','Facebook','X','Twitter'].includes(item.video_platform),
+                            }"></i>
+                            {{ item.video_platform }}
                         </div>
 
                         <!-- Category Badge -->
@@ -408,7 +443,13 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                                 @click="openSource(item)"
                                 class="btn-action btn-secondary"
                             >
-                                <i class="fab" :class="`fa-${item.video_platform?.toLowerCase()}`"></i>
+                                <i :class="{
+                                    'fab fa-youtube':   item.video_platform === 'YouTube',
+                                    'fab fa-tiktok':    item.video_platform === 'TikTok',
+                                    'fab fa-instagram': item.video_platform === 'Instagram',
+                                    'fab fa-facebook':  item.video_platform === 'Facebook',
+                                    'fas fa-video':     !['YouTube','TikTok','Instagram','Facebook'].includes(item.video_platform),
+                                }"></i>
                                 {{ t('content.watch_on') }} {{ item.video_platform }}
                             </button>
                         </div>
@@ -745,19 +786,43 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
     transform: scale(1.05);
 }
 
-.video-badge {
+/* Type badge (top-left) — visiem tipiem */
+.type-badge {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    width: 3rem;
-    height: 3rem;
-    background: rgba(220, 38, 38, 0.9);
+    top: 0.75rem;
+    left: 0.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.25rem;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px);
+}
+.type-badge--video       { background: rgba(220, 38, 38, 0.92); }
+.type-badge--blog        { background: rgba(37, 99, 235, 0.92); }
+.type-badge--news,
+.type-badge--post        { background: rgba(5, 150, 105, 0.92); }
+.type-badge--announcement{ background: rgba(245, 158, 11, 0.92); }
+
+/* Platform badge (bottom-left, tikai video) */
+.platform-badge {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
 }
 
 .category-badge {

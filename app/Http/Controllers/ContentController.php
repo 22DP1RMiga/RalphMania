@@ -44,7 +44,7 @@ class ContentController extends Controller
             });
         }
 
-        $content = $query->paginate(12)->through(fn ($item) => [
+        $content = $query->paginate(200)->through(fn ($item) => [
             'id' => $item->id,
             'title_lv' => $item->title_lv,
             'title_en' => $item->title_en,
@@ -93,11 +93,12 @@ class ContentController extends Controller
         // Increment view count
         $content->increment('view_count');
 
-        // Check if user has liked
+        // Pārbauda vai lietotājs ir "nolaikojis" — web guard (Inertia sesija)
         $userLiked = false;
-        if (auth()->check()) {
+        $userId = auth('web')->id() ?? auth()->id();
+        if ($userId) {
             $userLiked = $content->likes()
-                ->where('user_id', auth()->id())
+                ->where('user_id', $userId)
                 ->exists();
         }
 
@@ -108,7 +109,7 @@ class ContentController extends Controller
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'desc')
             ->limit(4)
-            ->get(['id', 'title_lv', 'title_en', 'slug', 'thumbnail', 'featured_image', 'type', 'published_at']);
+            ->get(['id', 'title_lv', 'title_en', 'slug', 'thumbnail', 'featured_image', 'type', 'video_url', 'video_platform', 'published_at']);
 
         return Inertia::render('Content/Show', [
             'content' => [
@@ -194,7 +195,7 @@ class ContentController extends Controller
     public function byType($type): Response
     {
         // Validate type
-        $validTypes = ['video', 'blog', 'news', 'announcement'];
+        $validTypes = ['video', 'blog', 'post', 'announcement'];
         if (!in_array($type, $validTypes)) {
             abort(404);
         }
@@ -222,15 +223,15 @@ class ContentController extends Controller
 
         // Type labels for page title
         $typeLabels = [
-            'video' => ['lv' => 'Video', 'en' => 'Videos'],
-            'blog' => ['lv' => 'Blogi', 'en' => 'Blogs'],
-            'news' => ['lv' => 'Ziņas', 'en' => 'News'],
-            'announcement' => ['lv' => 'Paziņojumi', 'en' => 'Announcements'],
+            'video'        => ['lv' => 'Video',      'en' => 'Videos'],
+            'blog'         => ['lv' => 'Blogi',       'en' => 'Blogs'],
+            'post'         => ['lv' => 'Ziņas',       'en' => 'Posts'],
+            'announcement' => ['lv' => 'Paziņojumi',  'en' => 'Announcements'],
         ];
 
         return Inertia::render('Content/Index', [
-            'content' => $content,
-            'filters' => ['type' => $type],
+            'content'   => $content,
+            'filters'   => ['type' => $type],
             'pageTitle' => $typeLabels[$type] ?? null,
         ]);
     }
@@ -255,7 +256,7 @@ class ContentController extends Controller
      */
     public function latestNews()
     {
-        $news = Content::where('type', 'news')
+        $news = Content::where('type', 'post')
             ->where('is_published', true)
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'desc')
