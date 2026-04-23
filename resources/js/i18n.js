@@ -557,8 +557,8 @@ const messages = {
             discount: 'Atlaide',
         },
         sections: {
-            featured_content: 'Jaunākais Saturs',
-            featured_products: 'Populārākie Produkti',
+            featured_content: 'Jaunākais saturs',
+            featured_products: 'Populārākie produkti',
             stats: {
                 views: 'Skatījumi',
                 followers: 'Sekotāji',
@@ -1480,7 +1480,7 @@ const messages = {
                 // Index page
                 index: {
                     title: 'Saturs',
-                    subtitle: 'Pārvaldiet video, emuārus un ziņas',
+                    subtitle: 'Pārvaldiet video, emuārus, ziņas un paziņojumus!',
                     newContent: 'Jauns saturs',
                 },
 
@@ -1619,6 +1619,7 @@ const messages = {
                 noText: 'Nav pievienots teksts',
                 deleted: 'Dzēsts',
                 deletedUser: 'Dzēsts lietotājs',
+                approveSuccess: 'Atsauksme veiksmīgi apstiprināta!',
             },
             comments: {
                 index: {
@@ -2387,7 +2388,7 @@ const messages = {
             views: 'Views',
             latest: 'Latest',
             title: 'Content',
-            subtitle: 'Videos, blogs, news and announcements from all made RoltonsLV content',
+            subtitle: 'Videos, blogs, posts and announcements from all made RoltonsLV content',
 
             // Filtri
             all: 'All',
@@ -3402,7 +3403,7 @@ const messages = {
                 // Index page
                 index: {
                     title: 'Content',
-                    subtitle: 'Manage videos, blogs and news',
+                    subtitle: 'Manage videos, blogs, posts and announcements!',
                     newContent: 'New content',
                 },
 
@@ -3541,6 +3542,7 @@ const messages = {
                 noText: 'No text provided',
                 deleted: 'Deleted',
                 deletedUser: 'Deleted user',
+                approveSuccess: 'Review successfully approved!',
             },
             comments: {
                 index: {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Content;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,24 +45,56 @@ class ContentController extends Controller
             });
         }
 
-        $content = $query->paginate(200)->through(fn ($item) => [
-            'id' => $item->id,
-            'title_lv' => $item->title_lv,
-            'title_en' => $item->title_en,
-            'slug' => $item->slug,
-            'type' => $item->type,
-            'description_lv' => $item->description_lv,
-            'description_en' => $item->description_en,
-            'thumbnail' => $item->thumbnail,
-            'featured_image' => $item->featured_image,
-            'video_platform' => $item->video_platform,
-            'duration' => $item->duration,
-            'category' => $item->category,
-            'view_count' => $item->view_count,
-            'like_count' => $item->like_count,
-            'is_featured' => $item->is_featured,
-            'published_at' => $item->published_at,
-        ]);
+        // Sort
+        $sort = $request->get('sort', 'newest');
+        if ($sort === 'oldest') {
+            $query->orderBy('published_at', 'asc');
+        } elseif ($sort === 'most_liked') {
+            $query->orderBy('like_count', 'desc');
+        } elseif ($sort === 'most_viewed') {
+            $query->orderBy('view_count', 'desc');
+        } elseif ($sort === 'best_mood') {
+            // Subquery pieeja — MySQL strict mode draudzīga
+            $query->orderByRaw('(
+                SELECT AVG(cm2.score)
+                FROM comment_moods cm2
+                INNER JOIN comments c2 ON cm2.comment_id = c2.id
+                WHERE c2.content_id = content.id
+            ) DESC')
+                ->orderBy('published_at', 'desc');
+        } else {
+            $query->orderBy('published_at', 'desc');
+        }
+
+        $content = $query->paginate(200)->through(function ($item) {
+            // Mood dati
+            $moodData = DB::table('comment_moods')
+                ->join('comments', 'comment_moods.comment_id', '=', 'comments.id')
+                ->where('comments.content_id', $item->id)
+                ->selectRaw('AVG(comment_moods.score) as avg_score, COUNT(comment_moods.id) as mood_count')
+                ->first();
+
+            return [
+                'id' => $item->id,
+                'title_lv' => $item->title_lv,
+                'title_en' => $item->title_en,
+                'slug' => $item->slug,
+                'type' => $item->type,
+                'description_lv' => $item->description_lv,
+                'description_en' => $item->description_en,
+                'thumbnail' => $item->thumbnail,
+                'featured_image' => $item->featured_image,
+                'video_platform' => $item->video_platform,
+                'duration' => $item->duration,
+                'category' => $item->category,
+                'view_count' => $item->view_count,
+                'like_count' => $item->like_count,
+                'is_featured' => $item->is_featured,
+                'published_at' => $item->published_at,
+                'avg_mood_score' => $moodData->avg_score !== null ? round($moodData->avg_score) : null,
+                'mood_count' => (int)($moodData->mood_count ?? 0),
+            ];
+        });
 
         // Get available categories for filter
         $categories = Content::where('is_published', true)
@@ -77,6 +110,7 @@ class ContentController extends Controller
                 'category' => $request->category,
                 'platform' => $request->platform,
                 'search' => $request->search,
+                'sort' => $sort,
             ],
         ]);
     }
@@ -152,20 +186,26 @@ class ContentController extends Controller
             ->first();
 
         if ($like) {
-            // Unlike
             $like->delete();
             $content->decrement('like_count');
+
+            \App\Models\ActivityLog::log(
+                'content_unliked',
+                'Lietotājs ' . auth()->user()?->username . ' noņēma "patīk" (saturs: ' . $content->title_lv . ')',
+            );
 
             return response()->json([
                 'liked' => false,
                 'like_count' => $content->fresh()->like_count,
             ]);
         } else {
-            // Like
-            $content->likes()->create([
-                'user_id' => auth()->id(),
-            ]);
+            $content->likes()->create(['user_id' => auth()->id()]);
             $content->increment('like_count');
+
+            \App\Models\ActivityLog::log(
+                'content_liked',
+                'Lietotājs ' . auth()->user()?->username . ' atzīmēja "patīk" (saturs: ' . $content->title_lv . ')',
+            );
 
             return response()->json([
                 'liked' => true,

@@ -253,11 +253,33 @@ const toggleLike = async () => {
     }
 };
 
-// Comment form
+// ── KOMENTĀRI AR ATBILDĒM ──────────────────────────────────────
+// Galvenā forma (top-level)
 const commentForm = useForm({
     content_id: props.content.id,
     comment_text: '',
+    parent_id: null,
 });
+
+// Aktīvā reply forma — {commentId: id} vai null
+const activeReplyId   = ref(null);
+// Kuri komentāri ir izvērsti (replies redzami)
+const expandedReplies = ref({});
+// Reply teksti pa komentāriem
+const replyTexts      = ref({});
+// Vai reply tiek sūtīts
+const replySubmitting = ref({});
+
+const toggleReplies = (commentId) => {
+    expandedReplies.value[commentId] = !expandedReplies.value[commentId];
+};
+
+const openReply = (commentId) => {
+    activeReplyId.value = activeReplyId.value === commentId ? null : commentId;
+    if (!replyTexts.value[commentId]) replyTexts.value[commentId] = '';
+    // Automātiski izvērst replies kad atbild
+    if (activeReplyId.value) expandedReplies.value[commentId] = true;
+};
 
 const submitComment = () => {
     if (!authUser.value) { showMsg(t('content.login_required'), 'error'); return; }
@@ -271,13 +293,250 @@ const submitComment = () => {
     });
 };
 
+const submitReply = async (parentComment) => {
+    if (!authUser.value) { showMsg(t('content.login_required'), 'error'); return; }
+    const text = (replyTexts.value[parentComment.id] || '').trim();
+    if (text.length < 3) {
+        showMsg(locale.value === 'lv' ? 'Atbilde ir pārāk īsa!' : 'Reply is too short!', 'error');
+        return;
+    }
+    replySubmitting.value[parentComment.id] = true;
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await axios.post('/comments', {
+            content_id:   props.content.id,
+            comment_text: text,
+            parent_id:    parentComment.id,
+        }, { headers: { 'X-CSRF-TOKEN': csrf } });
+        replyTexts.value[parentComment.id] = '';
+        activeReplyId.value = null;
+        expandedReplies.value[parentComment.id] = true;
+        showMsg(locale.value === 'lv' ? 'Atbilde pievienota!' : 'Reply added!', 'success');
+        await loadComments();
+    } catch {
+        showMsg(locale.value === 'lv' ? 'Kļūda!' : 'Error!', 'error');
+    } finally {
+        replySubmitting.value[parentComment.id] = false;
+    }
+};
+
 const loadComments = async () => {
     isLoadingComments.value = true;
     try {
-        const res = await axios.get(`/api/v1/comments/content/${props.content.id}`);
-        comments.value = res.data || [];
+        const res = await axios.get(`/content/${props.content.id}/comments`);
+        const loaded = res.data || [];
+        // mySlider inicializē no servera datiem
+        loaded.forEach(c => {
+            c.mySlider = c.my_mood_score ?? undefined;
+            if (c.replies) c.replies.forEach(r => { r.mySlider = r.my_mood_score ?? undefined; });
+        });
+        comments.value = loaded;
     } catch { comments.value = []; }
     finally { isLoadingComments.value = false; }
+};
+
+// Kopējais komentāru skaits (top-level + replies)
+const totalComments = computed(() => {
+    return comments.value.reduce((sum, c) => sum + 1 + (c.replies_count || 0), 0);
+});
+
+// Globālais vidējais noskaņojums — vidējais no visu komentāru avg_mood_score
+const avgMoodScore = computed(() => {
+    const scores = [];
+    comments.value.forEach(c => {
+        if (c.avg_mood_score !== null && c.avg_mood_score !== undefined) {
+            scores.push(c.avg_mood_score);
+        }
+        if (c.replies) {
+            c.replies.forEach(r => {
+                if (r.avg_mood_score !== null && r.avg_mood_score !== undefined) {
+                    scores.push(r.avg_mood_score);
+                }
+            });
+        }
+    });
+    if (!scores.length) return null;
+    return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length);
+});
+
+const formatCommentDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+    }) + ' ' + d.toLocaleTimeString(locale.value === 'lv' ? 'lv-LV' : 'en-US', {
+        hour: '2-digit', minute: '2-digit',
+    });
+};
+
+// ── KOMENTĀRU DZĒŠANA UN REDIĢĒŠANA ──────────────────────────
+const editingCommentId = ref(null);
+const editingText      = ref('');
+const editSubmitting   = ref(false);
+const deleteSubmitting = ref({});
+
+// Dzēšanas modālis
+const deleteModal = ref({ show: false, comment: null, isReply: false, parentComment: null });
+
+const openDeleteModal = (comment, isReply = false, parentComment = null) => {
+    deleteModal.value = { show: true, comment, isReply, parentComment };
+};
+const closeDeleteModal = () => {
+    deleteModal.value = { show: false, comment: null, isReply: false, parentComment: null };
+};
+
+const startEdit = (comment) => {
+    editingCommentId.value = comment.id;
+    editingText.value = comment.comment_text;
+};
+
+const cancelEdit = () => {
+    editingCommentId.value = null;
+    editingText.value = '';
+};
+
+const submitEdit = async (comment) => {
+    if (!editingText.value.trim() || editingText.value.trim().length < 3) return;
+    editSubmitting.value = true;
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await axios.patch(`/comments/${comment.id}`, {
+            comment_text: editingText.value.trim(),
+        }, { headers: { 'X-CSRF-TOKEN': csrf } });
+        comment.comment_text = editingText.value.trim();
+        comment.is_edited = true;
+        cancelEdit();
+        showMsg(locale.value === 'lv' ? 'Komentārs atjaunināts!' : 'Comment updated!', 'success');
+    } catch (err) {
+        showMsg(err.response?.data?.message || (locale.value === 'lv' ? 'Kļūda!' : 'Error!'), 'error');
+    } finally {
+        editSubmitting.value = false;
+    }
+};
+
+const confirmDelete = async () => {
+    const { comment, isReply, parentComment } = deleteModal.value;
+    if (!comment) return;
+    deleteSubmitting.value[comment.id] = true;
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await axios.delete(`/comments/${comment.id}`, {
+            headers: { 'X-CSRF-TOKEN': csrf },
+        });
+        if (isReply && parentComment) {
+            parentComment.replies = parentComment.replies.filter(r => r.id !== comment.id);
+            parentComment.replies_count = Math.max(0, (parentComment.replies_count || 1) - 1);
+        } else {
+            comments.value = comments.value.filter(c => c.id !== comment.id);
+        }
+        showMsg(
+            isReply
+                ? (locale.value === 'lv' ? 'Atbilde dzēsta' : 'Reply deleted')
+                : (locale.value === 'lv' ? 'Komentārs dzēsts' : 'Comment deleted'),
+            'success'
+        );
+    } catch {
+        showMsg(locale.value === 'lv' ? 'Kļūda!' : 'Error!', 'error');
+    } finally {
+        delete deleteSubmitting.value[comment.id];
+        closeDeleteModal();
+    }
+};
+
+// Reply rediģēšana
+const editingReplyId   = ref(null);
+const editingReplyText = ref('');
+const editReplySubmitting = ref(false);
+
+const startEditReply = (reply) => {
+    editingReplyId.value   = reply.id;
+    editingReplyText.value = reply.comment_text;
+};
+const cancelEditReply = () => {
+    editingReplyId.value   = null;
+    editingReplyText.value = '';
+};
+const submitEditReply = async (reply) => {
+    if (!editingReplyText.value.trim() || editingReplyText.value.trim().length < 3) return;
+    editReplySubmitting.value = true;
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await axios.patch(`/comments/${reply.id}`, {
+            comment_text: editingReplyText.value.trim(),
+        }, { headers: { 'X-CSRF-TOKEN': csrf } });
+        reply.comment_text = editingReplyText.value.trim();
+        reply.is_edited = true;
+        cancelEditReply();
+        showMsg(locale.value === 'lv' ? 'Atbilde atjaunināta!' : 'Reply updated!', 'success');
+    } catch (err) {
+        showMsg(err.response?.data?.message || (locale.value === 'lv' ? 'Kļūda!' : 'Error!'), 'error');
+    } finally {
+        editReplySubmitting.value = false;
+    }
+};
+
+
+// ── EMOJI SLIDER — per-user vērtējums ────────────────────────
+// mySlider: ko ES esmu iestatījis (no servera vai lokāli pirms saglabāšanas)
+// avgMoodScore tiek atjaunināts serverī
+
+const sliderSaveTimers = {};
+
+const setCommentSlider = (comment, val) => {
+    const score = Number(val);
+    comment.mySlider = score;  // lokāla atjaunināšana uzreiz
+
+    // Debounced saglabāšana 600ms pēc pēdējās kustības
+    clearTimeout(sliderSaveTimers[comment.id]);
+    sliderSaveTimers[comment.id] = setTimeout(async () => {
+        if (!authUser.value) return; // nav autorizēts
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await axios.patch(`/comments/${comment.id}/mood`, { score }, {
+                headers: { 'X-CSRF-TOKEN': csrf }
+            });
+            // Atjaunina vidējo no servera
+            comment.avg_mood_score = res.data.avg_mood_score;
+            comment.mood_count     = res.data.mood_count;
+            comment.my_mood_score  = res.data.my_mood_score;
+        } catch {
+            // Klusu ignorē — lokālā vērtība paliek
+        }
+    }, 600);
+};
+
+// Vai šis komentārs nav vērtēts — ņem vērā gan servera, gan lokālo stāvokli
+const isSliderUnset = (comment) => {
+    // Ja lietotājs lokāli kustinājis slideri — jau vērtēts
+    if (comment.mySlider !== undefined) return false;
+    // Ja serveris atgrieza vērtējumu — jau vērtēts
+    if (comment.my_mood_score !== null && comment.my_mood_score !== undefined) return false;
+    return true;
+};
+const getMySlider = (comment) => {
+    if (comment.mySlider !== undefined) return comment.mySlider;
+    return comment.my_mood_score ?? 50;
+};
+
+const getSliderEmoji = (pct) => {
+    if (pct <= 10)  return '😡';
+    if (pct <= 25)  return '😠';
+    if (pct <= 40)  return '😕';
+    if (pct <= 55)  return '😐';
+    if (pct <= 70)  return '🙂';
+    if (pct <= 85)  return '😊';
+    return '🤩';
+};
+
+// Krāsa: sarkana (0%) → oranža (50%) → zaļa (100%)
+const getSliderColor = (pct) => {
+    const r = pct < 50
+        ? 220
+        : Math.round(220 - (pct - 50) / 50 * 180);
+    const g = pct < 50
+        ? Math.round(pct / 50 * 185)
+        : 185;
+    return `rgb(${r}, ${g}, 38)`;
 };
 
 const openSource = () => {
@@ -632,7 +891,7 @@ onMounted(() => {
                     <h2 class="section-title">
                         <i class="fas fa-comments"></i>
                         {{ t('content.comments') }}
-                        <span class="comments-count">({{ comments.length }})</span>
+                        <span class="comments-count">({{ totalComments }})</span>
                     </h2>
 
                     <form v-if="authUser" @submit.prevent="submitComment" class="comment-form">
@@ -665,23 +924,259 @@ onMounted(() => {
                         {{ t('content.loading_comments') }}
                     </div>
                     <div v-else-if="comments.length > 0" class="comments-list">
-                        <div v-for="comment in comments" :key="comment.id" class="comment-item">
-                            <img :src="comment.user?.profile_picture ? comment.user.profile_picture : '/img/default-avatar.png'"
-                                 :alt="comment.user?.username" class="comment-avatar">
-                            <div class="comment-content">
-                                <div class="comment-header">
-                                    <span class="comment-author-wrap">
-                                        <span class="comment-author">{{ comment.user?.username }}</span>
-                                        <span v-if="getRoleBadge(comment.user)" :class="['role-badge', getRoleBadge(comment.user).cls]">
-                                            {{ getRoleBadge(comment.user).label }}
+                        <div v-for="comment in comments" :key="comment.id" class="comment-thread">
+
+                            <!-- ── Top-level komentārs ── -->
+                            <div class="comment-item">
+                                <img :src="comment.user?.profile_picture || '/img/default-avatar.png'"
+                                     :alt="comment.user?.username" class="comment-avatar"
+                                     @error="$event.target.src='/img/default-avatar.png'">
+                                <div class="comment-content">
+                                    <!-- Galvene -->
+                                    <div class="comment-header">
+                                        <span class="comment-author-wrap">
+                                            <span class="comment-author">{{ comment.user?.username }}</span>
+                                            <span v-if="getRoleBadge(comment.user)" :class="['role-badge', getRoleBadge(comment.user).cls]">
+                                                {{ getRoleBadge(comment.user).label }}
+                                            </span>
                                         </span>
-                                    </span>
-                                    <span class="comment-date">
-                                        {{ new Date(comment.created_at).toLocaleDateString(locale === 'lv' ? 'lv-LV' : 'en-US') }}
-                                    </span>
+                                        <span class="comment-date">{{ formatCommentDate(comment.created_at) }}</span>
+                                        <span v-if="comment.is_edited" class="comment-edited-badge">
+                                            <i class="fas fa-pencil-alt"></i>
+                                            {{ locale === 'lv' ? 'rediģēts' : 'edited' }}
+                                        </span>
+                                    </div>
+
+
+                                    <!-- Teksts vai rediģēšanas forma -->
+                                    <div v-if="editingCommentId === comment.id" class="comment-edit-wrap">
+                                        <textarea
+                                            v-model="editingText"
+                                            class="comment-edit-textarea"
+                                            rows="3"
+                                            maxlength="1000"
+                                            @keydown.ctrl.enter="submitEdit(comment)"
+                                            @keydown.escape="cancelEdit"
+                                        ></textarea>
+                                        <div class="comment-edit-actions">
+                                            <button @click="cancelEdit" class="edit-cancel-btn">
+                                                {{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}
+                                            </button>
+                                            <button
+                                                @click="submitEdit(comment)"
+                                                :disabled="editSubmitting || !editingText.trim() || editingText.trim().length < 3"
+                                                class="edit-save-btn">
+                                                <i v-if="editSubmitting" class="fas fa-spinner fa-spin"></i>
+                                                <i v-else class="fas fa-check"></i>
+                                                {{ editSubmitting ? (locale === 'lv' ? 'Saglabā...' : 'Saving...') : (locale === 'lv' ? 'Saglabāt' : 'Save') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p v-else class="comment-text">{{ comment.comment_text }}</p>
+
+                                    <!-- Emoji slider + darbību josla -->
+                                    <div class="comment-bottom-bar">
+                                        <!-- Emoji slider — mans vērtējums -->
+                                        <div class="emoji-slider-wrap"
+                                             :class="{ 'emoji-slider-unset': isSliderUnset(comment) }">
+                                            <span class="emoji-slider-icon" :title="locale === 'lv' ? 'Mans vērtējums' : 'My rating'">
+                                                {{ getSliderEmoji(getMySlider(comment)) }}
+                                            </span>
+                                            <div class="emoji-slider-track-wrap">
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    :value="getMySlider(comment)"
+                                                    @input="setCommentSlider(comment, $event.target.value)"
+                                                    :class="['emoji-slider', { 'emoji-slider--unset': isSliderUnset(comment) }]"
+                                                >
+                                                <!-- Avg rinda zem slidera -->
+                                                <div v-if="comment.avg_mood_score !== null && comment.avg_mood_score !== undefined"
+                                                     class="mood-avg-row">
+                                                    <span class="mood-avg-bar-wrap">
+                                                        <span class="mood-avg-bar"
+                                                              :style="{
+                                                                  width: comment.avg_mood_score + '%',
+                                                                  background: getSliderColor(comment.avg_mood_score),
+                                                              }"></span>
+                                                    </span>
+                                                    <span class="mood-avg-label"
+                                                          :style="{ color: getSliderColor(comment.avg_mood_score) }">
+                                                        {{ locale === 'lv' ? 'Vid.' : 'Avg' }}
+                                                        {{ comment.avg_mood_score }}%
+                                                        <span class="mood-count">({{ comment.mood_count }})</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span class="emoji-slider-pct"
+                                                  :style="{ color: isSliderUnset(comment) ? '#9ca3af' : getSliderColor(getMySlider(comment)) }">
+                                                {{ isSliderUnset(comment) ? '—' : getMySlider(comment) + '%' }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Atbildēt + Replies toggle (labajā pusē) -->
+                                        <div class="comment-actions-bar">
+                                            <button
+                                                @click="authUser ? openReply(comment.id) : router.visit('/login')"
+                                                class="reply-btn"
+                                                :class="{ 'reply-btn--active': activeReplyId === comment.id }">
+                                                <i class="fas fa-reply"></i>
+                                                {{ locale === 'lv' ? 'Atbildēt' : 'Reply' }}
+                                            </button>
+                                            <button v-if="comment.replies_count > 0"
+                                                    @click="toggleReplies(comment.id)"
+                                                    class="replies-toggle-btn">
+                                                <i class="fas" :class="expandedReplies[comment.id] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                                <span v-if="!expandedReplies[comment.id]">
+                                                    {{ comment.replies_count }}
+                                                    {{ locale === 'lv'
+                                                    ? (comment.replies_count === 1 ? 'atbilde' : 'atbildes')
+                                                    : (comment.replies_count === 1 ? 'reply' : 'replies') }}
+                                                </span>
+                                                <span v-else>{{ locale === 'lv' ? 'Aizvērt' : 'Hide replies' }}</span>
+                                            </button>
+                                            <!-- Edit/Delete — tikai komentāra autoram -->
+                                            <template v-if="authUser && Number(authUser.id) === Number(comment.user_id)">
+                                                <button
+                                                    v-if="editingCommentId !== comment.id"
+                                                    @click="startEdit(comment)"
+                                                    class="comment-own-btn comment-edit-btn"
+                                                    :title="locale === 'lv' ? 'Rediģēt' : 'Edit'">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
+                                                <button
+                                                    @click="openDeleteModal(comment)"
+                                                    :disabled="deleteSubmitting[comment.id]"
+                                                    class="comment-own-btn comment-delete-btn"
+                                                    :title="locale === 'lv' ? 'Dzēst' : 'Delete'">
+                                                    <i v-if="deleteSubmitting[comment.id]" class="fas fa-spinner fa-spin"></i>
+                                                    <i v-else class="fas fa-trash"></i>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reply forma -->
+                                    <Transition name="reply-form">
+                                        <div v-if="activeReplyId === comment.id" class="reply-form-wrap">
+                                            <div class="reply-form-inner">
+                                                <img :src="authUser.profile_picture ? `/storage/${authUser.profile_picture}` : '/img/default-avatar.png'"
+                                                     class="reply-avatar"
+                                                     @error="$event.target.src='/img/default-avatar.png'">
+                                                <div class="reply-input-wrap">
+                                                    <p class="reply-to-label">
+                                                        <i class="fas fa-reply"></i>
+                                                        {{ locale === 'lv' ? 'Atbildēt uz' : 'Replying to' }}
+                                                        <strong>{{ comment.user?.username }}</strong>
+                                                    </p>
+                                                    <textarea
+                                                        v-model="replyTexts[comment.id]"
+                                                        :placeholder="locale === 'lv' ? 'Raksti atbildi...' : 'Write a reply...'"
+                                                        class="reply-textarea"
+                                                        rows="2"
+                                                        maxlength="1000"
+                                                        @keydown.ctrl.enter="submitReply(comment)"
+                                                    ></textarea>
+                                                    <div class="reply-form-actions">
+                                                        <button @click="activeReplyId = null" class="reply-cancel-btn">
+                                                            {{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}
+                                                        </button>
+                                                        <button
+                                                            @click="submitReply(comment)"
+                                                            :disabled="!replyTexts[comment.id]?.trim() || replySubmitting[comment.id]"
+                                                            class="reply-submit-btn">
+                                                            <i v-if="replySubmitting[comment.id]" class="fas fa-spinner fa-spin"></i>
+                                                            <i v-else class="fas fa-paper-plane"></i>
+                                                            {{ replySubmitting[comment.id]
+                                                            ? (locale === 'lv' ? 'Sūta...' : 'Sending...')
+                                                            : (locale === 'lv' ? 'Sūtīt' : 'Send') }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Transition>
                                 </div>
-                                <p class="comment-text">{{ comment.comment_text }}</p>
                             </div>
+
+                            <!-- ── Replies dropdown ar savienojuma līnijām ── -->
+                            <Transition name="replies-drop">
+                                <div v-if="expandedReplies[comment.id] && comment.replies?.length" class="replies-wrap">
+                                    <div class="thread-line-container">
+                                        <div class="thread-line"></div>
+                                    </div>
+                                    <div class="replies-list">
+                                        <div v-for="reply in comment.replies" :key="reply.id" class="reply-item">
+                                            <div class="reply-connector">
+                                                <div class="reply-line-h"></div>
+                                            </div>
+                                            <img :src="reply.user?.profile_picture || '/img/default-avatar.png'"
+                                                 :alt="reply.user?.username" class="reply-avatar-sm"
+                                                 @error="$event.target.src='/img/default-avatar.png'">
+                                            <div class="reply-content">
+                                                <div class="comment-header">
+                                                    <span class="comment-author-wrap">
+                                                        <span class="comment-author">{{ reply.user?.username }}</span>
+                                                        <span v-if="getRoleBadge(reply.user)" :class="['role-badge', getRoleBadge(reply.user).cls]">
+                                                            {{ getRoleBadge(reply.user).label }}
+                                                        </span>
+                                                    </span>
+                                                    <span class="comment-date">{{ formatCommentDate(reply.created_at) }}</span>
+                                                    <span v-if="reply.is_edited" class="comment-edited-badge">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                        {{ locale === 'lv' ? 'rediģēts' : 'edited' }}
+                                                    </span>
+                                                </div>
+                                                <!-- Reply teksts vai edit forma -->
+                                                <div v-if="editingReplyId === reply.id" class="comment-edit-wrap">
+                                                    <textarea
+                                                        v-model="editingReplyText"
+                                                        class="comment-edit-textarea"
+                                                        rows="2"
+                                                        maxlength="1000"
+                                                        @keydown.ctrl.enter="submitEditReply(reply)"
+                                                        @keydown.escape="cancelEditReply"
+                                                    ></textarea>
+                                                    <div class="comment-edit-actions">
+                                                        <button @click="cancelEditReply" class="edit-cancel-btn">
+                                                            {{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}
+                                                        </button>
+                                                        <button
+                                                            @click="submitEditReply(reply)"
+                                                            :disabled="editReplySubmitting || !editingReplyText.trim() || editingReplyText.trim().length < 3"
+                                                            class="edit-save-btn">
+                                                            <i v-if="editReplySubmitting" class="fas fa-spinner fa-spin"></i>
+                                                            <i v-else class="fas fa-check"></i>
+                                                            {{ editReplySubmitting ? (locale === 'lv' ? 'Saglabā...' : 'Saving...') : (locale === 'lv' ? 'Saglabāt' : 'Save') }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <p v-else class="comment-text">{{ reply.comment_text }}</p>
+                                                <!-- Edit/Delete — tikai atbildes autoram -->
+                                                <div v-if="authUser && Number(authUser.id) === Number(reply.user_id)"
+                                                     class="reply-own-actions">
+                                                    <button
+                                                        v-if="editingReplyId !== reply.id"
+                                                        @click="startEditReply(reply)"
+                                                        class="comment-own-btn comment-edit-btn comment-delete-btn--sm"
+                                                        :title="locale === 'lv' ? 'Rediģēt' : 'Edit'">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button
+                                                        @click="openDeleteModal(reply, true, comment)"
+                                                        :disabled="deleteSubmitting[reply.id]"
+                                                        class="comment-own-btn comment-delete-btn comment-delete-btn--sm"
+                                                        :title="locale === 'lv' ? 'Dzēst atbildi' : 'Delete reply'">
+                                                        <i v-if="deleteSubmitting[reply.id]" class="fas fa-spinner fa-spin"></i>
+                                                        <i v-else class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Transition>
                         </div>
                     </div>
                     <div v-else class="no-comments">
@@ -712,6 +1207,46 @@ onMounted(() => {
 
             </div><!-- /content-container -->
         </div>
+
+        <!-- ── Dzēšanas apstiprinājuma modālis ── -->
+        <Transition name="modal-fade">
+            <div v-if="deleteModal.show" class="delete-modal-overlay" @click.self="closeDeleteModal">
+                <div class="delete-modal">
+                    <div class="delete-modal-icon">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <h3 class="delete-modal-title">
+                        {{ deleteModal.isReply
+                        ? (locale === 'lv' ? 'Dzēst atbildi?' : 'Delete reply?')
+                        : (locale === 'lv' ? 'Dzēst komentāru?' : 'Delete comment?') }}
+                    </h3>
+                    <p class="delete-modal-body">
+                        {{ locale === 'lv'
+                        ? 'Šo darbību nevar atsaukt. Vai esi pārliecināts?'
+                        : 'This action cannot be undone. Are you sure?' }}
+                    </p>
+                    <div v-if="deleteModal.comment" class="delete-modal-preview">
+                        "{{ deleteModal.comment.comment_text?.slice(0, 80) }}{{ deleteModal.comment.comment_text?.length > 80 ? '…' : '' }}"
+                    </div>
+                    <div class="delete-modal-actions">
+                        <button @click="closeDeleteModal" class="delete-modal-cancel">
+                            {{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}
+                        </button>
+                        <button
+                            @click="confirmDelete"
+                            :disabled="deleteSubmitting[deleteModal.comment?.id]"
+                            class="delete-modal-confirm">
+                            <i v-if="deleteSubmitting[deleteModal.comment?.id]" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-trash-alt"></i>
+                            {{ deleteSubmitting[deleteModal.comment?.id]
+                            ? (locale === 'lv' ? 'Dzēš...' : 'Deleting...')
+                            : (locale === 'lv' ? 'Dzēst' : 'Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
     </MainLayout>
 </template>
 
@@ -908,13 +1443,205 @@ onMounted(() => {
 .btn-login { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg,#dc2626,#b91c1c); border-radius: 0.75rem; color: white; font-weight: 600; transition: all 0.2s; }
 .btn-login:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
 .loading-comments { text-align: center; padding: 2rem; color: #6b7280; }
-.comments-list { display: flex; flex-direction: column; gap: 1.5rem; }
-.comment-item { display: flex; gap: 1rem; padding: 1.25rem; background: #f9fafb; border-radius: 0.75rem; }
-.comment-content { flex: 1; }
-.comment-header  { display: flex; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.25rem; }
-.comment-author  { font-weight: 600; color: #111827; }
-.comment-date    { font-size: 0.875rem; color: #9ca3af; }
-.comment-text    { color: #374151; line-height: 1.6; margin: 0; }
+/* ── KOMENTĀRI AR ATBILDĒM ── */
+.comments-list { display: flex; flex-direction: column; gap: 0; }
+.comment-thread { margin-bottom: 1.25rem; }
+
+/* Top-level komentārs */
+.comment-item {
+    display: flex;
+    gap: 0.875rem;
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+}
+.comment-content { flex: 1; min-width: 0; }
+.comment-header  { display: flex; justify-content: space-between; margin-bottom: 0.375rem; flex-wrap: wrap; gap: 0.25rem; align-items: center; }
+.comment-author  { font-weight: 700; color: #111827; font-size: 0.9rem; }
+.comment-date    { font-size: 0.8rem; color: #9ca3af; }
+.comment-text    { color: #374151; line-height: 1.6; margin: 0 0 0.625rem; font-size: 0.9375rem; }
+
+/* Darbību josla */
+.comment-actions-bar { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+
+/* "Atbildēt" poga */
+/* Edit/Delete pogas pie komentāriem */
+.comment-own-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.comment-edit-btn {
+    background: #fef3c7;
+    color: #d97706;
+}
+.comment-edit-btn:hover { background: #d97706; color: white; }
+.comment-delete-btn {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.comment-delete-btn:hover:not(:disabled) { background: #dc2626; color: white; }
+.comment-delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.comment-delete-btn--sm {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.65rem;
+}
+.reply-own-actions { display: flex; justify-content: flex-end; margin-top: 0.25rem; }
+
+/* Edit forma */
+.comment-edit-wrap { margin-bottom: 0.5rem; }
+.comment-edit-textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 2px solid #fbbf24;
+    border-radius: 0.625rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    background: #fffbeb;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+.comment-edit-textarea:focus { border-color: #f59e0b; }
+.comment-edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 0.375rem;
+}
+.edit-cancel-btn {
+    padding: 0.35rem 0.875rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+}
+.edit-cancel-btn:hover { background: #e5e7eb; }
+.edit-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.875rem;
+    background: #059669;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.edit-save-btn:hover:not(:disabled) { background: #047857; }
+.edit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.reply-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 9999px;
+    color: #6b7280;
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+}
+.reply-btn:hover, .reply-btn--active {
+    background: #fef2f2; border-color: #fca5a5; color: #dc2626;
+}
+
+/* Replies toggle */
+.replies-toggle-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 9999px;
+    color: #374151;
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+}
+.replies-toggle-btn:hover { background: #f3f4f6; border-color: #9ca3af; }
+
+/* Reply forma */
+.reply-form-wrap { margin-top: 0.75rem; }
+.reply-form-inner { display: flex; gap: 0.75rem; align-items: flex-start; }
+.reply-avatar { width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.reply-input-wrap { flex: 1; }
+.reply-to-label {
+    font-size: 0.78rem; color: #6b7280; margin: 0 0 0.375rem;
+    display: flex; align-items: center; gap: 0.35rem;
+}
+.reply-to-label i { color: #dc2626; }
+.reply-to-label strong { color: #111827; }
+.reply-textarea {
+    width: 100%; padding: 0.625rem 0.875rem;
+    border: 2px solid #e5e7eb; border-radius: 0.625rem;
+    font-size: 0.9rem; font-family: inherit; resize: none;
+    transition: border-color 0.2s; box-sizing: border-box;
+}
+.reply-textarea:focus { outline: none; border-color: #dc2626; }
+.reply-form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; justify-content: flex-end; }
+.reply-cancel-btn {
+    padding: 0.4rem 0.875rem; background: #f3f4f6; border: none;
+    border-radius: 0.5rem; color: #374151; font-size: 0.8rem;
+    font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.reply-cancel-btn:hover { background: #e5e7eb; }
+.reply-submit-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.875rem;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    border: none; border-radius: 0.5rem; color: white;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.18s;
+}
+.reply-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.reply-submit-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(220,38,38,0.3); }
+
+/* Reply forma transitions */
+.reply-form-enter-active, .reply-form-leave-active { transition: all 0.22s ease; }
+.reply-form-enter-from, .reply-form-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* Replies bloks ar savienojumiem */
+.replies-wrap { display: flex; margin-left: 1.875rem; }
+.thread-line-container { width: 1.5rem; flex-shrink: 0; position: relative; }
+.thread-line {
+    position: absolute;
+    top: 0; bottom: 0.875rem;
+    left: 50%;
+    width: 2px;
+    background: #e5e7eb;
+    border-radius: 1px;
+}
+.replies-list { flex: 1; display: flex; flex-direction: column; gap: 0.625rem; padding-top: 0.625rem; }
+
+/* Katrs reply */
+.reply-item { display: flex; align-items: flex-start; gap: 0; }
+.reply-connector { width: 1.5rem; flex-shrink: 0; display: flex; align-items: center; padding-top: 0.875rem; }
+.reply-line-h {
+    width: 100%; height: 2px;
+    background: #e5e7eb;
+    border-radius: 1px;
+}
+.reply-avatar-sm { width: 1.75rem; height: 1.75rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-right: 0.625rem; }
+.reply-content { flex: 1; background: white; border: 1px solid #e5e7eb; border-radius: 0.625rem; padding: 0.75rem 1rem; }
+
+/* Replies transitions */
+.replies-drop-enter-active { transition: all 0.28s ease; }
+.replies-drop-leave-active { transition: all 0.2s ease; }
+.replies-drop-enter-from, .replies-drop-leave-to { opacity: 0; transform: translateY(-8px); }
 .no-comments     { text-align: center; padding: 3rem 2rem; }
 .no-comments i   { font-size: 3rem; color: #d1d5db; margin-bottom: 1rem; display: block; }
 .no-comments p   { color: #6b7280; margin: 0; }
@@ -1031,6 +1758,147 @@ onMounted(() => {
 .role-admin   { background: rgba(220,38,38,0.12); color: #b91c1c; border: 1px solid rgba(220,38,38,0.25); }
 .role-courier { background: rgba(37,99,235,0.12);  color: #1d4ed8; border: 1px solid rgba(37,99,235,0.25); }
 
+/* ── EMOJI SLIDER (per-user) ── */
+.comment-bottom-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Visa slider sadaļa kreisajā pusē */
+.emoji-slider-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;          /* svarīgi — neļauj pārstiepties */
+    max-width: 100%;
+}
+
+.emoji-slider-icon {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    line-height: 1.5;
+    transition: transform 0.15s;
+    cursor: default;
+}
+.emoji-slider-wrap:hover .emoji-slider-icon { transform: scale(1.15); }
+
+/* Slider + avg rinda stacked vertikāli */
+.emoji-slider-track-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.emoji-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    background: linear-gradient(
+        to right,
+        rgb(220, 38, 38) 0%,
+        rgb(234, 150, 38) 50%,
+        rgb(34, 197, 94) 100%
+    );
+    display: block;
+}
+
+/* Nav vērtēts — pelēks slider */
+.emoji-slider--unset {
+    background: #d1d5db !important;
+    opacity: 0.55;
+}
+
+.emoji-slider-unset .emoji-slider-icon {
+    filter: grayscale(1);
+    opacity: 0.45;
+}
+
+.emoji-slider-unset:hover .emoji-slider-icon {
+    filter: none;
+    opacity: 1;
+    transform: scale(1.15);
+}
+.emoji-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #6b7280;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+    position: relative;
+    z-index: 2;
+}
+.emoji-slider::-webkit-slider-thumb:hover { transform: scale(1.2); border-color: #374151; }
+.emoji-slider::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #6b7280;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+}
+
+/* Avg josla zem slidera */
+.mood-avg-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+.mood-avg-bar-wrap {
+    flex: 1;
+    min-width: 0;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.mood-avg-bar {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    opacity: 0.7;
+}
+.mood-avg-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.mood-count {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+/* Procentu skaitlis labajā malā */
+.emoji-slider-pct {
+    font-size: 0.72rem;
+    font-weight: 700;
+    width: 2.25rem;      /* fiksēts platums, nevis min-width */
+    text-align: right;
+    transition: color 0.2s;
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding-top: 0.125rem;
+    line-height: 1.5;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
     .breadcrumbs, .video-container, .content-hero, .content-container { padding-left: 1rem; padding-right: 1rem; }
@@ -1041,602 +1909,740 @@ onMounted(() => {
     .toast-notif { top: 1rem; right: 1rem; left: 1rem; }
     .stats-box { flex-direction: column; }
     .related-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Slider: plena platuma, stacked layout */
+    .comment-bottom-bar {
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+    .emoji-slider-wrap {
+        width: 100%;
+        max-width: 100%;
+    }
+    .comment-actions-bar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .emoji-slider-pct {
+        width: 2rem;
+        font-size: 0.7rem;
+    }
+    .mood-avg-label {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 390px) {
+    /* iPhone 12 un mazāki — vēl mazāks teksts */
+    .emoji-slider-icon { font-size: 1rem; }
+    .emoji-slider-pct  { width: 1.75rem; font-size: 0.65rem; }
+    .mood-avg-label    { font-size: 0.6rem; }
+    .reply-btn, .replies-toggle-btn { font-size: 0.72rem; padding: 0.25rem 0.5rem; }
 }
 
 .content-show {
-min-height: 100vh;
-background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
 }
 
 /* Success Notification */
 .success-notification {
-position: fixed;
-top: 2rem;
-right: 2rem;
-display: flex;
-align-items: center;
-gap: 0.75rem;
-padding: 1rem 1.5rem;
-background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-color: white;
-border-radius: 0.75rem;
-box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-font-weight: 600;
-z-index: 9999;
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+    font-weight: 600;
+    z-index: 9999;
 }
 
 .success-notification i {
-font-size: 1.25rem;
+    font-size: 1.25rem;
 }
 
 .notification-enter-active,
 .notification-leave-active {
-transition: all 0.3s;
+    transition: all 0.3s;
 }
 
 .notification-enter-from {
-opacity: 0;
-transform: translateX(2rem);
+    opacity: 0;
+    transform: translateX(2rem);
 }
 
 .notification-leave-to {
-opacity: 0;
-transform: translateY(-2rem);
+    opacity: 0;
+    transform: translateY(-2rem);
 }
 
 /* Breadcrumbs */
 .breadcrumbs {
-max-width: 1400px;
-margin: 0 auto;
-padding: 1.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
 }
 
 .breadcrumb-item {
-display: inline-flex;
-align-items: center;
-gap: 0.5rem;
-color: #6b7280;
-font-weight: 600;
-transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    font-weight: 600;
+    transition: color 0.2s;
 }
 
 .breadcrumb-item:hover {
-color: #dc2626;
+    color: #dc2626;
 }
 
 /* Video Container */
 .video-container {
-max-width: 1400px;
-margin: 0 auto 2rem;
-padding: 0 2rem;
+    max-width: 1400px;
+    margin: 0 auto 2rem;
+    padding: 0 2rem;
 }
 
 .video-iframe {
-width: 100%;
-aspect-ratio: 16 / 9;
-border-radius: 1rem;
-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 /* Hero Image */
 .content-hero {
-max-width: 1400px;
-margin: 0 auto 2rem;
-padding: 0 2rem;
+    max-width: 1400px;
+    margin: 0 auto 2rem;
+    padding: 0 2rem;
 }
 
 .video-preview {
-position: relative;
-cursor: pointer;
-overflow: hidden;
-border-radius: 1rem;
-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .hero-image {
-width: 100%;
-max-height: 600px;
-object-fit: cover;
-border-radius: 1rem;
-transition: transform 0.3s;
+    width: 100%;
+    max-height: 600px;
+    object-fit: cover;
+    border-radius: 1rem;
+    transition: transform 0.3s;
 }
 
 .video-preview:hover .hero-image {
-transform: scale(1.05);
+    transform: scale(1.05);
 }
 
 .play-overlay {
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 0.75rem;
-padding: 2rem 3rem;
-background: rgba(220, 38, 38, 0.95);
-border-radius: 1rem;
-color: white;
-font-weight: 700;
-font-size: 1.125rem;
-transition: all 0.3s;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 3rem;
+    background: rgba(220, 38, 38, 0.95);
+    border-radius: 1rem;
+    color: white;
+    font-weight: 700;
+    font-size: 1.125rem;
+    transition: all 0.3s;
 }
 
 .video-preview:hover .play-overlay {
-background: rgba(220, 38, 38, 1);
-transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(220, 38, 38, 1);
+    transform: translate(-50%, -50%) scale(1.1);
 }
 
 .play-overlay i {
-font-size: 3rem;
+    font-size: 3rem;
 }
 
 /* Content Container */
 .content-container {
-max-width: 1000px;
-margin: 0 auto;
-padding: 0 2rem 4rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
 }
 
 /* Header Section */
 .content-header-section {
-background: white;
-padding: 2rem;
-border-radius: 1rem;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-margin-bottom: 2rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
 }
 
 .content-main-title {
-font-size: 2rem;
-font-weight: 800;
-color: #111827;
-margin: 0 0 1rem 0;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 1rem 0;
 }
 
 .content-meta-bar {
-display: flex;
-flex-wrap: wrap;
-gap: 0.75rem;
-margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
 .meta-badge {
-display: inline-flex;
-align-items: center;
-gap: 0.375rem;
-padding: 0.375rem 0.875rem;
-border-radius: 9999px;
-font-weight: 600;
-font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.875rem;
 }
 
 .meta-badge-video {
-background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-color: white;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
 }
 
 .meta-badge-blog {
-background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-color: white;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
 }
 
 .meta-badge-category {
-background: #f3f4f6;
-color: #374151;
+    background: #f3f4f6;
+    color: #374151;
 }
 
 .meta-text {
-display: inline-flex;
-align-items: center;
-gap: 0.375rem;
-color: #6b7280;
-font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: #6b7280;
+    font-size: 0.875rem;
 }
 
 .meta-text i {
-color: #dc2626;
+    color: #dc2626;
 }
 
 .header-actions {
-display: flex;
-gap: 0.75rem;
-margin-top: 1.5rem;
-padding-top: 1.5rem;
-border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f3f4f6;
 }
 
 .action-btn {
-display: flex;
-align-items: center;
-gap: 0.5rem;
-padding: 0.75rem 1.25rem;
-background: #f3f4f6;
-border: 2px solid transparent;
-border-radius: 0.75rem;
-color: #374151;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: #f3f4f6;
+    border: 2px solid transparent;
+    border-radius: 0.75rem;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .action-btn:hover {
-background: #e5e7eb;
-transform: translateY(-2px);
+    background: #e5e7eb;
+    transform: translateY(-2px);
 }
 
 .action-btn-liked {
-background: #fee2e2;
-border-color: #dc2626;
-color: #dc2626;
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #dc2626;
 }
 
 .action-btn-primary {
-background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-color: white;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
 }
 
 .action-btn-primary:hover {
-box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 /* Description */
 .content-description-section {
-background: white;
-padding: 2rem;
-border-radius: 1rem;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-margin-bottom: 2rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
 }
 
 .section-subtitle {
-display: flex;
-align-items: center;
-gap: 0.75rem;
-font-size: 1.25rem;
-font-weight: 700;
-color: #111827;
-margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1rem 0;
 }
 
 .section-subtitle i {
-color: #dc2626;
+    color: #dc2626;
 }
 
 .content-description-text {
-font-size: 1.125rem;
-line-height: 1.75;
-color: #374151;
-margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.75;
+    color: #374151;
+    margin: 0;
 }
 
 /* Body */
 .content-body-section {
-background: white;
-padding: 2rem;
-border-radius: 1rem;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-margin-bottom: 2rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
 }
 
 .content-body {
-font-size: 1rem;
-line-height: 1.75;
-color: #374151;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: #374151;
 }
 
 /* Rating Section */
 .rating-section {
-background: white;
-padding: 2rem;
-border-radius: 1rem;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-margin-bottom: 2rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
 }
 
 .section-title {
-display: flex;
-align-items: center;
-gap: 0.75rem;
-font-size: 1.5rem;
-font-weight: 700;
-color: #111827;
-margin: 0 0 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1.5rem 0;
 }
 
 .section-title i {
-color: #dc2626;
+    color: #dc2626;
 }
 
 .comments-count {
-font-size: 1.125rem;
-color: #6b7280;
-font-weight: 500;
+    font-size: 1.125rem;
+    color: #6b7280;
+    font-weight: 500;
 }
 
 .rating-stars {
-display: flex;
-gap: 0.5rem;
-margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .star-btn {
-width: 3rem;
-height: 3rem;
-background: #f3f4f6;
-border: none;
-border-radius: 0.5rem;
-color: #d1d5db;
-font-size: 1.5rem;
-cursor: pointer;
-transition: all 0.2s;
+    width: 3rem;
+    height: 3rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 0.5rem;
+    color: #d1d5db;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .star-btn:hover {
-transform: scale(1.1);
+    transform: scale(1.1);
 }
 
 .star-filled {
-background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-color: white;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
 }
 
 /* Forms */
 .review-prompt {
-text-align: center;
+    text-align: center;
 }
 
 .btn-write-review {
-display: inline-flex;
-align-items: center;
-gap: 0.5rem;
-padding: 0.875rem 1.75rem;
-background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-border: none;
-border-radius: 0.75rem;
-color: white;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .btn-write-review:hover {
-transform: translateY(-2px);
-box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .review-form,
 .comment-form {
-margin-top: 1.5rem;
+    margin-top: 1.5rem;
 }
 
 .comment-form-header {
-display: flex;
-gap: 1rem;
-margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .comment-avatar {
-width: 3rem;
-height: 3rem;
-border-radius: 50%;
-object-fit: cover;
-flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
 .review-textarea,
 .comment-textarea {
-width: 100%;
-padding: 1rem;
-border: 2px solid #e5e7eb;
-border-radius: 0.75rem;
-font-size: 1rem;
-font-family: inherit;
-resize: vertical;
-transition: all 0.2s;
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s;
 }
 
 .review-textarea:focus,
 .comment-textarea:focus {
-outline: none;
-border-color: #dc2626;
+    outline: none;
+    border-color: #dc2626;
 }
 
 .form-actions {
-display: flex;
-gap: 0.75rem;
-margin-top: 1rem;
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
 }
 
 .btn-submit {
-display: flex;
-align-items: center;
-gap: 0.5rem;
-padding: 0.75rem 1.5rem;
-background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-border: none;
-border-radius: 0.75rem;
-color: white;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .btn-submit:hover:not(:disabled) {
-transform: translateY(-2px);
-box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .btn-submit:disabled {
-opacity: 0.5;
-cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-cancel {
-padding: 0.75rem 1.5rem;
-background: #f3f4f6;
-border: none;
-border-radius: 0.75rem;
-color: #374151;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.2s;
+    padding: 0.75rem 1.5rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 0.75rem;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .btn-cancel:hover {
-background: #e5e7eb;
+    background: #e5e7eb;
 }
 
 /* Comments Section */
 .comments-section {
-background: white;
-padding: 2rem;
-border-radius: 1rem;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .login-prompt {
-text-align: center;
-padding: 2rem;
-background: #f9fafb;
-border-radius: 0.75rem;
-margin-bottom: 2rem;
+    text-align: center;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    margin-bottom: 2rem;
 }
 
 .login-prompt i {
-font-size: 3rem;
-color: #d1d5db;
-margin-bottom: 1rem;
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
 }
 
 .login-prompt p {
-color: #6b7280;
-margin: 0 0 1.5rem 0;
+    color: #6b7280;
+    margin: 0 0 1.5rem 0;
 }
 
 .btn-login {
-display: inline-flex;
-align-items: center;
-gap: 0.5rem;
-padding: 0.75rem 1.5rem;
-background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-border-radius: 0.75rem;
-color: white;
-font-weight: 600;
-transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
 .btn-login:hover {
-transform: translateY(-2px);
-box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .loading-comments {
-text-align: center;
-padding: 2rem;
-color: #6b7280;
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
 }
 
 .comments-list {
-display: flex;
-flex-direction: column;
-gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .comment-item {
-display: flex;
-gap: 1rem;
-padding: 1.5rem;
-background: #f9fafb;
-border-radius: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
 }
 
 .comment-content {
-flex: 1;
+    flex: 1;
 }
 
 .comment-header {
-display: flex;
-justify-content: space-between;
-margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
 }
 
 .comment-author {
-font-weight: 600;
-color: #111827;
+    font-weight: 600;
+    color: #111827;
 }
 
 .comment-date {
-font-size: 0.875rem;
-color: #9ca3af;
+    font-size: 0.875rem;
+    color: #9ca3af;
 }
 
 .comment-text {
-color: #374151;
-line-height: 1.6;
-margin: 0;
+    color: #374151;
+    line-height: 1.6;
+    margin: 0;
 }
 
 .no-comments {
-text-align: center;
-padding: 3rem 2rem;
+    text-align: center;
+    padding: 3rem 2rem;
 }
 
 .no-comments i {
-font-size: 3rem;
-color: #d1d5db;
-margin-bottom: 1rem;
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
 }
 
 .no-comments p {
-color: #6b7280;
-margin: 0;
+    color: #6b7280;
+    margin: 0;
 }
 
 /* Animations */
 .fade-enter-active,
 .fade-leave-active {
-transition: all 0.3s;
+    transition: all 0.3s;
 }
 
 .fade-enter-from,
 .fade-leave-to {
-opacity: 0;
-transform: translateY(-1rem);
+    opacity: 0;
+    transform: translateY(-1rem);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-.breadcrumbs,
-.video-container,
-.content-hero,
-.content-container {
-padding-left: 1rem;
-padding-right: 1rem;
-}
+    .breadcrumbs,
+    .video-container,
+    .content-hero,
+    .content-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 
-.content-main-title {
-font-size: 1.5rem;
-}
+    .content-main-title {
+        font-size: 1.5rem;
+    }
 
-.header-actions {
-flex-wrap: wrap;
-}
+    .header-actions {
+        flex-wrap: wrap;
+    }
 
-.action-btn {
-flex: 1;
-min-width: calc(50% - 0.375rem);
-}
+    .action-btn {
+        flex: 1;
+        min-width: calc(50% - 0.375rem);
+    }
 
-.comment-form-header {
-flex-direction: column;
-}
+    .comment-form-header {
+        flex-direction: column;
+    }
 
-.success-notification {
-top: 1rem;
-right: 1rem;
-left: 1rem;
+    .success-notification {
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
 }
+/* "Rediģēts" badge */
+.comment-edited-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.65rem;
+    color: #9ca3af;
+    font-style: italic;
 }
+.comment-edited-badge i { font-size: 0.55rem; }
+
+/* Dzēšanas modālis */
+.delete-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+.delete-modal {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+.delete-modal-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: #fee2e2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.375rem;
+    color: #dc2626;
+}
+.delete-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.5rem;
+}
+.delete-modal-body {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0 0 1rem;
+}
+.delete-modal-preview {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+    color: #374151;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+    text-align: left;
+    line-height: 1.5;
+}
+.delete-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+.delete-modal-cancel {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.delete-modal-cancel:hover { background: #e5e7eb; }
+.delete-modal-confirm {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.5rem;
+    background: #dc2626;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.delete-modal-confirm:hover:not(:disabled) { background: #b91c1c; }
+.delete-modal-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Modāļa animācija */
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-active .delete-modal, .modal-fade-leave-active .delete-modal { transition: transform 0.2s ease; }
+.modal-fade-enter-from .delete-modal, .modal-fade-leave-to .delete-modal { transform: scale(0.92); }
+
 </style>

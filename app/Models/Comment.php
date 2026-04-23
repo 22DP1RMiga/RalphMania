@@ -16,12 +16,14 @@ class Comment extends Model
         'comment_text',
         'parent_id',
         'is_approved',
+        'mood_score',
     ];
 
     protected $casts = [
         'is_approved' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'mood_score'  => 'integer',
+        'created_at'  => 'datetime',
+        'updated_at'  => 'datetime',
     ];
 
     /**

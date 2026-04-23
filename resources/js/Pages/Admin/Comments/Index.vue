@@ -128,10 +128,10 @@ const getContentLink = (content) => {
 
 // Get content image
 const getContentImage = (content) => {
-    if (!content) return '/img/thumbnails/no-content-placeholder.png';
+    if (!content) return '/img/no-content-placeholder.png';
 
     const img = content.thumbnail || content.featured_image;
-    if (!img) return '/img/thumbnails/no-content-placeholder.png';
+    if (!img) return '/img/no-content-placeholder.png';
     if (img.startsWith('http') || img.startsWith('/')) return img;
 
     return content.type === 'video'
@@ -162,7 +162,7 @@ const getUserAvatar = (user) => {
 const contentTypeIcons = {
     video: 'fas fa-video',
     blog: 'fas fa-blog',
-    news: 'fas fa-newspaper',
+    post: 'fas fa-bullhorn',
     announcement: 'fas fa-bullhorn',
 };
 
@@ -265,7 +265,7 @@ const truncateText = (text, length = 150) => {
                         <option value="">{{ t('admin.comments.allContentTypes') }}</option>
                         <option value="video">{{ t('admin.content.types.video') }}</option>
                         <option value="blog">{{ t('admin.content.types.blog') }}</option>
-                        <option value="news">{{ t('admin.content.types.news') }}</option>
+                        <option value="post">{{ t('admin.content.types.post') }}</option>
                         <option value="announcement">{{ t('admin.content.types.announcement') }}</option>
                     </select>
                 </div>
@@ -351,7 +351,7 @@ const truncateText = (text, length = 150) => {
                                 :src="getContentImage(comment.content)"
                                 :alt="getContentTitle(comment.content)"
                                 class="content-image"
-                                @error="$event.target.src = '/img/thumbnails/no-content-placeholder.png'"
+                                @error="$event.target.src = '/img/no-content-placeholder.png'"
                             >
                             <div class="content-details">
                                 <span class="content-type">

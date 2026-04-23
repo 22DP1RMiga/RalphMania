@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use App\Models\Content;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -41,23 +42,34 @@ class AdminContentController extends Controller
 
         $content = $query->orderBy('created_at', 'desc')
             ->paginate(12)
-            ->through(fn ($item) => [
-                'id' => $item->id,
-                'title_lv' => $item->title_lv,
-                'title_en' => $item->title_en,
-                'slug' => $item->slug,
-                'type' => $item->type,
-                'category' => $item->category,
-                'thumbnail' => $item->thumbnail,
-                'featured_image' => $item->featured_image,
-                'view_count' => $item->view_count,
-                'like_count' => $item->like_count,
-                'duration' => $item->duration,
-                'is_published' => $item->is_published,
-                'is_featured' => $item->is_featured,
-                'published_at' => $item->published_at,
-                'created_at' => $item->created_at,
-            ]);
+            ->through(function ($item) {
+                // Vidējais noskaņojums no comment_moods caur komentāriem
+                $moodData = \DB::table('comment_moods')
+                    ->join('comments', 'comment_moods.comment_id', '=', 'comments.id')
+                    ->where('comments.content_id', $item->id)
+                    ->selectRaw('AVG(comment_moods.score) as avg_score, COUNT(comment_moods.id) as mood_count')
+                    ->first();
+
+                return [
+                    'id' => $item->id,
+                    'title_lv' => $item->title_lv,
+                    'title_en' => $item->title_en,
+                    'slug' => $item->slug,
+                    'type' => $item->type,
+                    'category' => $item->category,
+                    'thumbnail' => $item->thumbnail,
+                    'featured_image' => $item->featured_image,
+                    'view_count' => $item->view_count,
+                    'like_count' => $item->like_count,
+                    'duration' => $item->duration,
+                    'is_published' => $item->is_published,
+                    'is_featured' => $item->is_featured,
+                    'published_at' => $item->published_at,
+                    'created_at' => $item->created_at,
+                    'avg_mood_score' => $moodData->avg_score !== null ? round($moodData->avg_score) : null,
+                    'mood_count' => (int)($moodData->mood_count ?? 0),
+                ];
+            });
 
         return Inertia::render('Admin/Content/Index', [
             'content' => $content,
@@ -313,6 +325,34 @@ class AdminContentController extends Controller
                 Storage::delete($storagePath);
             }
         }
+    }
+
+    /**
+     * Ātrs statusa maiņas endpoint (no Index lapas) — pieņem tikai pamata laukus.
+     * Šis tiek izsaukts kad nospiež publish/draft toggle Admin/Content/Index.vue.
+     */
+    public function quickUpdate(Request $request, $id)
+    {
+        $content = Content::findOrFail($id);
+
+        $validated = $request->validate([
+            'type'         => 'required|in:video,blog,post,announcement',
+            'title_lv'     => 'required|string|max:255',
+            'title_en'     => 'nullable|string|max:255',
+            'slug'         => 'required|string|max:255|unique:content,slug,' . $id,
+            'is_published' => 'boolean',
+            'is_featured'  => 'boolean',
+            'published_at' => 'nullable|date',
+        ]);
+
+        // Ja publicē pirmo reizi, iestata published_at
+        if (!empty($validated['is_published']) && !$content->published_at) {
+            $validated['published_at'] = now();
+        }
+
+        $content->update($validated);
+
+        return redirect()->back()->with('success', 'Statuss mainīts!');
     }
 
     /**

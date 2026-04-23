@@ -30,10 +30,11 @@ class DashboardController extends Controller
 
         // Stats
         $stats = [
-            'orders'     => Order::where('user_id', $user->id)->count(),
-            'reviews'    => Review::where('user_id', $user->id)->count(),
-            'comments'   => Comment::where('user_id', $user->id)->count(),
-            'cart_items' => $user->cartItems()->count(),
+            'orders'           => Order::where('user_id', $user->id)->count(),
+            'reviews'          => Review::where('user_id', $user->id)->count(),
+            'comments'         => Comment::where('user_id', $user->id)->whereNull('parent_id')->count(),
+            // Manas atbildes — cik reižu ES esmu atbildējis
+            'replies_received' => Comment::where('user_id', $user->id)->whereNotNull('parent_id')->count(),
         ];
 
         // Recent orders
@@ -91,12 +92,85 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Recent comments with content title
-        $recentComments = Comment::where('user_id', $user->id)
-            ->with(['content:id,title_lv,title_en,slug'])
+        // Diskusijas kurās piedalījies — galvenie komentāri, kur tu esi autors VAI esi atbildējis
+        $userId = $user->id;
+
+        // 1) ID saraksts: mani galvenie komentāri
+        $myTopIds = Comment::where('user_id', $userId)->whereNull('parent_id')->pluck('id');
+
+        // 2) Galvenie komentāri, uz kuriem ES esmu atbildējis (citu cilvēku pavedienu)
+        $repliedToIds = Comment::where('user_id', $userId)
+            ->whereNotNull('parent_id')
+            ->pluck('parent_id')
+            ->map(fn ($parentId) => Comment::where('id', $parentId)->whereNull('parent_id')->value('id'))
+            ->filter()
+            ->unique();
+
+        $allTopIds = $myTopIds->merge($repliedToIds)->unique()->values();
+
+        $recentComments = Comment::whereIn('id', $allTopIds)
+            ->with([
+                'content:id,title_lv,title_en,slug',
+                'user:id,username,profile_picture',
+                'replies' => function ($q) {
+                    $q->where('is_approved', true)
+                        ->with(['user:id,username,profile_picture'])
+                        ->orderBy('created_at', 'asc');
+                },
+            ])
             ->latest()
             ->take(5)
-            ->get();
+            ->get()
+            ->map(function ($comment) use ($userId) {
+                // Mood
+                $avgMood   = \App\Models\CommentMood::where('comment_id', $comment->id)->avg('score');
+                $moodCount = \App\Models\CommentMood::where('comment_id', $comment->id)->count();
+                $myMood    = \App\Models\CommentMood::where('comment_id', $comment->id)
+                    ->where('user_id', $userId)->value('score');
+
+                $replies = $comment->replies->map(function ($reply) use ($userId) {
+                    $myReplyMood = \App\Models\CommentMood::where('comment_id', $reply->id)
+                        ->where('user_id', $userId)->value('score');
+                    return [
+                        'id'             => $reply->id,
+                        'comment_text'   => $reply->comment_text,
+                        'created_at'     => $reply->created_at,
+                        'my_mood_score'  => $myReplyMood,
+                        'user'           => $reply->user ? [
+                            'username'        => $reply->user->username,
+                            'profile_picture' => $reply->user->profile_picture
+                                ? '/storage/' . $reply->user->profile_picture
+                                : '/img/default-avatar.png',
+                        ] : null,
+                    ];
+                });
+
+                $isMyComment = $comment->user_id === $userId;
+
+                return [
+                    'id'             => $comment->id,
+                    'comment_text'   => $comment->comment_text,
+                    'created_at'     => $comment->created_at,
+                    'is_my_comment'  => $isMyComment, // true = es rakstīju, false = cita cilvēka
+                    'author'         => $comment->user ? [
+                        'username'        => $comment->user->username,
+                        'profile_picture' => $comment->user->profile_picture
+                            ? '/storage/' . $comment->user->profile_picture
+                            : '/img/default-avatar.png',
+                    ] : null,
+                    'avg_mood_score' => $avgMood !== null ? round($avgMood) : null,
+                    'mood_count'     => $moodCount,
+                    'my_mood_score'  => $myMood,
+                    'replies'        => $replies,
+                    'replies_count'  => $replies->count(),
+                    'content'        => $comment->content ? [
+                        'id'       => $comment->content->id,
+                        'title_lv' => $comment->content->title_lv,
+                        'title_en' => $comment->content->title_en,
+                        'slug'     => $comment->content->slug,
+                    ] : null,
+                ];
+            });
 
         return Inertia::render('Dashboard', [
             'stats'            => $stats,

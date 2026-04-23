@@ -161,15 +161,24 @@ const togglePublish = (content) => {
         openUnauthorized('content.publish');
         return;
     }
-    router.put(`/admin/content/${content.id}`, {
-        ...content,
+    // Sūta tikai is_published lauku — nekādas bildes/faili netiek sūtīti
+    router.post(`/admin/content/${content.id}/quick-update`, {
+        type:        content.type,
+        title_lv:    content.title_lv,
+        title_en:    content.title_en || '',
+        slug:        content.slug,
         is_published: !content.is_published,
+        is_featured:  content.is_featured,
+        published_at: content.published_at || null,
     }, {
         preserveScroll: true,
         onSuccess: () => showToast(
             content.is_published
                 ? (locale.value === 'lv' ? 'Saturs pārcelts uz melnrakstu' : 'Content moved to draft')
                 : (locale.value === 'lv' ? 'Saturs publicēts!' : 'Content published!')
+        ),
+        onError: () => showToast(
+            locale.value === 'lv' ? 'Kļūda mainot statusu!' : 'Error changing status!', 'error'
         ),
     });
 };
@@ -187,6 +196,25 @@ const formatDate = (date) => {
 // Stats by type
 const getTypeCount = (type) => {
     return props.content.data?.filter(c => c.type === type).length || 0;
+};
+
+// Noskaņojuma helpers
+const getMoodEmoji = (score) => {
+    if (score === null || score === undefined) return '😶';
+    if (score <= 10)  return '😡';
+    if (score <= 25)  return '😠';
+    if (score <= 40)  return '😕';
+    if (score <= 55)  return '😐';
+    if (score <= 70)  return '🙂';
+    if (score <= 85)  return '😊';
+    return '🤩';
+};
+
+const getMoodColor = (score) => {
+    if (score === null || score === undefined) return '#9ca3af';
+    const r = score < 50 ? 220 : Math.round(220 - (score - 50) / 50 * 180);
+    const g = score < 50 ? Math.round(score / 50 * 185) : 185;
+    return `rgb(${r}, ${g}, 38)`;
 };
 </script>
 
@@ -315,6 +343,30 @@ const getTypeCount = (type) => {
                         <span class="meta-item" :title="t('admin.content.date')">
                             <i class="fas fa-calendar"></i>
                             {{ formatDate(item.published_at || item.created_at) }}
+                        </span>
+                    </div>
+
+                    <!-- Vidējais noskaņojums -->
+                    <div v-if="item.avg_mood_score !== null && item.avg_mood_score !== undefined"
+                         class="content-mood-bar">
+                        <span class="content-mood-emoji">{{ getMoodEmoji(item.avg_mood_score) }}</span>
+                        <div class="content-mood-track">
+                            <div class="content-mood-fill"
+                                 :style="{ width: item.avg_mood_score + '%', background: getMoodColor(item.avg_mood_score) }">
+                            </div>
+                        </div>
+                        <span class="content-mood-label" :style="{ color: getMoodColor(item.avg_mood_score) }">
+                            {{ item.avg_mood_score }}%
+                        </span>
+                        <span class="content-mood-count">({{ item.mood_count || 0 }})</span>
+                    </div>
+                    <div v-else class="content-mood-bar content-mood-bar--empty">
+                        <span class="content-mood-emoji" style="filter:grayscale(1);opacity:0.4">😶</span>
+                        <div class="content-mood-track">
+                            <div class="content-mood-fill" style="width:0%"></div>
+                        </div>
+                        <span class="content-mood-label" style="color:#9ca3af">
+                            {{ locale === 'lv' ? 'Nav vērtējumu' : 'No ratings' }}
                         </span>
                     </div>
 
@@ -651,6 +703,48 @@ const getTypeCount = (type) => {
     font-size: 0.7rem;
     color: #6b7280;
     margin-bottom: 0.75rem;
+}
+
+/* Vidējais noskaņojums kartītē */
+.content-mood-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    background: #f9fafb;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+}
+.content-mood-bar--empty {
+    opacity: 0.5;
+    border-style: dashed;
+}
+.content-mood-emoji { font-size: 0.95rem; flex-shrink: 0; }
+.content-mood-track {
+    flex: 1;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 30px;
+}
+.content-mood-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+.content-mood-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.content-mood-count {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .content-footer {

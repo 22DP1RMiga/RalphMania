@@ -121,6 +121,13 @@ class ReviewController extends Controller
             'is_approved'     => false,
         ]);
 
+        // Aktivitātes žurnāls
+        $target = isset($validated['content_id']) ? 'saturs ID ' . $reviewable_id : 'produkts ID ' . $reviewable_id;
+        \App\Models\ActivityLog::log(
+            'review_added',
+            'Lietotājs ' . auth()->user()?->username . ' pievienoja atsauksmi (' . $target . ', vērtējums: ' . $validated['rating'] . '/5)',
+        );
+
         return redirect()->back()->with('success', 'Atsauksme pievienota un gaida apstiprinājumu');
     }
 

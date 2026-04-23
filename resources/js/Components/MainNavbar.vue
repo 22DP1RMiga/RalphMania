@@ -155,6 +155,15 @@ const goToCourierDashboard = () => {
                         {{ $t('nav.shop') }}
                     </Link>
                 </li>
+                <li>
+                    <Link
+                        href="/content"
+                        class="nav-link"
+                        :class="{ 'nav-link-active': $page.url.startsWith('/content') }"
+                    >
+                        {{ currentLocale === 'lv' ? 'Saturs' : 'Content' }}
+                    </Link>
+                </li>
             </ul>
 
             <!-- Right: User & Locale (Desktop) -->
@@ -257,6 +266,11 @@ const goToCourierDashboard = () => {
             <li>
                 <Link href="/shop" class="menubar-link" @click="closeMenu">
                     {{ $t('nav.shop') }}
+                </Link>
+            </li>
+            <li>
+                <Link href="/content" class="menubar-link" @click="closeMenu">
+                    {{ currentLocale === 'lv' ? 'Saturs' : 'Content' }}
                 </Link>
             </li>
 
