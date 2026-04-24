@@ -164,7 +164,7 @@ class ReviewController extends Controller
      * WEB: Dzēš atsauksmi
      * DELETE /reviews/{id}
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(int $id): mixed
     {
         $review = Review::findOrFail($id);
 
@@ -173,6 +173,10 @@ class ReviewController extends Controller
         }
 
         $review->delete();
+
+        if (!request()->header('X-Inertia') && (request()->expectsJson() || request()->ajax())) {
+            return response()->json(['success' => true]);
+        }
         return redirect()->back()->with('success', 'Atsauksme dzēsta');
     }
 

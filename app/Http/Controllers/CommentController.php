@@ -137,6 +137,9 @@ class CommentController extends Controller
                 : 'Lietotājs ' . auth()->user()?->username . ' pievienoja komentāru (satura ID: ' . $validated['content_id'] . ')',
         );
 
+        if (!$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax())) {
+            return response()->json(['success' => true, 'id' => $comment->id]);
+        }
         return back()->with('success', 'Comment submitted successfully.');
     }
 
@@ -160,6 +163,9 @@ class CommentController extends Controller
             'comment_text' => $validated['comment_text'],
         ]);
 
+        if (!$request->header('X-Inertia') && ($request->expectsJson() || $request->ajax())) {
+            return response()->json(['success' => true]);
+        }
         return back()->with('success', 'Comment updated successfully.');
     }
 
@@ -177,6 +183,9 @@ class CommentController extends Controller
 
         $comment->delete();
 
+        if (!request()->header('X-Inertia') && (request()->expectsJson() || request()->ajax())) {
+            return response()->json(['success' => true]);
+        }
         return back()->with('success', 'Comment deleted successfully.');
     }
 

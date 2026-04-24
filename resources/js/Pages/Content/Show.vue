@@ -86,14 +86,38 @@ const submitReview = async () => {
     } finally { isSubmitting.value = false; }
 };
 
-const deleteReview = async (reviewId) => {
-    if (!confirm(locale.value === 'lv' ? 'Dzēst atsauksmi?' : 'Delete review?')) return;
+// Atsauksmes dzēšanas modālis
+const reviewDeleteModal   = ref({ show: false, reviewId: null, reviewText: '' });
+const reviewDeleteSubmitting = ref(false);
+
+const openReviewDeleteModal = (review) => {
+    const text = locale.value === 'lv'
+        ? (review.review_text_lv || review.review_text_en || review.review_text || '')
+        : (review.review_text_en || review.review_text_lv || review.review_text || '');
+    reviewDeleteModal.value = { show: true, reviewId: review.id, reviewText: text };
+};
+const closeReviewDeleteModal = () => {
+    reviewDeleteModal.value = { show: false, reviewId: null, reviewText: '' };
+};
+
+const deleteReview = async () => {
+    const reviewId = reviewDeleteModal.value.reviewId;
+    if (!reviewId) return;
+    reviewDeleteSubmitting.value = true;
     try {
-        await axios.delete(`/reviews/${reviewId}`);
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await axios.delete(`/reviews/${reviewId}`, {
+            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        });
         reviews.value = reviews.value.filter(r => r.id !== reviewId);
         justSubmittedReview.value = false;
         showMsg(locale.value === 'lv' ? 'Atsauksme dzēsta' : 'Review deleted', 'success');
-    } catch { showMsg(locale.value === 'lv' ? 'Kļūda!' : 'Error!', 'error'); }
+    } catch {
+        showMsg(locale.value === 'lv' ? 'Kļūda!' : 'Error!', 'error');
+    } finally {
+        reviewDeleteSubmitting.value = false;
+        closeReviewDeleteModal();
+    }
 };
 
 const getReviewText = (r) => {
@@ -307,7 +331,7 @@ const submitReply = async (parentComment) => {
             content_id:   props.content.id,
             comment_text: text,
             parent_id:    parentComment.id,
-        }, { headers: { 'X-CSRF-TOKEN': csrf } });
+        }, { headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         replyTexts.value[parentComment.id] = '';
         activeReplyId.value = null;
         expandedReplies.value[parentComment.id] = true;
@@ -402,7 +426,7 @@ const submitEdit = async (comment) => {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         await axios.patch(`/comments/${comment.id}`, {
             comment_text: editingText.value.trim(),
-        }, { headers: { 'X-CSRF-TOKEN': csrf } });
+        }, { headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         comment.comment_text = editingText.value.trim();
         comment.is_edited = true;
         cancelEdit();
@@ -463,7 +487,7 @@ const submitEditReply = async (reply) => {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         await axios.patch(`/comments/${reply.id}`, {
             comment_text: editingReplyText.value.trim(),
-        }, { headers: { 'X-CSRF-TOKEN': csrf } });
+        }, { headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
         reply.comment_text = editingReplyText.value.trim();
         reply.is_edited = true;
         cancelEditReply();
@@ -493,7 +517,7 @@ const setCommentSlider = (comment, val) => {
         try {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const res = await axios.patch(`/comments/${comment.id}/mood`, { score }, {
-                headers: { 'X-CSRF-TOKEN': csrf }
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
             });
             // Atjaunina vidējo no servera
             comment.avg_mood_score = res.data.avg_mood_score;
@@ -873,7 +897,7 @@ onMounted(() => {
                                     <time class="rev-date">{{ formatRevDate(review.created_at) }}</time>
                                 </div>
                                 <button v-if="authUser && (Number(authUser.id) === Number(review.user_id) || Number(authUser.id) === Number(review.user?.id))"
-                                        @click="deleteReview(review.id)" class="rev-del"
+                                        @click="openReviewDeleteModal(review)" class="rev-del"
                                         :title="locale === 'lv' ? 'Dzēst' : 'Delete'">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -1208,7 +1232,37 @@ onMounted(() => {
             </div><!-- /content-container -->
         </div>
 
-        <!-- ── Dzēšanas apstiprinājuma modālis ── -->
+        <!-- ── Atsauksmes dzēšanas modālis ── -->
+        <Transition name="modal-fade">
+            <div v-if="reviewDeleteModal.show" class="delete-modal-overlay" @click.self="closeReviewDeleteModal">
+                <div class="delete-modal">
+                    <div class="delete-modal-icon">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <h3 class="delete-modal-title">
+                        {{ locale === 'lv' ? 'Dzēst atsauksmi?' : 'Delete review?' }}
+                    </h3>
+                    <p class="delete-modal-body">
+                        {{ locale === 'lv' ? 'Šo darbību nevar atsaukt. Vai esi pārliecināts?' : 'This action cannot be undone. Are you sure?' }}
+                    </p>
+                    <div v-if="reviewDeleteModal.reviewText" class="delete-modal-preview">
+                        "{{ reviewDeleteModal.reviewText.slice(0, 80) }}{{ reviewDeleteModal.reviewText.length > 80 ? '…' : '' }}"
+                    </div>
+                    <div class="delete-modal-actions">
+                        <button @click="closeReviewDeleteModal" class="delete-modal-cancel">
+                            {{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}
+                        </button>
+                        <button @click="deleteReview" :disabled="reviewDeleteSubmitting" class="delete-modal-confirm">
+                            <i v-if="reviewDeleteSubmitting" class="fas fa-spinner fa-spin"></i>
+                            <i v-else class="fas fa-trash-alt"></i>
+                            {{ reviewDeleteSubmitting ? (locale === 'lv' ? 'Dzēš...' : 'Deleting...') : (locale === 'lv' ? 'Dzēst' : 'Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
+        <!-- ── Komentāra dzēšanas apstiprinājuma modālis ── -->
         <Transition name="modal-fade">
             <div v-if="deleteModal.show" class="delete-modal-overlay" @click.self="closeDeleteModal">
                 <div class="delete-modal">
@@ -1794,7 +1848,8 @@ onMounted(() => {
     gap: 0.3rem;
     flex: 1;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
+    padding: 4px 0;
 }
 
 .emoji-slider {
