@@ -60,7 +60,7 @@ const currentYear = new Date().getFullYear();
                             <i class="fas fa-newspaper footer-link-icon"></i>
                             {{ t('footer.blogs') }}
                         </Link>
-                        <Link href="/content?type=news" class="footer-link">
+                        <Link href="/content?type=post" class="footer-link">
                             <i class="fas fa-bullhorn footer-link-icon"></i>
                             {{ t('footer.news') }}
                         </Link>

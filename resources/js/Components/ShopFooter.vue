@@ -138,7 +138,7 @@ onMounted(() => {
                         <nav class="footer-nav">
                             <Link href="/content?type=video" class="footer-nav-link">{{ t('footer.videos') }}</Link>
                             <Link href="/content?type=blog" class="footer-nav-link">{{ t('footer.blogs') }}</Link>
-                            <Link href="/content?type=news" class="footer-nav-link">{{ t('footer.news') }}</Link>
+                            <Link href="/content?type=post" class="footer-nav-link">{{ t('footer.news') }}</Link>
                             <Link href="/content?type=announcement" class="footer-nav-link">{{ t('footer.announcements') }}</Link>
                         </nav>
                     </div>

@@ -93,6 +93,9 @@ Route::prefix('content')->group(function () {
     // Content Home
     Route::get('/', [ContentController::class, 'index'])->name('content.index');
 
+    // Komentāri ar mood — web route lai sesijas auth strādā (my_mood_score)
+    Route::get('/{contentId}/comments', [CommentController::class, 'byContent'])->name('comments.byContent');
+
     // Content Detail
     Route::get('/{slug}', [ContentController::class, 'show'])->name('content.show');
 
@@ -178,7 +181,9 @@ Route::middleware('auth')->group(function () {
     // Komentāri
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::put('/comments/{id}', [CommentController::class, 'update'])->name('comments.update');
+    Route::patch('/comments/{id}', [CommentController::class, 'update'])->name('comments.update.patch');
     Route::delete('/comments/{id}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::patch('/comments/{id}/mood', [CommentController::class, 'updateMood'])->name('comments.mood');
 
     // Like content (WEB route for session auth)
     Route::post('/content/{id}/like', [ContentController::class, 'toggleLike'])->name('content.like');
@@ -264,6 +269,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/', [AdminContentController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [AdminContentController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AdminContentController::class, 'update'])->name('update');
+        Route::post('/{id}/quick-update', [AdminContentController::class, 'quickUpdate'])->name('quick-update');
         Route::delete('/{id}', [AdminContentController::class, 'destroy'])->name('destroy');
     });
 

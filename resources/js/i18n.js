@@ -557,8 +557,8 @@ const messages = {
             discount: 'Atlaide',
         },
         sections: {
-            featured_content: 'Jaunākais Saturs',
-            featured_products: 'Populārākie Produkti',
+            featured_content: 'Jaunākais saturs',
+            featured_products: 'Populārākie produkti',
             stats: {
                 views: 'Skatījumi',
                 followers: 'Sekotāji',
@@ -1480,17 +1480,20 @@ const messages = {
                 // Index page
                 index: {
                     title: 'Saturs',
-                    subtitle: 'Pārvaldiet video, emuārus un ziņas',
+                    subtitle: 'Pārvaldiet video, emuārus, ziņas un paziņojumus!',
                     newContent: 'Jauns saturs',
                 },
 
                 // Types
                 types: {
+                    videos: 'Video',
                     video: 'Video',
                     blogs: 'Emuāri',
                     blog: 'Emuārs',
-                    news: 'Ziņas',
-                    announcement: 'Paziņojumi',
+                    posts: 'Ziņas',
+                    post: 'Ziņa',
+                    announcements: 'Paziņojumi',
+                    announcement: 'Paziņojums',
                 },
 
                 // Filters
@@ -1576,6 +1579,10 @@ const messages = {
                     orClickToSelect: 'vai uzklikšķiniet, lai atlasītu',
                     videoSettings: 'Video iestatījumi',
                     currentImage: 'Pašreizējais attēls',
+                    addMoreImages: 'Pievienojiet vēl attēlus!',
+                    existingImages: 'Esošie attēli',
+                    newImage: 'Jauns attēls',
+                    newImages: 'Jauni attēli',
                     created: 'Izveidots',
                     updated: 'Atjaunināts',
                 },
@@ -1612,6 +1619,7 @@ const messages = {
                 noText: 'Nav pievienots teksts',
                 deleted: 'Dzēsts',
                 deletedUser: 'Dzēsts lietotājs',
+                approveSuccess: 'Atsauksme veiksmīgi apstiprināta!',
             },
             comments: {
                 index: {
@@ -2380,7 +2388,7 @@ const messages = {
             views: 'Views',
             latest: 'Latest',
             title: 'Content',
-            subtitle: 'Videos, blogs, news and announcements from all made RoltonsLV content',
+            subtitle: 'Videos, blogs, posts and announcements from all made RoltonsLV content',
 
             // Filtri
             all: 'All',
@@ -2388,8 +2396,8 @@ const messages = {
             blogs: 'Blogs',
             video: 'Video',
             blog: 'Blog',
-            news: 'News',
-            news_single: 'News',
+            news: 'Posts',
+            news_single: 'Post',
             announcements: 'Announcements',
             announcement_single: 'Announcement',
 
@@ -2538,7 +2546,7 @@ const messages = {
             content: 'Content',
             videos: 'Videos',
             blogs: 'Blogs',
-            news: 'News',
+            news: 'Posts',
             announcements: 'Announcements',
             clothing: 'Clothing',
             souvenirs: 'Souvenirs',
@@ -3395,17 +3403,20 @@ const messages = {
                 // Index page
                 index: {
                     title: 'Content',
-                    subtitle: 'Manage videos, blogs and news',
+                    subtitle: 'Manage videos, blogs, posts and announcements!',
                     newContent: 'New content',
                 },
 
                 // Types
                 types: {
+                    videos: 'Videos',
                     video: 'Video',
                     blog: 'Blog',
                     blogs: 'Blogs',
-                    news: 'News',
-                    announcement: 'Announcements',
+                    posts: 'Posts',
+                    post: 'Post',
+                    announcements: 'Announcements',
+                    announcement: 'Announcement',
                 },
 
                 // Filters
@@ -3491,6 +3502,10 @@ const messages = {
                     orClickToSelect: 'or Click to Select',
                     videoSettings: 'Video Settings',
                     currentImage: 'Current Image',
+                    addMoreImages: 'Add more images!',
+                    existingImages: 'Existing Images',
+                    newImage: 'New Image',
+                    newImages: 'New Images',
                     created: 'Created',
                     updated: 'Updated',
                 },
@@ -3527,6 +3542,7 @@ const messages = {
                 noText: 'No text provided',
                 deleted: 'Deleted',
                 deletedUser: 'Deleted user',
+                approveSuccess: 'Review successfully approved!',
             },
             comments: {
                 index: {

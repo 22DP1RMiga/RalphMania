@@ -135,6 +135,25 @@ const resendVerification = async () => {
     }
 };
 
+// ── Komentāru noskaņojuma helpers ────────────────────────────────
+const getMoodEmoji = (score) => {
+    if (score === null || score === undefined) return '😶';
+    if (score <= 10)  return '😡';
+    if (score <= 25)  return '😠';
+    if (score <= 40)  return '😕';
+    if (score <= 55)  return '😐';
+    if (score <= 70)  return '🙂';
+    if (score <= 85)  return '😊';
+    return '🤩';
+};
+
+const getMoodColor = (score) => {
+    if (score === null || score === undefined) return '#9ca3af';
+    const r = score < 50 ? 220 : Math.round(220 - (score - 50) / 50 * 180);
+    const g = score < 50 ? Math.round(score / 50 * 185) : 185;
+    return `rgb(${r}, ${g}, 38)`;
+};
+
 // Privacy settings
 const isPrivateProfile = ref(!user.value.is_public); // Invert is_public
 const savingSettings = ref(false);
@@ -263,12 +282,12 @@ const savePrivacySettings = async () => {
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon stat-icon-cart">
-                    <i class="fas fa-shopping-cart"></i>
+                <div class="stat-icon stat-icon-replies">
+                    <i class="fas fa-reply"></i>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ stats.cart_items }}</div>
-                    <div class="stat-label">{{ $t('dashboard.stats.cart') }}</div>
+                    <div class="stat-value">{{ stats.replies_received }}</div>
+                    <div class="stat-label">{{ currentLocale === 'lv' ? 'Manas atbildes' : 'My replies' }}</div>
                 </div>
             </div>
         </div>
@@ -442,7 +461,17 @@ const savePrivacySettings = async () => {
                             <div class="profile-info">
                                 <h3 class="profile-username">{{ user.username }}</h3>
                                 <p class="profile-email">{{ user.email }}</p>
-                                <span class="profile-role">{{ user.role?.display_name_lv || 'Customer' }}</span>
+                                <div class="profile-badges">
+                                    <span class="profile-role">{{ user.role?.display_name_lv || 'Customer' }}</span>
+                                    <span v-if="isPrivateProfile" class="profile-privacy-badge profile-privacy-badge--private">
+                                        <i class="fas fa-lock"></i>
+                                        {{ currentLocale === 'lv' ? 'Privāts' : 'Private' }}
+                                    </span>
+                                    <span v-else class="profile-privacy-badge profile-privacy-badge--public">
+                                        <i class="fas fa-globe"></i>
+                                        {{ currentLocale === 'lv' ? 'Publisks' : 'Public' }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
@@ -465,6 +494,33 @@ const savePrivacySettings = async () => {
                                     {{ user.last_login_at ? new Date(user.last_login_at).toLocaleString() : '-' }}
                                 </span>
                             </div>
+                        </div>
+
+                        <!-- Privātuma statusa paziņojums -->
+                        <div class="profile-privacy-notice" :class="isPrivateProfile ? 'notice-private' : 'notice-public'">
+                            <div class="notice-icon">
+                                <i :class="isPrivateProfile ? 'fas fa-user-lock' : 'fas fa-user-check'"></i>
+                            </div>
+                            <div class="notice-body">
+                                <strong>
+                                    {{ isPrivateProfile
+                                    ? (currentLocale === 'lv' ? 'Privāts profils' : 'Private profile')
+                                    : (currentLocale === 'lv' ? 'Publisks profils' : 'Public profile') }}
+                                </strong>
+                                <span>
+                                    {{ isPrivateProfile
+                                    ? (currentLocale === 'lv'
+                                        ? 'Citi lietotāji nevar redzēt jūsu profilu, komentārus un aktivitātes.'
+                                        : 'Other users cannot see your profile, comments or activity.')
+                                    : (currentLocale === 'lv'
+                                        ? 'Jūsu profils un aktivitātes ir redzamas citiem lietotājiem.'
+                                        : 'Your profile and activity are visible to other users.') }}
+                                </span>
+                            </div>
+                            <button @click="setActiveSection('settings')" class="notice-settings-btn">
+                                <i class="fas fa-cog"></i>
+                                {{ currentLocale === 'lv' ? 'Mainīt' : 'Change' }}
+                            </button>
                         </div>
 
                         <div class="profile-actions">
@@ -660,28 +716,131 @@ const savePrivacySettings = async () => {
                     <!-- Comments List -->
                     <div v-if="recentComments && recentComments.length > 0" class="comments-full-list">
                         <div v-for="comment in recentComments" :key="comment.id" class="comment-card">
+                            <!-- Header -->
                             <div class="comment-card-header">
                                 <div class="comment-author">
                                     <div class="comment-avatar">
-                                        <img :src="userAvatar" :alt="user.username">
+                                        <img
+                                            :src="comment.is_my_comment ? userAvatar : (comment.author?.profile_picture || '/img/default-avatar.png')"
+                                            :alt="comment.is_my_comment ? user.username : comment.author?.username"
+                                            @error="$event.target.src='/img/default-avatar.png'"
+                                        >
                                     </div>
                                     <div class="comment-author-info">
-                                        <span class="comment-username">{{ user.username }}</span>
+                                        <span class="comment-username">
+                                            {{ comment.is_my_comment ? user.username : comment.author?.username }}
+                                            <span v-if="!comment.is_my_comment" class="comment-participated-tag">
+                                                <i class="fas fa-reply"></i>
+                                                {{ currentLocale === 'lv' ? 'Tu atbildēji' : 'You replied' }}
+                                            </span>
+                                        </span>
                                         <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
                                     </div>
                                 </div>
+                                <!-- Atbildes skaits badge -->
+                                <div v-if="comment.replies_count > 0" class="comment-replies-badge">
+                                    <i class="fas fa-reply"></i>
+                                    {{ comment.replies_count }}
+                                    {{ currentLocale === 'lv'
+                                    ? (comment.replies_count === 1 ? 'atbilde' : 'atbildes')
+                                    : (comment.replies_count === 1 ? 'reply' : 'replies') }}
+                                </div>
                             </div>
 
+                            <!-- Teksts -->
                             <div class="comment-card-body">
                                 <p class="comment-text">{{ comment.comment_text }}</p>
+
+                                <!-- Noskaņojuma sliders (tikai rādīšanai) -->
+                                <div class="comment-mood-display"
+                                     :class="{ 'mood-unset': comment.my_mood_score === null || comment.my_mood_score === undefined }">
+                                    <span class="mood-emoji">{{ getMoodEmoji(comment.my_mood_score) }}</span>
+                                    <div class="mood-bar-track">
+                                        <div
+                                            class="mood-bar-fill"
+                                            :style="{
+                                                width: (comment.my_mood_score ?? 0) + '%',
+                                                background: getMoodColor(comment.my_mood_score),
+                                                opacity: (comment.my_mood_score !== null && comment.my_mood_score !== undefined) ? 1 : 0
+                                            }"
+                                        ></div>
+                                    </div>
+                                    <span class="mood-pct"
+                                          :style="{ color: getMoodColor(comment.my_mood_score) }">
+                                        <template v-if="comment.my_mood_score !== null && comment.my_mood_score !== undefined">
+                                            {{ comment.my_mood_score }}%
+                                        </template>
+                                        <template v-else>
+                                            {{ currentLocale === 'lv' ? 'Nav vērtēts' : 'Not rated' }}
+                                        </template>
+                                    </span>
+
+                                    <!-- Vidējais (ja ir) -->
+                                    <span v-if="comment.avg_mood_score !== null && comment.avg_mood_score !== undefined"
+                                          class="mood-avg-chip"
+                                          :style="{ color: getMoodColor(comment.avg_mood_score) }">
+                                        {{ currentLocale === 'lv' ? 'Vid.' : 'Avg' }}
+                                        {{ comment.avg_mood_score }}%
+                                        <span class="mood-avg-count">({{ comment.mood_count ?? 0 }})</span>
+                                    </span>
+                                </div>
+
+                                <!-- Atbildes — pilnas, visas redzamas -->
+                                <div v-if="comment.replies && comment.replies.length > 0" class="comment-replies-full">
+                                    <div class="replies-full-label">
+                                        <i class="fas fa-reply"></i>
+                                        {{ comment.replies_count }}
+                                        {{ currentLocale === 'lv'
+                                        ? (comment.replies_count === 1 ? 'atbilde' : 'atbildes')
+                                        : (comment.replies_count === 1 ? 'reply' : 'replies') }}
+                                    </div>
+                                    <div class="replies-full-list">
+                                        <div v-for="reply in comment.replies" :key="reply.id" class="reply-full-item">
+                                            <div class="reply-full-connector">
+                                                <div class="reply-full-line"></div>
+                                            </div>
+                                            <img
+                                                :src="reply.user?.profile_picture || '/img/default-avatar.png'"
+                                                class="reply-full-avatar"
+                                                @error="$event.target.src='/img/default-avatar.png'"
+                                            >
+                                            <div class="reply-full-body">
+                                                <div class="reply-full-header">
+                                                    <span class="reply-full-author"
+                                                          :class="{ 'reply-author-me': reply.user?.username === user.username }">
+                                                        {{ reply.user?.username }}
+                                                        <span v-if="reply.user?.username === user.username" class="reply-me-tag">
+                                                            {{ currentLocale === 'lv' ? 'Tu' : 'You' }}
+                                                        </span>
+                                                    </span>
+                                                    <span class="reply-full-date">{{ formatDate(reply.created_at) }}</span>
+                                                    <span class="reply-full-mood"
+                                                          :class="{ 'mood-unset-icon': reply.my_mood_score === null || reply.my_mood_score === undefined }"
+                                                          :title="reply.my_mood_score !== null && reply.my_mood_score !== undefined ? reply.my_mood_score + '%' : (currentLocale === 'lv' ? 'Nav vērtēts' : 'Not rated')">
+                                                        {{ getMoodEmoji(reply.my_mood_score) }}
+                                                    </span>
+                                                </div>
+                                                <p class="reply-full-text">{{ reply.comment_text }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        :href="`/content/${comment.content?.slug}`"
+                                        class="replies-view-all-link"
+                                    >
+                                        <i class="fas fa-external-link-alt"></i>
+                                        {{ currentLocale === 'lv' ? 'Skatīt pilnu diskusiju' : 'View full discussion' }}
+                                    </Link>
+                                </div>
                             </div>
 
+                            <!-- Footer: satura links -->
                             <div v-if="comment.content" class="comment-card-footer">
                                 <div class="comment-item-info">
                                     <i class="fas fa-file-alt"></i>
                                     <span class="comment-item-label">
-                        {{ currentLocale === 'lv' ? 'Komentēts pie:' : 'Commented on:' }}
-                    </span>
+                                        {{ currentLocale === 'lv' ? 'Komentēts pie:' : 'Commented on:' }}
+                                    </span>
                                     <Link
                                         :href="`/content/${comment.content.slug}`"
                                         class="comment-item-link"
@@ -689,8 +848,8 @@ const savePrivacySettings = async () => {
                                         {{ currentLocale === 'lv' ? comment.content.title_lv : comment.content.title_en }}
                                     </Link>
                                     <span class="comment-content-badge">
-                        {{ currentLocale === 'lv' ? 'Saturs' : 'Content' }}
-                    </span>
+                                        {{ currentLocale === 'lv' ? 'Saturs' : 'Content' }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -1128,8 +1287,8 @@ const savePrivacySettings = async () => {
     background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
-.stat-icon-cart {
-    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+.stat-icon-replies {
+    background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
 }
 
 .stat-content {
@@ -1382,6 +1541,118 @@ const savePrivacySettings = async () => {
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 600;
+}
+
+/* Profila badges rinda */
+.profile-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.375rem;
+}
+
+.profile-privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+.profile-privacy-badge--private {
+    background: #1e1b4b;
+    color: #a5b4fc;
+    border: 1px solid #4338ca;
+}
+.profile-privacy-badge--public {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+/* Privātuma paziņojuma bloks */
+.profile-privacy-notice {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.notice-private {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    border: 1px solid #4338ca;
+    color: #c7d2fe;
+}
+.notice-public {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #86efac;
+    color: #166534;
+}
+.notice-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+.notice-private .notice-icon {
+    background: rgba(99, 102, 241, 0.25);
+    color: #a5b4fc;
+}
+.notice-public .notice-icon {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+}
+.notice-body {
+    flex: 1;
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.notice-private .notice-body strong { color: #e0e7ff; font-size: 0.875rem; }
+.notice-private .notice-body span   { color: #a5b4fc; font-size: 0.78rem; opacity: 0.85; }
+.notice-public  .notice-body strong { color: #14532d; font-size: 0.875rem; }
+.notice-public  .notice-body span   { color: #166534; font-size: 0.78rem; opacity: 0.85; }
+.notice-settings-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.875rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.notice-private .notice-settings-btn {
+    background: rgba(99, 102, 241, 0.3);
+    color: #e0e7ff;
+}
+.notice-private .notice-settings-btn:hover {
+    background: rgba(99, 102, 241, 0.55);
+}
+.notice-public .notice-settings-btn {
+    background: rgba(16, 185, 129, 0.2);
+    color: #065f46;
+}
+.notice-public .notice-settings-btn:hover {
+    background: rgba(16, 185, 129, 0.35);
+}
+
+@media (max-width: 480px) {
+    .profile-privacy-notice { gap: 0.75rem; }
+    .notice-settings-btn { width: 100%; justify-content: center; }
 }
 
 .profile-details {
@@ -1856,7 +2127,25 @@ const savePrivacySettings = async () => {
     font-weight: 600;
     color: #111827;
     font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
 }
+
+.comment-participated-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+}
+.comment-participated-tag i { font-size: 0.55rem; }
 
 .comment-date {
     font-size: 0.75rem;
@@ -1956,5 +2245,190 @@ const savePrivacySettings = async () => {
     font-weight: 700;
     margin-left: auto;
 }
+
+/* ── Komentāru noskaņojums (Dashboard) ─────────────────────────── */
+.comment-replies-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #1d4ed8;
+    white-space: nowrap;
+}
+.comment-replies-badge i { font-size: 0.6rem; }
+
+.comment-mood-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+.comment-mood-display.mood-unset {
+    opacity: 0.5;
+    border-style: dashed;
+}
+.mood-emoji { font-size: 1.1rem; flex-shrink: 0; }
+.mood-bar-track {
+    flex: 1;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 40px;
+}
+.mood-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+.mood-pct {
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    color: #9ca3af;
+}
+.mood-avg-chip {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    background: white;
+    border: 1px solid currentColor;
+    border-radius: 9999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+.mood-avg-count { font-weight: 400; color: #9ca3af; }
+
+/* Replies — pilns skats */
+.comment-replies-full {
+    margin-top: 0.75rem;
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 0.75rem;
+}
+.replies-full-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 0.6rem;
+    background: #eff6ff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px solid #bfdbfe;
+}
+.replies-full-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+}
+.reply-full-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+.reply-full-item:last-child { padding-bottom: 0; }
+.reply-full-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 1rem;
+    flex-shrink: 0;
+    padding-top: 0.75rem;
+}
+.reply-full-line {
+    width: 2px;
+    flex: 1;
+    min-height: 1.5rem;
+    background: #bfdbfe;
+    border-radius: 1px;
+}
+.reply-full-item:last-child .reply-full-line { display: none; }
+.reply-full-avatar {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #bfdbfe;
+    margin-top: 0.15rem;
+}
+.reply-full-body {
+    flex: 1;
+    min-width: 0;
+    background: #f8faff;
+    border: 1px solid #dbeafe;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+}
+.reply-full-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+    flex-wrap: wrap;
+}
+.reply-full-author {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1d4ed8;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.reply-author-me { color: #dc2626; }
+.reply-me-tag {
+    font-size: 0.6rem;
+    font-weight: 700;
+    background: #dc2626;
+    color: white;
+    padding: 0.05rem 0.35rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+}
+.reply-full-date {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-left: auto;
+}
+.reply-full-mood {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.reply-full-text {
+    font-size: 0.82rem;
+    color: #374151;
+    line-height: 1.5;
+    margin: 0;
+    word-break: break-word;
+}
+.replies-view-all-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #3b82f6;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.replies-view-all-link:hover { color: #1d4ed8; text-decoration: underline; }
+.mood-unset-icon { filter: grayscale(1); opacity: 0.4; }
 
 </style>

@@ -33,7 +33,7 @@ class ReviewController extends Controller
 
         $query = Review::where('reviewable_type', $reviewableType)
             ->where('reviewable_id', $id)
-            ->with('user:id,username,profile_picture')
+            ->with('user:id,username,profile_picture,role_id', 'user.role:id,name,display_name_lv,display_name_en')
             ->orderBy('created_at', 'desc');
 
         if ($currentUserId) {
@@ -61,6 +61,11 @@ class ReviewController extends Controller
                 'id'              => $r->user->id,
                 'username'        => $r->user->username,
                 'profile_picture' => $r->user->profile_picture,
+                'role'            => $r->user->role ? [
+                    'name'            => $r->user->role->name,
+                    'display_name_lv' => $r->user->role->display_name_lv,
+                    'display_name_en' => $r->user->role->display_name_en,
+                ] : null,
             ] : null,
         ]);
 
@@ -116,6 +121,13 @@ class ReviewController extends Controller
             'is_approved'     => false,
         ]);
 
+        // Aktivitātes žurnāls
+        $target = isset($validated['content_id']) ? 'saturs ID ' . $reviewable_id : 'produkts ID ' . $reviewable_id;
+        \App\Models\ActivityLog::log(
+            'review_added',
+            'Lietotājs ' . auth()->user()?->username . ' pievienoja atsauksmi (' . $target . ', vērtējums: ' . $validated['rating'] . '/5)',
+        );
+
         return redirect()->back()->with('success', 'Atsauksme pievienota un gaida apstiprinājumu');
     }
 
@@ -152,7 +164,7 @@ class ReviewController extends Controller
      * WEB: Dzēš atsauksmi
      * DELETE /reviews/{id}
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(int $id): mixed
     {
         $review = Review::findOrFail($id);
 
@@ -161,6 +173,10 @@ class ReviewController extends Controller
         }
 
         $review->delete();
+
+        if (!request()->header('X-Inertia') && (request()->expectsJson() || request()->ajax())) {
+            return response()->json(['success' => true]);
+        }
         return redirect()->back()->with('success', 'Atsauksme dzēsta');
     }
 

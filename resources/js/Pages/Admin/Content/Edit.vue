@@ -3,8 +3,16 @@ import { ref, computed } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
 
 const { t, locale } = useI18n({ useScope: 'global' });
+
+// Toast
+const toast = ref({ show: false, message: '', type: 'success' });
+const showToast = (message, type = 'success') => {
+    toast.value = { show: false, message, type };
+    setTimeout(() => { toast.value = { show: true, message, type }; }, 10);
+};
 
 const props = defineProps({
     content: {
@@ -32,7 +40,7 @@ const form = useForm({
     content_body_lv: props.content.content_body_lv || '',
     content_body_en: props.content.content_body_en || '',
     video_url: props.content.video_url || '',
-    video_platform: props.content.video_platform || 'youtube',
+    video_platform: props.content.video_platform || 'YouTube',
     duration: props.content.duration || null,
     thumbnail: null,
     featured_image: null,
@@ -56,34 +64,51 @@ const isDraggingThumbnail = ref(false);
 const isDraggingFeatured = ref(false);
 const isDraggingBlogImages = ref(false);
 
+// Universāls attēla URL aprēķins
+const resolveImg = (path, fallbackDir = '/img/thumbnails') => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    if (path.startsWith('storage/')) return '/' + path;
+    return `${fallbackDir}/${path}`;
+};
+
+// Iegūst attēla mapi pēc satura tipa
+const getTypeDir = (type) => {
+    const map = { video: '/img/thumbnails', blog: '/img/Blogs', post: '/img/Posts', announcement: '/img/Announcements' };
+    return map[type] || '/img/thumbnails';
+};
+
 // Existing images computed
 const existingThumbnail = computed(() => {
-    if (form._remove_thumbnail || !props.content.thumbnail) return null;
-    const img = props.content.thumbnail;
-    if (img.startsWith('http') || img.startsWith('/')) return img;
-    return `/img/thumbnails/${img}`;
+    if (form._remove_thumbnail) return null;
+    return resolveImg(props.content.thumbnail, '/img/thumbnails');
 });
 
 const existingFeaturedImage = computed(() => {
-    if (form._remove_featured_image || !props.content.featured_image) return null;
-    const img = props.content.featured_image;
-    if (img.startsWith('http') || img.startsWith('/')) return img;
-    return `/img/Blogs/${img}`;
+    if (form._remove_featured_image) return null;
+    return resolveImg(props.content.featured_image, getTypeDir(props.content.type));
 });
+
+// Get blog image URL
+const getBlogImageUrl = (img) => resolveImg(img, getTypeDir(props.content.type)) ?? '/img/no-content-placeholder.png';
 
 // Content types
 const contentTypes = computed(() => [
     { value: 'video', labelKey: 'admin.content.types.video', icon: 'fas fa-video' },
     { value: 'blog', labelKey: 'admin.content.types.blog', icon: 'fas fa-blog' },
-    { value: 'news', labelKey: 'admin.content.types.news', icon: 'fas fa-newspaper' },
+    { value: 'post', labelKey: 'admin.content.types.post', icon: 'fas fa-bullhorn' },
     { value: 'announcement', labelKey: 'admin.content.types.announcement', icon: 'fas fa-bullhorn' },
 ]);
 
 // Video platforms
 const videoPlatforms = [
-    { value: 'youtube', label: 'YouTube' },
-    { value: 'vimeo', label: 'Vimeo' },
-    { value: 'other', label: 'Cits' },
+    { value: 'YouTube', label: 'YouTube' },
+    { value: 'TikTok', label: 'TikTok' },
+    { value: 'Instagram', label: 'Instagram' },
+    { value: 'Facebook', label: 'Facebook' },
+    { value: 'X', label: 'X / Twitter' },
+    { value: 'Vimeo', label: 'Vimeo' },
+    { value: 'Other', label: 'Cits' },
 ];
 
 // Generate slug
@@ -190,18 +215,29 @@ const removeExistingBlogImage = (index) => {
 // Active tab for language content
 const activeTab = ref('lv');
 
-// Submit form
+// Submit form — POST ar _method=PUT (Laravel method spoofing, strādā ar FormData)
 const submit = () => {
-    form.post(`/admin/content/${props.content.id}`, {
-        preserveScroll: true,
+    form.transform(data => ({
+        ...data,
+        _method: 'PUT',
+    })).post(`/admin/content/${props.content.id}`, {
         forceFormData: true,
-        headers: { 'X-HTTP-Method-Override': 'PUT' },
+        onSuccess: () => {
+            showToast(locale.value === 'lv' ? 'Saturs veiksmīgi atjaunināts!' : 'Content updated successfully!', 'success');
+            setTimeout(() => router.visit('/admin/content'), 1200);
+        },
+        onError: (errors) => {
+            const first = Object.values(errors)[0];
+            showToast(first || (locale.value === 'lv' ? 'Lūdzu pārbaudiet ievadītos datus.' : 'Please check your input.'), 'error');
+        },
     });
 };
 
 // Computed
 const isVideoType = computed(() => form.type === 'video');
-const isBlogType = computed(() => form.type === 'blog');
+const isBlogType  = computed(() => form.type === 'blog');
+const isPostType  = computed(() => form.type === 'post');
+const hasGallery  = computed(() => form.type === 'blog' || form.type === 'post');
 
 const displayTitle = computed(() => {
     return locale.value === 'lv'
@@ -212,14 +248,10 @@ const displayTitle = computed(() => {
 // Delete content
 const deleteContent = () => {
     if (confirm(t('admin.content.deleteConfirm', { name: displayTitle.value }))) {
-        router.delete(`/admin/content/${props.content.id}`);
+        router.delete(`/admin/content/${props.content.id}`, {
+            onSuccess: () => router.visit('/admin/content'),
+        });
     }
-};
-
-// Get blog image URL
-const getBlogImageUrl = (img) => {
-    if (img.startsWith('http') || img.startsWith('/')) return img;
-    return `/img/Blogs/${img}`;
 };
 
 // Format date
@@ -234,7 +266,12 @@ const formatDate = (date) => {
     <AdminLayout>
         <template #title>{{ t('admin.content.edit.title') }}</template>
 
-        <!-- Header -->
+        <ToastNotification
+            :show="toast.show"
+            :message="toast.message"
+            :type="toast.type"
+            @close="toast.show = false"
+        />
         <div class="page-header">
             <div class="header-left">
                 <Link href="/admin/content" class="btn btn-back">
@@ -425,34 +462,54 @@ const formatDate = (date) => {
                         </div>
                     </div>
 
-                    <!-- Blog Images -->
-                    <div v-if="isBlogType" class="card">
+                    <!-- Attēlu galerija (blog un post tipam) -->
+                    <div v-if="hasGallery" class="card">
                         <div class="card-header">
                             <h3 class="card-title">
                                 <i class="fas fa-images"></i>
-                                {{ t('admin.content.form.blogImages') || 'Bloga attēli' }}
+                                {{ isPostType
+                                ? (locale === 'lv' ? 'Ziņas attēli (Instagram stils)' : 'Post Images (Instagram style)')
+                                : (t('admin.content.form.blogImages') || 'Bloga attēli') }}
                             </h3>
                         </div>
                         <div class="card-body">
-                            <!-- Existing Images -->
+                            <!-- Esošie attēli -->
                             <div v-if="content.blog_images && content.blog_images.length > 0" class="existing-images">
-                                <p class="section-label">{{ t('admin.content.form.existingImages') || 'Esošie attēli' }}</p>
+                                <p class="section-label">
+                                    {{ locale === 'lv' ? 'Esošie attēli' : 'Current images' }}
+                                    <span class="section-count">({{ content.blog_images.length - form._remove_blog_images.length }} / {{ content.blog_images.length }})</span>
+                                </p>
                                 <div class="image-gallery">
                                     <div v-for="(img, index) in content.blog_images" :key="'existing-' + index"
-                                         class="gallery-item" :class="{ 'removed': form._remove_blog_images.includes(index) }">
-                                        <img :src="getBlogImageUrl(img)" :alt="`Image ${index + 1}`">
-                                        <button v-if="!form._remove_blog_images.includes(index)" type="button"
-                                                @click="removeExistingBlogImage(index)" class="remove-image">
-                                            <i class="fas fa-times"></i>
+                                         class="gallery-item" :class="{ 'gallery-item--removed': form._remove_blog_images.includes(index) }">
+                                        <img :src="getBlogImageUrl(img)" :alt="`Image ${index + 1}`"
+                                             @error="$event.target.src='/img/no-content-placeholder.png'">
+
+                                        <!-- Aktīvs attēls — poga "Noņemt" -->
+                                        <button v-if="!form._remove_blog_images.includes(index)"
+                                                type="button"
+                                                @click="removeExistingBlogImage(index)"
+                                                class="gallery-remove-btn"
+                                                title="Noņemt">
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
-                                        <div v-else class="removed-overlay">
+
+                                        <!-- Atzīmēts dzēšanai — poga "Atjaunot" -->
+                                        <div v-else class="gallery-removed-overlay">
                                             <i class="fas fa-trash"></i>
+                                            <span>{{ locale === 'lv' ? 'Tiks dzēsts' : 'Will delete' }}</span>
+                                            <button type="button"
+                                                    @click="form._remove_blog_images.splice(form._remove_blog_images.indexOf(index), 1)"
+                                                    class="gallery-undo-btn">
+                                                <i class="fas fa-undo"></i>
+                                                {{ locale === 'lv' ? 'Atcelt' : 'Undo' }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Upload New -->
+                            <!-- Augšupielādēt jaunus -->
                             <div class="dropzone" :class="{ 'dragging': isDraggingBlogImages }"
                                  @dragover="handleDragOver($event, 'blog')" @dragleave="handleDragLeave('blog')"
                                  @drop="handleDrop($event, 'blog')">
@@ -460,19 +517,24 @@ const formatDate = (date) => {
                                        class="dropzone-input" id="blog-images-input">
                                 <label for="blog-images-input" class="dropzone-label">
                                     <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>{{ t('admin.content.form.addMoreImages') || 'Pievienot attēlus' }}</span>
+                                    <span>{{ locale === 'lv' ? 'Pievienot jaunus attēlus' : 'Add new images' }}</span>
+                                    <span class="dropzone-hint">{{ locale === 'lv' ? 'vai ievelciet šeit' : 'or drag & drop' }}</span>
                                 </label>
                             </div>
 
-                            <!-- New Images Preview -->
+                            <!-- Jaunie attēli (priekšskatījums) -->
                             <div v-if="blogImagesPreview.length > 0" class="new-images">
-                                <p class="section-label">{{ t('admin.content.form.newImages') || 'Jaunie attēli' }}</p>
+                                <p class="section-label">
+                                    {{ locale === 'lv' ? 'Jaunie attēli (netiek saglabāti vēl)' : 'New images (not saved yet)' }}
+                                    <span class="section-count">({{ blogImagesPreview.length }})</span>
+                                </p>
                                 <div class="image-gallery">
                                     <div v-for="(preview, index) in blogImagesPreview" :key="'new-' + index" class="gallery-item">
                                         <img :src="preview" :alt="`New ${index + 1}`">
-                                        <button type="button" @click="removeNewBlogImage(index)" class="remove-image">
-                                            <i class="fas fa-times"></i>
+                                        <button type="button" @click="removeNewBlogImage(index)" class="gallery-remove-btn">
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
+                                        <div class="gallery-new-badge">{{ locale === 'lv' ? 'Jauns' : 'New' }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -1071,18 +1133,22 @@ const formatDate = (date) => {
 
 /* Image Gallery */
 .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
     color: #6b7280;
     text-transform: uppercase;
     margin-bottom: 0.75rem;
 }
+.section-count { color: #9ca3af; font-weight: 400; }
 
-.existing-images, .new-images { margin-bottom: 1rem; }
+.existing-images, .new-images { margin-bottom: 1.25rem; }
 
 .image-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 0.75rem;
 }
 
@@ -1091,34 +1157,88 @@ const formatDate = (date) => {
     aspect-ratio: 1;
     border-radius: 0.5rem;
     overflow: hidden;
+    border: 2px solid #e5e7eb;
+    background: #f9fafb;
 }
-
 .gallery-item img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    transition: opacity 0.2s;
 }
 
-.gallery-item .remove-image {
-    width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.625rem;
-}
-
-.gallery-item.removed {
-    opacity: 0.5;
-}
-
-.removed-overlay {
+/* Noņemšanas poga */
+.gallery-remove-btn {
     position: absolute;
-    inset: 0;
-    background: rgba(220, 38, 38, 0.8);
+    top: 0.375rem;
+    right: 0.375rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: rgba(220, 38, 38, 0.9);
+    border: none;
+    border-radius: 0.375rem;
+    color: white;
+    font-size: 0.75rem;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.15s;
 }
+.gallery-item:hover .gallery-remove-btn { opacity: 1; }
+.gallery-remove-btn:hover { transform: scale(1.1); background: #b91c1c; }
+
+/* "Jauns" badge */
+.gallery-new-badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.25rem;
+    background: rgba(5, 150, 105, 0.9);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* Atzīmēts dzēšanai */
+.gallery-item--removed img { opacity: 0.25; }
+.gallery-removed-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(220, 38, 38, 0.82);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.25rem;
+}
+.gallery-removed-overlay i { font-size: 1.25rem; margin-bottom: 0.125rem; }
+.gallery-undo-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: white;
+    color: #dc2626;
+    border: none;
+    border-radius: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.gallery-undo-btn:hover { background: #fef2f2; }
 
 /* Stats */
 .stats-grid {

@@ -12,16 +12,62 @@ const props = defineProps({
     filters: Object,
 });
 
-// State
-const activeType = ref(props.filters.type || null);
-const activePlatform = ref(null);
-const activeCategory = ref(null);
-const sortBy = ref('newest');
-const searchQuery = ref('');
-const searchResults = ref([]);
-const isSearching = ref(false);
-const displayedItems = ref(3);
-const allContent = ref(props.content.data || []);
+// State — activeType inicializējas no URL parametra
+const activeType     = ref(props.filters?.type || null);
+const activePlatform = ref(props.filters?.platform || null);
+const activeCategory = ref(props.filters?.category || null);
+const sortBy         = ref(props.filters?.sort || 'newest');
+
+// Noskaņojuma filtrs: null = visi, [min, max] = diapazons
+const moodFilter = ref(null); // null | 'any' | [0,40] | [40,70] | [70,100]
+
+const moodRanges = computed(() => [
+    { label: locale.value === 'lv' ? 'Visi' : 'All',               value: null,        emoji: null },
+    { label: locale.value === 'lv' ? 'Tikai vērtēti' : 'Rated',    value: 'rated',     emoji: '📊' },
+    { label: locale.value === 'lv' ? 'Negatīvs' : 'Negative',      value: 'negative',  emoji: '😠', min: 0,  max: 39 },
+    { label: locale.value === 'lv' ? 'Neitrāls' : 'Neutral',       value: 'neutral',   emoji: '😐', min: 40, max: 69 },
+    { label: locale.value === 'lv' ? 'Pozitīvs' : 'Positive',      value: 'positive',  emoji: '🙂', min: 70, max: 100 },
+]);
+
+// Mood helpers
+const getMoodEmoji = (score) => {
+    if (score === null || score === undefined) return '😶';
+    if (score <= 10) return '😡';
+    if (score <= 25) return '😠';
+    if (score <= 40) return '😕';
+    if (score <= 55) return '😐';
+    if (score <= 70) return '🙂';
+    if (score <= 85) return '😊';
+    return '🤩';
+};
+const getMoodColor = (score) => {
+    if (score === null || score === undefined) return '#9ca3af';
+    const r = score < 50 ? 220 : Math.round(220 - (score - 50) / 50 * 180);
+    const g = score < 50 ? Math.round(score / 50 * 185) : 185;
+    return `rgb(${r}, ${g}, 38)`;
+};
+const searchQuery    = ref('');
+const searchResults  = ref([]);
+const isSearching    = ref(false);
+const displayedItems = ref(12);
+const allContent     = ref(props.content?.data || []);
+
+// Kad Inertia atjaunina props (piem. nākot no kājenes ar ?type=blog),
+// sinhronizē lokālo stāvokli
+watch(() => props.content?.data, (newData) => {
+    if (newData) allContent.value = newData;
+});
+watch(() => props.filters, (newFilters) => {
+    if (newFilters?.type !== undefined) {
+        activeType.value = newFilters.type || null;
+    }
+    if (newFilters?.platform !== undefined) {
+        activePlatform.value = newFilters.platform || null;
+    }
+    if (newFilters?.category !== undefined) {
+        activeCategory.value = newFilters.category || null;
+    }
+}, { deep: true });
 
 // Available platforms & categories (dynamic from data)
 const platforms = computed(() => {
@@ -38,7 +84,7 @@ const categories = computed(() => {
 const filteredContent = computed(() => {
     let filtered = [...allContent.value];
 
-    // Filter by type
+    // Filter by type — tikai 'post', nav vairs 'news' aizstājvārds
     if (activeType.value) {
         filtered = filtered.filter(item => item.type === activeType.value);
     }
@@ -51,6 +97,23 @@ const filteredContent = computed(() => {
     // Filter by category
     if (activeCategory.value) {
         filtered = filtered.filter(item => item.category === activeCategory.value);
+    }
+
+    // Filter by mood range
+    if (moodFilter.value) {
+        if (moodFilter.value === 'rated') {
+            filtered = filtered.filter(item => item.avg_mood_score !== null && item.avg_mood_score !== undefined);
+        } else {
+            const range = moodRanges.value.find(r => r.value === moodFilter.value);
+            if (range && range.min !== undefined) {
+                filtered = filtered.filter(item =>
+                    item.avg_mood_score !== null &&
+                    item.avg_mood_score !== undefined &&
+                    item.avg_mood_score >= range.min &&
+                    item.avg_mood_score <= range.max
+                );
+            }
+        }
     }
 
     // Sort
@@ -67,6 +130,13 @@ const filteredContent = computed(() => {
         case 'most_viewed':
             filtered.sort((a, b) => b.view_count - a.view_count);
             break;
+        case 'best_mood':
+            filtered.sort((a, b) => {
+                const aScore = a.avg_mood_score ?? -1;
+                const bScore = b.avg_mood_score ?? -1;
+                return bScore - aScore;
+            });
+            break;
     }
 
     return filtered;
@@ -81,20 +151,45 @@ const hasMore = computed(() => {
     return displayedItems.value < filteredContent.value.length;
 });
 
-// Methods
+// Methods — maina URL lai kājenes/citi ārēji linki darbojas
 const setType = (type) => {
     activeType.value = type;
-    displayedItems.value = 3;
+    activePlatform.value = null;
+    activeCategory.value = null;
+    moodFilter.value = null;
+    displayedItems.value = 12;
+    const params = {};
+    if (type) params.type = type;
+    if (sortBy.value && sortBy.value !== 'newest') params.sort = sortBy.value;
+    router.get('/content', params, {
+        preserveScroll: true,
+        preserveState: false,
+        replace: true,
+    });
 };
+
+// Kad sort mainās uz best_mood — sūtam uz serveri (citi sort notiek klientā)
+watch(sortBy, (newSort) => {
+    displayedItems.value = 12;
+    if (newSort === 'best_mood') {
+        const params = { sort: 'best_mood' };
+        if (activeType.value) params.type = activeType.value;
+        router.get('/content', params, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    }
+});
 
 const setPlatform = (platform) => {
     activePlatform.value = activePlatform.value === platform ? null : platform;
-    displayedItems.value = 3;
+    displayedItems.value = 12;
 };
 
 const setCategory = (category) => {
     activeCategory.value = activeCategory.value === category ? null : category;
-    displayedItems.value = 3;
+    displayedItems.value = 12;
 };
 
 const loadMore = () => {
@@ -109,20 +204,37 @@ const getDescription = (item) => {
     return locale.value === 'lv' ? item.description_lv : (item.description_en || item.description_lv);
 };
 
-const getThumbnail = (item) => {
-    if (item.thumbnail && !item.thumbnail.includes('img.thumbnails')) {
-        return item.thumbnail;
-    }
+// Universāls attēla URL aprēķins
+const resolveImg = (path, fallbackDir = '/img/thumbnails') => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    if (path.startsWith('storage/')) return '/' + path;
+    return `${fallbackDir}/${path}`;
+};
 
-    // YouTube thumbnail fallback
+// Iegūst attēla mapi pēc satura tipa
+const getTypeDir = (type) => {
+    const map = { video: '/img/thumbnails', blog: '/img/Blogs', post: '/img/Posts', announcement: '/img/Announcements' };
+    return map[type] || '/img/thumbnails';
+};
+
+const getThumbnail = (item) => {
+    // Thumbnail lauks
+    if (item.thumbnail) {
+        const url = resolveImg(item.thumbnail, getTypeDir(item.type));
+        if (url) return url;
+    }
+    // YouTube automātiskais sīktēls
     if (item.video_url && item.video_platform === 'YouTube') {
         const match = item.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-        if (match) {
-            return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
-        }
+        if (match) return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
     }
-
-    return '/img/default-content.jpg';
+    // featured_image kā rezerve
+    if (item.featured_image) {
+        const url = resolveImg(item.featured_image, getTypeDir(item.type));
+        if (url) return url;
+    }
+    return '/img/no-content-placeholder.png';
 };
 
 const formatViews = (count) => {
@@ -179,9 +291,9 @@ const clearSearch = () => {
 // Watch for search changes
 watch(searchQuery, handleSearch);
 
-// Reset displayed items when filters change
-watch([activeType, activePlatform, activeCategory, sortBy], () => {
-    displayedItems.value = 3;
+// Reset displayed items when filters change (bet ne activeType — tas jau tiek reset setType iekšā)
+watch([activePlatform, activeCategory, sortBy, moodFilter], () => {
+    displayedItems.value = 12;
 });
 </script>
 
@@ -225,8 +337,19 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                                 <div class="result-title">{{ getTitle(result) }}</div>
                                 <div class="result-meta">
                                     <span class="result-type">
-                                        <i :class="result.type === 'video' ? 'fas fa-play-circle' : 'fas fa-newspaper'"></i>
-                                        {{ result.type === 'video' ? t('content.video') : t('content.blog') }}
+                                        <i :class="{
+                                            'fas fa-play-circle': result.type === 'video',
+                                            'fas fa-newspaper':   result.type === 'blog',
+                                            'fas fa-bullhorn':    result.type === 'post',
+                                            'fas fa-bell':        result.type === 'announcement',
+                                        }"></i>
+                                        {{
+                                            result.type === 'video'        ? t('content.video') :
+                                                result.type === 'blog'         ? t('content.blogs') :
+                                                    result.type === 'post'         ? (locale === 'lv' ? 'Ziņa' : 'Post') :
+                                                        result.type === 'announcement' ? t('content.announcements') :
+                                                            result.type
+                                        }}
                                     </span>
                                     <span v-if="result.category" class="result-category">{{ result.category }}</span>
                                 </div>
@@ -268,14 +391,14 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     <span>{{ t('content.blogs') }}</span>
                 </button>
 
-                <!-- NEWS-->
+                <!-- POST / ZIŅAS -->
                 <button
-                    @click="setType('news')"
+                    @click="setType('post')"
                     class="filter-tab"
-                    :class="{ 'filter-tab-active': activeType === 'news' }"
+                    :class="{ 'filter-tab-active': activeType === 'post' }"
                 >
                     <i class="fas fa-bullhorn"></i>
-                    <span>{{ t('content.news') }}</span>
+                    <span>{{ locale === 'lv' ? 'Ziņas' : 'Posts' }}</span>
                 </button>
 
                 <!-- ANNOUNCEMENTS-->
@@ -329,6 +452,29 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     </div>
                 </div>
 
+                <!-- Mood Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-smile"></i>
+                        {{ locale === 'lv' ? 'Noskaņojums' : 'Mood' }}
+                    </label>
+                    <div class="filter-chips">
+                        <button
+                            v-for="range in moodRanges"
+                            :key="range.value ?? 'all'"
+                            @click="moodFilter = range.value"
+                            class="filter-chip mood-chip"
+                            :class="{
+                                'filter-chip-active': moodFilter === range.value,
+                                [`mood-chip--${range.value}`]: range.value,
+                            }"
+                        >
+                            <span v-if="range.emoji" class="mood-chip-emoji">{{ range.emoji }}</span>
+                            {{ range.label }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Sort Filter -->
                 <div class="filter-group">
                     <label class="filter-label">
@@ -340,6 +486,7 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                         <option value="oldest">{{ t('content.sort.oldest') }}</option>
                         <option value="most_liked">{{ t('content.sort.most_liked') }}</option>
                         <option value="most_viewed">{{ t('content.sort.most_viewed') }}</option>
+                        <option value="best_mood">{{ locale === 'lv' ? '🤩 Labākais noskaņojums' : '🤩 Best mood' }}</option>
                     </select>
                 </div>
             </div>
@@ -360,9 +507,27 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                     <Link :href="`/content/${item.slug}`" class="content-thumbnail">
                         <img :src="getThumbnail(item)" :alt="getTitle(item)">
 
-                        <!-- Video Badge -->
-                        <div v-if="item.type === 'video'" class="video-badge">
-                            <i class="fas fa-play"></i>
+                        <!-- Type Badge — visiem tipiem -->
+                        <div class="type-badge" :class="`type-badge--${item.type}`">
+                            <i :class="{
+                                'fas fa-play':           item.type === 'video',
+                                'fas fa-pen-nib':        item.type === 'blog',
+                                'fas fa-bullhorn':       item.type === 'news' || item.type === 'post',
+                                'fas fa-bell':           item.type === 'announcement',
+                            }"></i>
+                        </div>
+
+                        <!-- Platform badge (tikai video) -->
+                        <div v-if="item.type === 'video' && item.video_platform" class="platform-badge">
+                            <i :class="{
+                                'fab fa-youtube':   item.video_platform === 'YouTube',
+                                'fab fa-tiktok':    item.video_platform === 'TikTok',
+                                'fab fa-instagram': item.video_platform === 'Instagram',
+                                'fab fa-facebook':  item.video_platform === 'Facebook',
+                                'fab fa-x-twitter': item.video_platform === 'X' || item.video_platform === 'Twitter',
+                                'fas fa-video':     !['YouTube','TikTok','Instagram','Facebook','X','Twitter'].includes(item.video_platform),
+                            }"></i>
+                            {{ item.video_platform }}
                         </div>
 
                         <!-- Category Badge -->
@@ -394,6 +559,32 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                             </span>
                         </div>
 
+                        <!-- Noskaņojuma josla -->
+                        <div class="card-mood-bar"
+                             :class="{ 'card-mood-bar--empty': item.avg_mood_score === null || item.avg_mood_score === undefined }"
+                             :title="item.avg_mood_score !== null && item.avg_mood_score !== undefined
+                                ? (locale === 'lv' ? `Vidējais noskaņojums: ${item.avg_mood_score}% (${item.mood_count} vērtējumi)` : `Avg mood: ${item.avg_mood_score}% (${item.mood_count} ratings)`)
+                                : (locale === 'lv' ? 'Nav vērtējumu' : 'No ratings yet')">
+                            <span class="card-mood-emoji">{{ getMoodEmoji(item.avg_mood_score) }}</span>
+                            <div class="card-mood-track">
+                                <div class="card-mood-fill"
+                                     :style="{
+                                         width: (item.avg_mood_score ?? 0) + '%',
+                                         background: getMoodColor(item.avg_mood_score),
+                                     }"></div>
+                            </div>
+                            <span class="card-mood-label"
+                                  :style="{ color: getMoodColor(item.avg_mood_score) }">
+                                <template v-if="item.avg_mood_score !== null && item.avg_mood_score !== undefined">
+                                    {{ item.avg_mood_score }}%
+                                    <span class="card-mood-count">({{ item.mood_count }})</span>
+                                </template>
+                                <template v-else>
+                                    {{ locale === 'lv' ? 'Nav vērtēts' : 'Not rated' }}
+                                </template>
+                            </span>
+                        </div>
+
                         <!-- Actions -->
                         <div class="content-actions">
                             <Link
@@ -408,7 +599,13 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
                                 @click="openSource(item)"
                                 class="btn-action btn-secondary"
                             >
-                                <i class="fab" :class="`fa-${item.video_platform?.toLowerCase()}`"></i>
+                                <i :class="{
+                                    'fab fa-youtube':   item.video_platform === 'YouTube',
+                                    'fab fa-tiktok':    item.video_platform === 'TikTok',
+                                    'fab fa-instagram': item.video_platform === 'Instagram',
+                                    'fab fa-facebook':  item.video_platform === 'Facebook',
+                                    'fas fa-video':     !['YouTube','TikTok','Instagram','Facebook'].includes(item.video_platform),
+                                }"></i>
                                 {{ t('content.watch_on') }} {{ item.video_platform }}
                             </button>
                         </div>
@@ -438,11 +635,63 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
 </template>
 
 <style scoped>
+/* Noskaņojuma filtrs */
+.mood-chip { display: inline-flex; align-items: center; gap: 0.3rem; }
+.mood-chip-emoji { font-size: 0.9rem; }
+
+.mood-chip--rated.filter-chip-active  { background: #ede9fe; border-color: #7c3aed; color: #5b21b6; }
+.mood-chip--negative.filter-chip-active { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+.mood-chip--neutral.filter-chip-active  { background: #fef3c7; border-color: #d97706; color: #92400e; }
+.mood-chip--positive.filter-chip-active { background: #d1fae5; border-color: #059669; color: #065f46; }
+
 .content-page {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 3rem 2rem;
 }
+
+/* Noskaņojuma josla kartītē */
+.card-mood-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.375rem 0.5rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    min-width: 0;
+}
+.card-mood-bar--empty {
+    opacity: 0.45;
+    border-style: dashed;
+}
+.card-mood-emoji { font-size: 1rem; flex-shrink: 0; }
+.card-mood-track {
+    flex: 1;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 30px;
+}
+.card-mood-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.card-mood-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.card-mood-count {
+    font-weight: 400;
+    color: #9ca3af;
+    font-size: 0.65rem;
+}
+
+
 
 /* Header */
 .content-header {
@@ -745,19 +994,43 @@ watch([activeType, activePlatform, activeCategory, sortBy], () => {
     transform: scale(1.05);
 }
 
-.video-badge {
+/* Type badge (top-left) — visiem tipiem */
+.type-badge {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    width: 3rem;
-    height: 3rem;
-    background: rgba(220, 38, 38, 0.9);
+    top: 0.75rem;
+    left: 0.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.25rem;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px);
+}
+.type-badge--video       { background: rgba(220, 38, 38, 0.92); }
+.type-badge--blog        { background: rgba(37, 99, 235, 0.92); }
+.type-badge--news,
+.type-badge--post        { background: rgba(5, 150, 105, 0.92); }
+.type-badge--announcement{ background: rgba(245, 158, 11, 0.92); }
+
+/* Platform badge (bottom-left, tikai video) */
+.platform-badge {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
 }
 
 .category-badge {

@@ -124,7 +124,20 @@ const formatDate = (dateString) => {
                                 <i :class="content.type === 'video' ? 'fas fa-play-circle' : 'fas fa-newspaper'"></i>
                             </div>
                             <div class="content-badge" :class="`badge-${content.type}`">
-                                {{ content.type === 'video' ? t('content.video') : t('content.blog') }}
+                                <i :class="{
+                                    'fas fa-play-circle': content.type === 'video',
+                                    'fas fa-pen-nib':     content.type === 'blog',
+                                    'fas fa-bullhorn':    content.type === 'post',
+                                    'fas fa-bell':        content.type === 'announcement',
+                                    'fas fa-newspaper':   !['video','blog','post','announcement'].includes(content.type),
+                                }"></i>
+                                {{
+                                    content.type === 'video'        ? t('content.video') :
+                                        content.type === 'blog'         ? t('content.blogs') :
+                                            content.type === 'post'         ? (locale === 'lv' ? 'Ziņa' : 'Post') :
+                                                content.type === 'announcement' ? (locale === 'lv' ? 'Paziņojums' : 'Announcement') :
+                                                    content.type
+                                }}
                             </div>
                         </div>
 
@@ -470,6 +483,14 @@ const formatDate = (dateString) => {
 
 .badge-blog {
     background: #3b82f6;
+}
+
+.badge-post {
+    background: #059669;
+}
+
+.badge-announcement {
+    background: #d97706;
 }
 
 .content-info {

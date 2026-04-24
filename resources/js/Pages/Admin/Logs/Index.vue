@@ -103,6 +103,10 @@ const typeConfig = {
     settings_updated: { icon: 'fas fa-cog',    cls: 'type-default',    lv: 'Iestatījumu atjaunināšana',    en: 'Settings Updated' },
     test_email_sent: { icon: 'fas fa-envelope',    cls: 'type-test-email-sent',    lv: 'Testa e-pasta nosūtīšana',    en: 'Test Email Sent' },
     cache_cleared: { icon: 'fas fa-database',    cls: 'type-password',    lv: 'Kešatmiņa notīrīta',    en: 'Cache Cleared' },
+    // Jaunie tipi
+    comment_reply:    { icon: 'fas fa-reply',        cls: 'type-comment',  lv: 'Atbilde uz komentāru', en: 'Comment Reply' },
+    content_liked:    { icon: 'fas fa-thumbs-up',    cls: 'type-like',     lv: 'Patīk',                en: 'Content Liked' },
+    content_unliked:  { icon: 'far fa-thumbs-up',    cls: 'type-unlike',   lv: 'Noņemts patīk',        en: 'Content Unliked' },
 };
 
 const getTypeInfo = (type) => typeConfig[type] ?? {
