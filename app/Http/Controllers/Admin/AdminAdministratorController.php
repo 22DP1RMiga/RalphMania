@@ -184,12 +184,12 @@ class AdminAdministratorController extends Controller
             return back()->with('error', 'Nevar dzēst savu administratora kontu!');
         }
 
-        // Get customer role
-        $customerRole = Role::where('name', 'customer')->first();
+        // Get user role (demote from admin back to regular user)
+        $userRole = Role::whereIn('name', ['user', 'customer'])->first();
 
-        if ($customerRole && $admin->user) {
-            // Demote to customer
-            $admin->user->update(['role_id' => $customerRole->id]);
+        if ($userRole && $admin->user) {
+            // Demote to regular user
+            $admin->user->update(['role_id' => $userRole->id]);
         }
 
         // Delete administrator record

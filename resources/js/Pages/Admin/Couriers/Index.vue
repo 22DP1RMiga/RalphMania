@@ -44,8 +44,8 @@ const isSubmitting   = ref(false);
 const newCourier = ref({ user_id: null, full_name: '', phone: '', vehicle_type: '', delivery_area: '', hired_at: '' });
 
 const submitAddCourier = () => {
-    if (!can('couriers.create') && !can('users.create')) {
-        openUnauthorized('users.create');
+    if (!can('couriers.create')) {
+        openUnauthorized('couriers.create');
         return;
     }
     isSubmitting.value = true;
@@ -62,7 +62,7 @@ const assignData = ref({ courier_id: null, order_id: null, notes: '' });
 const assigning = ref(false);
 
 const openAssignModal = (courierId = null) => {
-    if (!can('orders.edit')) {
+    if (!can('couriers.assign')) {
         openUnauthorized('orders.edit');
         return;
     }
@@ -86,7 +86,7 @@ const submitAssign = async () => {
 
 // ─── TOGGLE ACTIVE ────────────────────────────────────────────────────────────
 const toggleCourier = async (courierId) => {
-    if (!can('users.ban')) {
+    if (!can('couriers.edit')) {
         openUnauthorized('users.ban');
         return;
     }
@@ -102,7 +102,7 @@ const toggleCourier = async (courierId) => {
 // ─── REMOVE COURIER ───────────────────────────────────────────────────────────
 const confirmRemove = ref(null);
 const openConfirmRemove = (courierId) => {
-    if (!can('users.delete')) {
+    if (!can('couriers.delete')) {
         openUnauthorized('users.delete');
         return;
     }
@@ -121,7 +121,7 @@ const isEditing      = ref(false);
 const editCourier = ref({ id: null, full_name: '', phone: '', vehicle_type: '', delivery_area: '', hired_at: '', username: '' });
 
 const openEditModal = (c) => {
-    if (!can('users.edit')) {
+    if (!can('couriers.edit')) {
         openUnauthorized('users.edit');
         return;
     }
@@ -174,19 +174,19 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                     <button
                         @click="openAssignModal()"
                         class="btn btn-outline"
-                        :class="actionBtnClass(can('orders.edit'))"
-                        :style="actionBtnStyle(can('orders.edit'))"
-                        :title="!can('orders.edit') ? noPermTitle : ''"
+                        :class="actionBtnClass(can('couriers.assign'))"
+                        :style="actionBtnStyle(can('couriers.assign'))"
+                        :title="!can('couriers.assign') ? noPermTitle : ''"
                     >
                         <i class="fas fa-link"></i>
                         {{ locale === 'lv' ? 'Piešķirt pasūtījumu' : 'Assign Order' }}
                     </button>
                     <button
-                        @click="can('users.create') ? (showAddModal = true) : openUnauthorized('users.create')"
+                        @click="can('couriers.create') ? (showAddModal = true) : openUnauthorized('couriers.create')"
                         class="btn btn-primary"
-                        :class="actionBtnClass(can('users.create'))"
-                        :style="actionBtnStyle(can('users.create'))"
-                        :title="!can('users.create') ? noPermTitle : ''"
+                        :class="actionBtnClass(can('couriers.create'))"
+                        :style="actionBtnStyle(can('couriers.create'))"
+                        :title="!can('couriers.create') ? noPermTitle : ''"
                     >
                         <i class="fas fa-plus"></i>
                         {{ locale === 'lv' ? 'Pievienot kurjeru' : 'Add Courier' }}
@@ -264,32 +264,32 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'l
                                 <button
                                     @click="openEditModal(c)"
                                     class="icon-btn"
-                                    :class="actionBtnClass(can('users.edit'))"
-                                    :style="actionBtnStyle(can('users.edit'))"
-                                    :title="!can('users.edit') ? noPermTitle : 'Rediģēt'"
+                                    :class="actionBtnClass(can('couriers.edit'))"
+                                    :style="actionBtnStyle(can('couriers.edit'))"
+                                    :title="!can('couriers.edit') ? noPermTitle : 'Rediģēt'"
                                 ><i class="fas fa-edit"></i></button>
                                 <button
                                     @click="openAssignModal(c.id)"
                                     class="icon-btn"
-                                    :class="actionBtnClass(can('orders.edit'))"
-                                    :style="actionBtnStyle(can('orders.edit'))"
-                                    :title="!can('orders.edit') ? noPermTitle : 'Piešķirt pasūtījumu'"
+                                    :class="actionBtnClass(can('couriers.assign'))"
+                                    :style="actionBtnStyle(can('couriers.assign'))"
+                                    :title="!can('couriers.assign') ? noPermTitle : 'Piešķirt pasūtījumu'"
                                 ><i class="fas fa-link"></i></button>
                                 <button
                                     @click="toggleCourier(c.id)"
                                     class="icon-btn"
-                                    :class="actionBtnClass(can('users.ban'))"
-                                    :style="actionBtnStyle(can('users.ban'))"
-                                    :title="!can('users.ban') ? noPermTitle : (c.is_active ? 'Deaktivizēt' : 'Aktivizēt')"
+                                    :class="actionBtnClass(can('couriers.edit'))"
+                                    :style="actionBtnStyle(can('couriers.edit'))"
+                                    :title="!can('couriers.edit') ? noPermTitle : (c.is_active ? 'Deaktivizēt' : 'Aktivizēt')"
                                 >
                                     <i :class="c.is_active ? 'fas fa-pause-circle' : 'fas fa-play-circle'"></i>
                                 </button>
                                 <button
                                     @click="openConfirmRemove(c.id)"
                                     class="icon-btn danger"
-                                    :class="actionBtnClass(can('users.delete'))"
-                                    :style="actionBtnStyle(can('users.delete'))"
-                                    :title="!can('users.delete') ? noPermTitle : 'Noņemt'"
+                                    :class="actionBtnClass(can('couriers.delete'))"
+                                    :style="actionBtnStyle(can('couriers.delete'))"
+                                    :title="!can('couriers.delete') ? noPermTitle : 'Noņemt'"
                                 ><i class="fas fa-trash"></i></button>
                             </div>
                         </td>

@@ -146,13 +146,20 @@ const deleteContent = (id, title) => {
         openUnauthorized('content.delete');
         return;
     }
-    if (confirm(t('admin.content.deleteConfirm', { name: title }))) {
-        router.delete(`/admin/content/${id}`, {
-            preserveScroll: true,
-            onSuccess: () => showToast(locale.value === 'lv' ? 'Saturs dzēsts!' : 'Content deleted!'),
-            onError: () => showToast(locale.value === 'lv' ? 'Kļūda dzēšot saturu' : 'Error deleting content', 'error'),
-        });
-    }
+    openDeleteModal({ id, title_lv: title, title_en: title });
+};
+
+// ── Dzēšanas modālis ──
+const deleteModal = ref({ show: false, item: null });
+const openDeleteModal = (item) => { deleteModal.value = { show: true, item }; };
+const closeDeleteModal = () => { deleteModal.value = { show: false, item: null }; };
+const confirmDeleteItem = () => {
+    if (!deleteModal.value.item) return;
+    router.delete(`/admin/content/${deleteModal.value.item.id}`, {
+        preserveScroll: true,
+        onSuccess: () => { showToast(locale.value === 'lv' ? 'Saturs dzēsts!' : 'Content deleted!'); closeDeleteModal(); },
+        onError: () => { showToast(locale.value === 'lv' ? 'Kļūda dzēšot saturu' : 'Error deleting content', 'error'); closeDeleteModal(); },
+    });
 };
 
 // Toggle publish status
@@ -453,6 +460,24 @@ const getMoodColor = (score) => {
             @close="closeUnauthorized"
         />
 
+
+        <!-- Dzēšanas modālis -->
+        <Transition name="modal-fade">
+            <div v-if="deleteModal.show" class="delete-modal-overlay" @click.self="closeDeleteModal">
+                <div class="delete-modal">
+                    <div class="delete-modal-icon"><i class="fas fa-trash-alt"></i></div>
+                    <h3 class="delete-modal-title">{{ locale === 'lv' ? 'Dzēst saturu?' : 'Delete content?' }}</h3>
+                    <p class="delete-modal-body">{{ locale === 'lv' ? 'Šo darbību nevar atsaukt.' : 'This action cannot be undone.' }}</p>
+                    <div v-if="deleteModal.item" class="delete-modal-preview">{{ deleteModal.item.title_lv || deleteModal.item.title_en }}</div>
+                    <div class="delete-modal-actions">
+                        <button @click="closeDeleteModal" class="delete-modal-cancel">{{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}</button>
+                        <button @click="confirmDeleteItem" class="delete-modal-confirm">
+                            <i class="fas fa-trash-alt"></i>{{ locale === 'lv' ? 'Dzēst' : 'Delete' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </AdminLayout>
 </template>
 
@@ -1012,4 +1037,47 @@ const getMoodColor = (score) => {
         justify-content: flex-end;
     }
 }
+
+/* Dzēšanas modālis */
+.delete-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; padding: 1rem;
+}
+.delete-modal {
+    background: white; border-radius: 1rem; padding: 2rem;
+    max-width: 420px; width: 100%; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.delete-modal-icon {
+    width: 3.5rem; height: 3.5rem; background: #fee2e2; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem; font-size: 1.375rem; color: #dc2626;
+}
+.delete-modal-title { font-size: 1.2rem; font-weight: 700; color: #111827; margin: 0 0 0.5rem; }
+.delete-modal-body  { font-size: 0.875rem; color: #6b7280; margin: 0 0 1rem; }
+.delete-modal-preview {
+    background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem; font-size: 0.825rem; color: #374151;
+    font-style: italic; margin-bottom: 1.5rem; text-align: left; line-height: 1.5;
+    word-break: break-word;
+}
+.delete-modal-actions { display: flex; gap: 0.75rem; justify-content: center; }
+.delete-modal-cancel {
+    flex: 1; padding: 0.75rem; background: #f3f4f6; border: none;
+    border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #374151; cursor: pointer;
+    transition: background 0.15s;
+}
+.delete-modal-cancel:hover { background: #e5e7eb; }
+.delete-modal-confirm {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.4rem; padding: 0.75rem; background: #dc2626; border: none;
+    border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; color: white; cursor: pointer;
+    transition: background 0.15s;
+}
+.delete-modal-confirm:hover { background: #b91c1c; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-active .delete-modal { transition: transform 0.2s ease; }
+.modal-fade-enter-from .delete-modal { transform: scale(0.93); }
 </style>

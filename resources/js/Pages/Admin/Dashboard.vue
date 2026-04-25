@@ -40,6 +40,7 @@ const availablePermissions = computed(() => ({
         { key: 'orders.view', labelKey: 'admin.permissions.ordersView' },
         { key: 'orders.edit', labelKey: 'admin.permissions.ordersEdit' },
         { key: 'orders.delete', labelKey: 'admin.permissions.ordersDelete' },
+        { key: 'orders.export', labelKey: 'admin.permissions.ordersExport' },
     ],
     [t('admin.permissions.users')]: [
         { key: 'users.view', labelKey: 'admin.permissions.usersView' },
@@ -53,16 +54,29 @@ const availablePermissions = computed(() => ({
         { key: 'content.create', labelKey: 'admin.permissions.contentCreate' },
         { key: 'content.edit', labelKey: 'admin.permissions.contentEdit' },
         { key: 'content.delete', labelKey: 'admin.permissions.contentDelete' },
+        { key: 'content.publish', labelKey: 'admin.permissions.contentPublish' },
     ],
     [t('admin.permissions.reviews')]: [
         { key: 'reviews.view', labelKey: 'admin.permissions.reviewsView' },
         { key: 'reviews.moderate', labelKey: 'admin.permissions.reviewsModerate' },
         { key: 'reviews.delete', labelKey: 'admin.permissions.reviewsDelete' },
     ],
+    [t('admin.permissions.comments')]: [
+        { key: 'comments.view', labelKey: 'admin.permissions.commentsView' },
+        { key: 'comments.moderate', labelKey: 'admin.permissions.commentsModerate' },
+        { key: 'comments.delete', labelKey: 'admin.permissions.commentsDelete' },
+    ],
     [t('admin.permissions.contacts')]: [
         { key: 'contacts.view', labelKey: 'admin.permissions.contactsView' },
         { key: 'contacts.reply', labelKey: 'admin.permissions.contactsReply' },
         { key: 'contacts.delete', labelKey: 'admin.permissions.contactsDelete' },
+    ],
+    [t('admin.permissions.couriers')]: [
+        { key: 'couriers.view', labelKey: 'admin.permissions.couriersView' },
+        { key: 'couriers.create', labelKey: 'admin.permissions.couriersCreate' },
+        { key: 'couriers.edit', labelKey: 'admin.permissions.couriersEdit' },
+        { key: 'couriers.delete', labelKey: 'admin.permissions.couriersDelete' },
+        { key: 'couriers.assign', labelKey: 'admin.permissions.couriersAssign' },
     ],
     [t('admin.permissions.settings')]: [
         { key: 'settings.view', labelKey: 'admin.permissions.settingsView' },
@@ -70,6 +84,13 @@ const availablePermissions = computed(() => ({
     ],
     [t('admin.permissions.logs')]: [
         { key: 'logs.view', labelKey: 'admin.permissions.logsView' },
+        { key: 'logs.export', labelKey: 'admin.permissions.logsExport' },
+    ],
+    [t('admin.permissions.admins')]: [
+        { key: 'admins.view', labelKey: 'admin.permissions.adminsView' },
+        { key: 'admins.create', labelKey: 'admin.permissions.adminsCreate' },
+        { key: 'admins.edit', labelKey: 'admin.permissions.adminsEdit' },
+        { key: 'admins.delete', labelKey: 'admin.permissions.adminsDelete' },
     ],
 }));
 
@@ -79,6 +100,7 @@ const showEditPermissionsModal = ref(false);
 const showRemoveAdminModal = ref(false);
 const selectedAdmin = ref(null);
 const selectedUserId = ref(null);
+const selectedFullName = ref('');
 const selectedPermissions = ref([]);
 const isLoading = ref(false);
 
@@ -95,7 +117,7 @@ watch(() => page.props.flash, (flash) => {
 }, { deep: true });
 
 // Open modals
-const openAddAdminModal = () => { selectedUserId.value = null; selectedPermissions.value = []; showAddAdminModal.value = true; };
+const openAddAdminModal = () => { selectedUserId.value = null; selectedFullName.value = ''; selectedPermissions.value = []; showAddAdminModal.value = true; };
 const openEditPermissionsModal = (admin) => { selectedAdmin.value = admin; selectedPermissions.value = [...(admin.permissions || [])]; showEditPermissionsModal.value = true; };
 const openRemoveAdminModal = (admin) => { selectedAdmin.value = admin; showRemoveAdminModal.value = true; };
 
@@ -106,6 +128,7 @@ const closeModals = () => {
     showRemoveAdminModal.value = false;
     selectedAdmin.value = null;
     selectedUserId.value = null;
+    selectedFullName.value = '';
     selectedPermissions.value = [];
 };
 
@@ -129,8 +152,9 @@ const clearAllPermissions = () => { selectedPermissions.value = []; };
 // Save actions
 const saveNewAdmin = () => {
     if (!selectedUserId.value) { toastMessage.value = t('admin.dashboard.selectUserError'); toastType.value = 'error'; showToast.value = true; return; }
+    if (!selectedFullName.value.trim()) { toastMessage.value = locale.value === 'lv' ? 'Lūdzu ievadiet pilno vārdu!' : 'Please enter full name!'; toastType.value = 'error'; showToast.value = true; return; }
     isLoading.value = true;
-    router.post('/admin/administrators', { user_id: selectedUserId.value, permissions: selectedPermissions.value }, {
+    router.post('/admin/administrators', { user_id: selectedUserId.value, full_name: selectedFullName.value.trim(), permissions: selectedPermissions.value }, {
         preserveScroll: true,
         onSuccess: () => { toastMessage.value = t('admin.dashboard.adminAdded'); toastType.value = 'success'; showToast.value = true; closeModals(); },
         onError: (err) => { toastMessage.value = Object.values(err)[0] || t('admin.dashboard.addAdminError'); toastType.value = 'error'; showToast.value = true; },
@@ -282,6 +306,16 @@ const getUserAvatar = (user) => {
                                     <option :value="null">{{ t('admin.dashboard.selectUserPlaceholder') }}</option>
                                     <option v-for="u in nonAdminUsers" :key="u.id" :value="u.id">{{ u.username }} ({{ u.email }})</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">{{ locale === 'lv' ? 'Pilnais vārds (parādāmais vārds)' : 'Full name (display name)' }}</label>
+                                <input
+                                    v-model="selectedFullName"
+                                    type="text"
+                                    class="form-select"
+                                    :placeholder="locale === 'lv' ? 'Piemēram: Jānis Bērziņš' : 'E.g. John Smith'"
+                                    style="padding: 0.625rem 0.875rem;"
+                                />
                             </div>
                             <div class="permissions-section">
                                 <div class="permissions-header">

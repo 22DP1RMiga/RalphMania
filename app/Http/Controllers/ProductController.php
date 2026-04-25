@@ -10,7 +10,7 @@ use Inertia\Inertia;
 class ProductController extends Controller
 {
     /**
-     * WEB: Shop home page
+     * WEB: veikala sākumlapa
      */
     public function shopIndex()
     {
@@ -18,7 +18,7 @@ class ProductController extends Controller
     }
 
     /**
-     * WEB: Product detail page
+     * WEB: produktu detalizācijas lapa
      */
     public function show($slug)
     {
@@ -33,7 +33,7 @@ class ProductController extends Controller
     }
 
     /**
-     * API: Get all products
+     * API: dabūt visus produktus
      * GET /api/v1/products?category=ID&sort=newest&search=query
      *
      * Ja category=ID ir parent kategorija, automātiski iekļauj visus bērnu ID arī.
@@ -46,18 +46,18 @@ class ProductController extends Controller
         if ($request->filled('category')) {
             $categoryId = (int) $request->category;
 
-            // Atrodi visus bērnu kategoriju ID (apakškategorijas)
+            // Atrod visus bērnu kategoriju ID (apakškategorijas)
             $childIds = Category::where('parent_id', $categoryId)
                 ->where('is_active', 1)
                 ->pluck('id')
                 ->toArray();
 
             if (!empty($childIds)) {
-                // Tas ir parent — filtrē pēc parent ID UN visiem bērnu ID
+                // Tas ir "vecāks" — filtrē pēc parent ID UN visiem bērnu ID
                 $allCategoryIds = array_merge([$categoryId], $childIds);
                 $query->whereIn('category_id', $allCategoryIds);
             } else {
-                // Tas ir leaf kategorija (apakškategorija) — filtrē tikai pēc tā ID
+                // Tā ir leaf kategorija (apakškategorija) — filtrē tikai pēc tā ID
                 $query->where('category_id', $categoryId);
             }
         }
@@ -84,7 +84,7 @@ class ProductController extends Controller
     }
 
     /**
-     * API: Featured products
+     * API: Ieteiktie (featured) produkti
      */
     public function featured()
     {
@@ -114,7 +114,7 @@ class ProductController extends Controller
     }
 
     /**
-     * API: Single product by slug
+     * API: viens produkts pēc URL daļas (slug)
      */
     public function apiShow($slug)
     {
@@ -126,7 +126,7 @@ class ProductController extends Controller
         return response()->json($this->formatProduct($p));
     }
 
-    // ─── PRIVATE HELPER ───────────────────────────────────────────
+    // ─── PRIVĀTS PALĪGS ───────────────────────────────────────────
 
     private function formatProduct(Product $p): array
     {
