@@ -11,7 +11,7 @@ use Inertia\Response;
 class ContentController extends Controller
 {
     /**
-     * Display a listing of content with pagination
+     * Rāda satura sarakstu ar lappušu numerāciju
      */
     public function index(Request $request): Response
     {
@@ -19,22 +19,22 @@ class ContentController extends Controller
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'desc');
 
-        // Filter by type
+        // filtrē pēc tipa
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
 
-        // Filter by category
+        // filtrē pēc kategorijas
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
-        // Filter by video platform
+        // filtrē pēc video platformas
         if ($request->filled('platform')) {
             $query->where('video_platform', $request->platform);
         }
 
-        // Search
+        // meklēšanai
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -45,7 +45,7 @@ class ContentController extends Controller
             });
         }
 
-        // Sort
+        // kārtošanai jeb sortēšanai
         $sort = $request->get('sort', 'newest');
         if ($sort === 'oldest') {
             $query->orderBy('published_at', 'asc');
@@ -67,7 +67,7 @@ class ContentController extends Controller
         }
 
         $content = $query->paginate(200)->through(function ($item) {
-            // Mood dati
+            // Noskaņojuma dati
             $moodData = DB::table('comment_moods')
                 ->join('comments', 'comment_moods.comment_id', '=', 'comments.id')
                 ->where('comments.content_id', $item->id)
@@ -96,7 +96,7 @@ class ContentController extends Controller
             ];
         });
 
-        // Get available categories for filter
+        // iegūst pieejamās kategorijas filtram
         $categories = Content::where('is_published', true)
             ->whereNotNull('category')
             ->distinct()
@@ -116,7 +116,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Display the specified content
+     * parāda norādīto saturu
      */
     public function show($slug): Response
     {
@@ -124,10 +124,10 @@ class ContentController extends Controller
             ->where('is_published', true)
             ->firstOrFail();
 
-        // Increment view count
+        // skatījumu skaita pieaugums (increment view count)
         $content->increment('view_count');
 
-        // Pārbauda vai lietotājs ir "nolaikojis" — web guard (Inertia sesija)
+        // pārbauda vai lietotājs ir "nolaikojis" — web guard (Inertia sesija)
         $userLiked = false;
         $userId = auth('web')->id() ?? auth()->id();
         if ($userId) {
@@ -136,7 +136,7 @@ class ContentController extends Controller
                 ->exists();
         }
 
-        // Get related content (same type, excluding current)
+        // iegūst saistītu saturu (tāda paša veida, izņemot pašreizējo)
         $relatedContent = Content::where('type', $content->type)
             ->where('id', '!=', $content->id)
             ->where('is_published', true)
@@ -175,7 +175,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Toggle like on content
+     * pārslēdz "patīk" vērtējumu uz saturu
      */
     public function toggleLike($id)
     {
@@ -215,7 +215,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Get featured content for homepage/API
+     * iegūst piedāvāto (featured) saturu sākumlapai/API
      */
     public function featured()
     {
@@ -230,7 +230,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Get content by type
+     * iegūst saturu pēc veida/tipa
      */
     public function byType($type): Response
     {
@@ -261,7 +261,7 @@ class ContentController extends Controller
                 'published_at' => $item->published_at,
             ]);
 
-        // Type labels for page title
+        // satura tipa etiķetes lapas virsraksti
         $typeLabels = [
             'video'        => ['lv' => 'Video',      'en' => 'Videos'],
             'blog'         => ['lv' => 'Blogi',       'en' => 'Blogs'],
@@ -277,7 +277,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Get latest announcements (for header/sidebar)
+     * saņem jaunākos paziņojumus (galvenē/sānjoslā jeb header/sidebar)
      */
     public function latestAnnouncements()
     {
@@ -292,7 +292,7 @@ class ContentController extends Controller
     }
 
     /**
-     * Get latest news
+     * saņem jaunākās ziņas
      */
     public function latestNews()
     {

@@ -56,6 +56,7 @@ class Administrator extends Model
         'orders.view' => 'Skatīt pasūtījumus',
         'orders.edit' => 'Rediģēt pasūtījumus',
         'orders.delete' => 'Dzēst pasūtījumus',
+        'orders.export' => 'Eksportēt pasūtījumus',
 
         // Lietotāju pārvaldība
         'users.view' => 'Skatīt lietotājus',
@@ -84,6 +85,13 @@ class Administrator extends Model
         'contacts.reply' => 'Atbildēt uz ziņojumiem',
         'contacts.delete' => 'Dzēst ziņojumus',
 
+        // Kurjeru pārvaldība
+        'couriers.view' => 'Skatīt kurjerus',
+        'couriers.create' => 'Pievienot kurjerus',
+        'couriers.edit' => 'Rediģēt kurjerus',
+        'couriers.delete' => 'Dzēst kurjerus',
+        'couriers.assign' => 'Piešķirt pasūtījumus kurjeriem',
+
         // Sistēmas iestatījumi
         'settings.view' => 'Skatīt iestatījumus',
         'settings.edit' => 'Rediģēt iestatījumus',
@@ -96,23 +104,25 @@ class Administrator extends Model
 
         // Aktivitāšu žurnāls
         'logs.view' => 'Skatīt aktivitāšu žurnālu',
+        'logs.export' => 'Eksportēt aktivitāšu žurnālu',
     ];
 
     /**
      * Permission groups for UI organization.
      */
     public const PERMISSION_GROUPS = [
-        'Produkti' => ['products.view', 'products.create', 'products.edit', 'products.delete'],
-        'Kategorijas' => ['categories.view', 'categories.create', 'categories.edit', 'categories.delete'],
-        'Pasūtījumi' => ['orders.view', 'orders.edit', 'orders.delete'],
-        'Lietotāji' => ['users.view', 'users.create', 'users.edit', 'users.delete', 'users.ban'],
-        'Saturs' => ['content.view', 'content.create', 'content.edit', 'content.delete', 'content.publish'],
-        'Atsauksmes' => ['reviews.view', 'reviews.moderate', 'reviews.delete'],
-        'Komentāri' => ['comments.view', 'comments.moderate', 'comments.delete'],
-        'Kontakti' => ['contacts.view', 'contacts.reply', 'contacts.delete'],
-        'Iestatījumi' => ['settings.view', 'settings.edit'],
+        'Produkti'       => ['products.view', 'products.create', 'products.edit', 'products.delete'],
+        'Kategorijas'    => ['categories.view', 'categories.create', 'categories.edit', 'categories.delete'],
+        'Pasūtījumi'     => ['orders.view', 'orders.edit', 'orders.delete', 'orders.export'],
+        'Lietotāji'      => ['users.view', 'users.create', 'users.edit', 'users.delete', 'users.ban'],
+        'Saturs'         => ['content.view', 'content.create', 'content.edit', 'content.delete', 'content.publish'],
+        'Atsauksmes'     => ['reviews.view', 'reviews.moderate', 'reviews.delete'],
+        'Komentāri'      => ['comments.view', 'comments.moderate', 'comments.delete'],
+        'Kontakti'       => ['contacts.view', 'contacts.reply', 'contacts.delete'],
+        'Kurjeri'        => ['couriers.view', 'couriers.create', 'couriers.edit', 'couriers.delete', 'couriers.assign'],
+        'Iestatījumi'    => ['settings.view', 'settings.edit'],
         'Administratori' => ['admins.view', 'admins.create', 'admins.edit', 'admins.delete'],
-        'Žurnāls' => ['logs.view'],
+        'Žurnāls'        => ['logs.view', 'logs.export'],
     ];
 
     /**

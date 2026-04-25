@@ -159,13 +159,20 @@ const deleteCategory = (category) => {
         return;
     }
     const name = getCategoryName(category);
-    if (confirm(t('admin.categories.deleteConfirm', { name }))) {
-        router.delete(`/admin/categories/${category.id}`, {
-            preserveScroll: true,
-            onSuccess: () => showToast(locale.value === 'lv' ? 'Kategorija dzēsta!' : 'Category deleted!'),
-            onError: () => showToast(locale.value === 'lv' ? 'Nevar dzēst — kategorijā ir produkti' : 'Cannot delete — category has products', 'error'),
-        });
-    }
+    openDeleteModal(category);
+};
+
+// ── Dzēšanas modālis ──
+const deleteModal = ref({ show: false, item: null });
+const openDeleteModal = (item) => { deleteModal.value = { show: true, item }; };
+const closeDeleteModal = () => { deleteModal.value = { show: false, item: null }; };
+const confirmDeleteItem = () => {
+    if (!deleteModal.value.item) return;
+    router.delete(`/admin/categories/${deleteModal.value.item.id}`, {
+        preserveScroll: true,
+        onSuccess: () => { showToast(locale.value === 'lv' ? 'Kategorija dzēsta!' : 'Category deleted!'); closeDeleteModal(); },
+        onError: () => { showToast(locale.value === 'lv' ? 'Nevar dzēst — kategorijā ir produkti' : 'Cannot delete — category has products', 'error'); closeDeleteModal(); },
+    });
 };
 
 // Get parent categories (for dropdown)
@@ -467,6 +474,24 @@ const modalTitle = computed(() => {
             @close="closeUnauthorized"
         />
 
+
+        <!-- Dzēšanas modālis -->
+        <Transition name="modal-fade">
+            <div v-if="deleteModal.show" class="delete-modal-overlay" @click.self="closeDeleteModal">
+                <div class="delete-modal">
+                    <div class="delete-modal-icon"><i class="fas fa-trash-alt"></i></div>
+                    <h3 class="delete-modal-title">{{ locale === 'lv' ? 'Dzēst kategoriju?' : 'Delete category?' }}</h3>
+                    <p class="delete-modal-body">{{ locale === 'lv' ? 'Šo darbību nevar atsaukt.' : 'This action cannot be undone.' }}</p>
+                    <div v-if="deleteModal.item" class="delete-modal-preview">{{ getCategoryName(deleteModal.item) }}</div>
+                    <div class="delete-modal-actions">
+                        <button @click="closeDeleteModal" class="delete-modal-cancel">{{ locale === 'lv' ? 'Atcelt' : 'Cancel' }}</button>
+                        <button @click="confirmDeleteItem" class="delete-modal-confirm">
+                            <i class="fas fa-trash-alt"></i>{{ locale === 'lv' ? 'Dzēst' : 'Delete' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </AdminLayout>
 </template>
 
@@ -854,7 +879,7 @@ const modalTitle = computed(() => {
 
 .btn-primary {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: black;
+    color: white;
 }
 
 .btn-primary:hover:not(:disabled):not(.btn-no-permission) {
@@ -950,4 +975,45 @@ const modalTitle = computed(() => {
 .modal-leave-to .modal-container {
     transform: scale(0.9);
 }
+
+/* Dzēšanas modālis */
+.delete-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; padding: 1rem;
+}
+.delete-modal {
+    background: white; border-radius: 1rem; padding: 2rem;
+    max-width: 420px; width: 100%; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.delete-modal-icon {
+    width: 3.5rem; height: 3.5rem; background: #fee2e2; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem; font-size: 1.375rem; color: #dc2626;
+}
+.delete-modal-title { font-size: 1.2rem; font-weight: 700; color: #111827; margin: 0 0 0.5rem; }
+.delete-modal-body  { font-size: 0.875rem; color: #6b7280; margin: 0 0 1rem; }
+.delete-modal-preview {
+    background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem; font-size: 0.825rem; color: #374151;
+    font-style: italic; margin-bottom: 1.5rem; text-align: left; line-height: 1.5;
+    word-break: break-word;
+}
+.delete-modal-actions { display: flex; gap: 0.75rem; justify-content: center; }
+.delete-modal-cancel {
+    flex: 1; padding: 0.75rem; background: #f3f4f6; border: none;
+    border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #374151; cursor: pointer;
+}
+.delete-modal-cancel:hover { background: #e5e7eb; }
+.delete-modal-confirm {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.4rem; padding: 0.75rem; background: #dc2626; border: none;
+    border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; color: white; cursor: pointer;
+}
+.delete-modal-confirm:hover { background: #b91c1c; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-active .delete-modal { transition: transform 0.2s ease; }
+.modal-fade-enter-from .delete-modal { transform: scale(0.93); }
 </style>

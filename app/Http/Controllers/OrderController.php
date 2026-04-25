@@ -19,7 +19,7 @@ use App\Mail\OrderConfirmation;
 class OrderController extends Controller
 {
     /**
-     * Display user's order history
+     * Rāda lietotāja pasūtījumu vēsturi
      * GET /orders
      */
     public function index(): Response
@@ -35,7 +35,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Display single order details
+     * Parāda viena pasūtījuma informāciju
      * GET /orders/{id}
      */
     public function show($id): Response
@@ -51,7 +51,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Create new order from cart
+     * Izveido jaunu pasūtījumu no groza
      * POST /orders
      */
     public function store(Request $request)
@@ -297,7 +297,7 @@ class OrderController extends Controller
         }
     }
 
-    // ─── PRIVATE HELPERS ─────────────────────────────────────────────────────
+    // ─── PRIVĀTIE PALĪGI ─────────────────────────────────────────────────────
 
     private function generateOrderNumber(): string
     {
@@ -373,10 +373,10 @@ class OrderController extends Controller
         return 'Unknown';
     }
 
-    // ─── PUBLIC ROUTES ───────────────────────────────────────────────────────
+    // ─── PUBLISKIE MARŠRUTI (ROUTES) ───────────────────────────────────────────────────────
 
     /**
-     * Cancel order
+     * atceļ pasūtījumu
      * PUT /orders/{id}/cancel
      */
     public function cancel($id): JsonResponse
@@ -418,7 +418,7 @@ class OrderController extends Controller
         }
     }
 
-    // ─── ADMIN ROUTES ────────────────────────────────────────────────────────
+    // ─── ADMINISTRATORU MARŠRUTI (ROUTES) ────────────────────────────────────────────────────────
 
     public function adminIndex(): Response
     {

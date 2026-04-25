@@ -1183,7 +1183,7 @@ const messages = {
                     lastLogin: 'Pēdējā pieteikšanās',
                     actions: 'Darbības',
                 },
-                title: 'Administratora panelis',
+                title: 'Admin panelis',
                 overview: 'Pārskats',
                 welcome: 'Sveiks',
                 welcomeSubtitle: 'Šeit ir jūsu administrācijas paneļa pārskats',
@@ -1240,6 +1240,7 @@ const messages = {
                 ordersView: 'Skatīt pasūtījumus',
                 ordersEdit: 'Rediģēt pasūtījumus',
                 ordersDelete: 'Dzēst pasūtījumus',
+                ordersExport: 'Eksportēt pasūtījumus',
 
                 // lietotājiem
                 users: 'Lietotāji',
@@ -1275,6 +1276,14 @@ const messages = {
                 contactsReply: 'Atbildēt uz kontaktiem',
                 contactsDelete: 'Dzēst kontaktus',
 
+                // kurjeriem
+                couriers: 'Kurjeri',
+                couriersView: 'Skatīt kurjerus',
+                couriersCreate: 'Pievienot kurjerus',
+                couriersEdit: 'Rediģēt kurjerus',
+                couriersDelete: 'Dzēst kurjerus',
+                couriersAssign: 'Piešķirt pasūtījumus kurjeriem',
+
                 // iestatījumiem
                 settings: 'Iestatījumi',
                 settingsView: 'Skatīt iestatījumus',
@@ -1283,6 +1292,14 @@ const messages = {
                 // žurnāliem
                 logs: 'Žurnāli',
                 logsView: 'Skatīt žurnālus',
+                logsExport: 'Eksportēt žurnālus',
+
+                // administratoriem
+                admins: 'Administratori',
+                adminsView: 'Skatīt administratorus',
+                adminsCreate: 'Pievienot administratorus',
+                adminsEdit: 'Rediģēt administratorus',
+                adminsDelete: 'Dzēst administratorus',
             },
             products: {
                 index: {
@@ -3164,6 +3181,7 @@ const messages = {
                 ordersView: 'View Orders',
                 ordersEdit: 'Edit Orders',
                 ordersDelete: 'Delete Orders',
+                ordersExport: 'Export Orders',
 
                 // lietotājiem
                 users: 'Users',
@@ -3199,6 +3217,14 @@ const messages = {
                 contactsReply: 'Reply to Contacts',
                 contactsDelete: 'Delete Contacts',
 
+                // kurjeriem
+                couriers: 'Couriers',
+                couriersView: 'View Couriers',
+                couriersCreate: 'Create Couriers',
+                couriersEdit: 'Edit Couriers',
+                couriersDelete: 'Delete Couriers',
+                couriersAssign: 'Assign Couriers',
+
                 // iestatījumiem
                 settings: 'Settings',
                 settingsView: 'View Settings',
@@ -3207,6 +3233,14 @@ const messages = {
                 // žurnāliem
                 logs: 'Logs',
                 logsView: 'View Logs',
+                logsExport: 'Export Logs',
+
+                // administratoriem
+                admins: 'Admins',
+                adminsView: 'View Admins',
+                adminsCreate: 'Create Admins',
+                adminsEdit: 'Edit Admins',
+                adminsDelete: 'Delete Admins',
             },
             products: {
                 index: {

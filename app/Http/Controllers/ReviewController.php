@@ -27,8 +27,8 @@ class ReviewController extends Controller
             default   => 'App\\Models\\Product',
         };
 
-        // API routes pēc noklusējuma izmanto 'api' guard — bet sesija ir 'web' guard.
-        // Mēģina 'web' guard vispirms (Inertia lietotnes sesija), tad noklusēto.
+        // API maršruti pēc noklusējuma izmanto 'api' guard — bet sesija ir 'web' guard.
+        // mēģina 'web' guard vispirms (Inertia lietotnes sesija), tad noklusēto.
         $currentUserId = auth('web')->id() ?? auth()->id();
 
         $query = Review::where('reviewable_type', $reviewableType)
@@ -37,13 +37,13 @@ class ReviewController extends Controller
             ->orderBy('created_at', 'desc');
 
         if ($currentUserId) {
-            // Pieteicies lietotājs redz apstiprinātas + savas neapstiprinātas
+            // pieteicies lietotājs redz apstiprinātas + savas neapstiprinātas
             $query->where(function ($q) use ($currentUserId) {
                 $q->where('is_approved', true)
                     ->orWhere('user_id', $currentUserId);
             });
         } else {
-            // Viesis redz tikai apstiprinātas
+            // viesis redz tikai apstiprinātas
             $query->where('is_approved', true);
         }
 
@@ -73,7 +73,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * WEB: Saglabā jaunu atsauksmi
+     * WEB: saglabā jaunu atsauksmi
      * POST /reviews
      */
     public function store(Request $request): RedirectResponse
@@ -93,7 +93,7 @@ class ReviewController extends Controller
             $reviewable_id   = $validated['product_id'];
         }
 
-        // Saglabā tekstu abos laukos lai nav lokāles problēmu
+        // saglabā tekstu abos laukos lai nav lokāles problēmu
         $reviewText = $validated['review_text'] ?? null;
 
         $existing = Review::where('user_id', auth()->id())
@@ -121,7 +121,7 @@ class ReviewController extends Controller
             'is_approved'     => false,
         ]);
 
-        // Aktivitātes žurnāls
+        // aktivitātes žurnāls
         $target = isset($validated['content_id']) ? 'saturs ID ' . $reviewable_id : 'produkts ID ' . $reviewable_id;
         \App\Models\ActivityLog::log(
             'review_added',
@@ -132,7 +132,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * WEB: Atjaunina atsauksmi
+     * WEB: atjaunina atsauksmi
      * PUT /reviews/{id}
      */
     public function update(Request $request, int $id): RedirectResponse
@@ -161,7 +161,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * WEB: Dzēš atsauksmi
+     * WEB: dzēš atsauksmi
      * DELETE /reviews/{id}
      */
     public function destroy(int $id): mixed
@@ -181,7 +181,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * Admin: Visu atsauksmju saraksts
+     * Admin: visu atsauksmju saraksts
      */
     public function adminIndex(): Response
     {
@@ -193,7 +193,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * Admin: Apstiprina atsauksmi
+     * Admin: apstiprina atsauksmi
      */
     public function approve(int $id): RedirectResponse
     {
@@ -202,7 +202,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * Admin: Noraida (dzēš) atsauksmi
+     * Admin: noraida (dzēš) atsauksmi
      */
     public function reject(int $id): RedirectResponse
     {
