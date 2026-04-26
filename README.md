@@ -33,7 +33,7 @@ un internetveikalu ar divu pogu palīdzību (skat. 1. att.).
 No sākumlapas līdz saturam (ieskaitot) ir kopīgā navigācijas josla, kur var pāriet
 no lapas uz citu, uzklikšķināt uz sava profila un pārslēgt no latviešu uz angļu valodu.
 
-> ![Sakumlapa](public/img/screenshots/home.png)
+> ![Sakumlapa](public/img/screenshots/home.PNG)
 <div align="center"><i>1. att. Sākumlapa</i></div>
 
 ### 🔴 Satura sadaļa
@@ -42,14 +42,14 @@ Atverot tīmekļa lietotnes satura lapu, lietotājam ir iespēja apskatīt četr
 – video, emuāri, ziņas un paziņojumi, un ir iespēja meklēt pēc filtriem, meklētājā vai
 ritināt satura bagātu katalogu (skat. 2. att.).
 
-> ![Saturs1](public/img/screenshots/content1.png)
+> ![Saturs1](public/img/screenshots/content1.PNG)
 <div align="center"><i>2. att. Satura lapas sākums</i></div>
 
 #### ~Filtrēta satura lapa~
 Filtrējot pēc video, katalogā pēc piemēra var pamanīt trīs rezultātus no 62 esošajiem ierakstiem.
 “Ielādēt vairāk” poga paplašinās katalogu par sešām vienībām vairāk (skat. 3. att.).
 
-> ![Saturs2](public/img/screenshots/content2.png)
+> ![Saturs2](public/img/screenshots/content2.PNG)
 <div align="center"><i>3. att. Satura lapa filtrēta pēc video</i></div>
 
 ### 🛍️ Veikals
@@ -61,7 +61,7 @@ noved atpakaļ uz sākumlapu, “Veikals” poga parāda kategorijas, “Kontakt
 saistīto kontaktlapu, palielināmā stikla poga – pie meklētāja, nākamā poga – uz savu profilu, groziņš -
 uz groza lapu un pašā galā ir LV/EN tulkotājs (skat. 4. att.).
 
-> ![Veikals1](public/img/screenshots/shop1.png)
+> ![Veikals1](public/img/screenshots/shop1.PNG)
 <div align="center"><i>4. att. Internetveikals ar pirmajiem četriem zīmola produktiem</i></div>
 
 #### ~Detalizēta produkta lapa~
@@ -70,13 +70,13 @@ vai lietotājs skatās produktu, kam loģiskā vērtība datubāzē ir piešķir
 konkrēto izmēru no XS līdz XXL. Tāpēc šajā piemērā var redzēt T-kreklu, kuram var nomainīt
 izmēru un daudzumu (skat. 5. att.).
 
-> ![Veikals2](public/img/screenshots/shop2.png)
+> ![Veikals2](public/img/screenshots/shop2.PNG)
 <div align="center"><i>5. att. Internetveikalā informatīva zīmola produkta lapa T-kreklam</i></div>
 
 #### ~Produkta lapa ar atsauksmēm~
 Paritinot zemāk var redzēt atsauksmes un līdzīgus produktus (skat. 6. att.).
 
-> ![Veikals3](public/img/screenshots/shop3.png)
+> ![Veikals3](public/img/screenshots/shop3.PNG)
 <div align="center"><i>6. att. Internetveikalā informatīva zīmola produkta lapa ar atsauksmēm</i></div>
 
 ### Kontrolpanelis
@@ -86,7 +86,7 @@ Ja ir vēlme iziet no esošās lapas, uzklikšķina uz “Atpakaļ uz sākumlapu
 kā ātrā pieeja visam, lai apskatītu jaunākos veiktos pasūtījumus un trīs pogas, kuras noved
 uz internetveikalu, groza lapu un profila rediģēšanas lapu (skat. 7. att.).
 
-> ![Panelis](public/img/screenshots/dashboard.png)
+> ![Panelis](public/img/screenshots/dashboard.PNG)
 <div align="center"><i>7. att. Kontrolpaneļa pārskats</i></div>
 
 ---
