@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -20,15 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [8.3]   # Tikai 8.3 — composer.json prasa ^8.3
+        php: [8.3]
 
     name: PHP ${{ matrix.php }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -46,17 +47,18 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
 
-      - name: Override DB to SQLite for testing
+      - name: Override DB and mail for testing
         run: |
           echo "DB_CONNECTION=sqlite" >> .env
           echo "DB_DATABASE=:memory:" >> .env
           echo "CACHE_DRIVER=array" >> .env
           echo "SESSION_DRIVER=array" >> .env
           echo "QUEUE_CONNECTION=sync" >> .env
-          echo "MAIL_MAILER=array" >> .env
+          echo "MAIL_MAILER=log" >> .env
+          echo "APP_URL=http://127.0.0.1:8000" >> .env
 
       - name: Run migrations
         run: php artisan migrate --force
 
       - name: Execute tests
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --display-warnings
