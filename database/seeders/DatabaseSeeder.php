@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Vispirms lomas — izmanto arī testi
+        $this->call(RoleSeeder::class);
+
         // ── 1. Lomas ─────────────────────────────────────────────────
         $guestRole = Role::firstOrCreate(
             ['name' => 'guest'],
