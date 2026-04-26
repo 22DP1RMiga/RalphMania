@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="public/img/RoltonsLV_Icon.png" alt="RalphMania Icon" width="100"/>
+<img src="docs/RoltonsLV_Icon.png" alt="RalphMania Icon" width="100"/>
 
-<img src="public/img/name_logo.png" alt="RalphMania" width="320"/>
+<img src="docs/name_logo.png" alt="RalphMania" width="320"/>
 
 **Sociālo mediju atbalstītāju saliedēšanās platforma un e-komercijas veikals no Latvijas YouTube satura veidotāja "RoltonsLV"**
 
-[![Laravel](https://img.shields.io/github/composer-package/v/laravel/framework?style=flat-square&logo=laravel&logoColor=white&label=Laravel&color=FF2D20)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/22DP1RMiga/ralphmania/main/composer.json&query=%24.require%5B%22laravel%2Fframework%22%5D&style=flat-square&logo=laravel&logoColor=white&label=Laravel&color=FF2D20)](https://laravel.com)
 [![Vue.js](https://img.shields.io/github/package-json/dependency-version/22DP1RMiga/ralphmania/vue?style=flat-square&logo=vue.js&logoColor=white&label=Vue.js&color=4FC08D)](https://vuejs.org)
 [![PHP](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/22DP1RMiga/ralphmania/main/composer.json&query=%24.require.php&style=flat-square&logo=php&logoColor=white&label=PHP&color=777BB4)](https://php.net)
-[![Licence](https://img.shields.io/github/license/22DP1RMiga/ralphmania?style=flat-square&label=Licence&color=blue)](LICENSE)
+[![Licence](https://img.shields.io/badge/Licence-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -27,66 +27,66 @@ Platforma ir veidota kā kvalifikācijas darbs, izmantojot modernu tehnoloģiju 
 ---
 
 ## 📸 Ekrānuzņēmumi
-Atverot tīmekļa lietotnes sākumlapu, lietotājs ir laipni lūgts 
-RalphMania sistēmā un tiek piedāvāta iespēja apmeklēt satura lapu 
-un internetveikalu ar divu pogu palīdzību (skat. 1. att.). 
-No sākumlapas līdz saturam (ieskaitot) ir kopīgā navigācijas josla, kur var pāriet 
+Atverot tīmekļa lietotnes sākumlapu, lietotājs ir laipni lūgts
+RalphMania sistēmā un tiek piedāvāta iespēja apmeklēt satura lapu
+un internetveikalu ar divu pogu palīdzību (skat. 1. att.).
+No sākumlapas līdz saturam (ieskaitot) ir kopīgā navigācijas josla, kur var pāriet
 no lapas uz citu, uzklikšķināt uz sava profila un pārslēgt no latviešu uz angļu valodu.
 
-> ![Sakumlapa](public/img/screenshots/home.png)
+> ![Sakumlapa](docs/screenshots/home.png)
 <div align="center"><i>1. att. Sākumlapa</i></div>
 
 ### 🔴 Satura sadaļa
 #### ~Sākums~
-Atverot tīmekļa lietotnes satura lapu, lietotājam ir iespēja apskatīt četru veidu saturu 
-– video, emuāri, ziņas un paziņojumi, un ir iespēja meklēt pēc filtriem, meklētājā vai 
+Atverot tīmekļa lietotnes satura lapu, lietotājam ir iespēja apskatīt četru veidu saturu
+– video, emuāri, ziņas un paziņojumi, un ir iespēja meklēt pēc filtriem, meklētājā vai
 ritināt satura bagātu katalogu (skat. 2. att.).
 
-> ![Saturs1](public/img/screenshots/content1.png)
+> ![Saturs1](docs/screenshots/content1.png)
 <div align="center"><i>2. att. Satura lapas sākums</i></div>
 
 #### ~Filtrēta satura lapa~
-Filtrējot pēc video, katalogā pēc piemēra var pamanīt trīs rezultātus no 62 esošajiem ierakstiem. 
+Filtrējot pēc video, katalogā pēc piemēra var pamanīt trīs rezultātus no 62 esošajiem ierakstiem.
 “Ielādēt vairāk” poga paplašinās katalogu par sešām vienībām vairāk (skat. 3. att.).
 
-> ![Saturs2](public/img/screenshots/content2.png)
+> ![Saturs2](docs/screenshots/content2.png)
 <div align="center"><i>3. att. Satura lapa filtrēta pēc video</i></div>
 
 ### 🛍️ Veikals
 #### ~Sākums~
-Atverot tīmekļa lietotnes internetveikalu, lietotājam ir iespēja aplūkot zīmola preču katalogu, 
-filtrējot pēc kategorijām, pēc cenām, pēc jaunākajiem un populārākajiem produktiem un meklējot pēc 
-to nosaukumiem latviešu vai angļu valodā. Internetveikalam ir sava navigācijas josla, kur mājas poga 
-noved atpakaļ uz sākumlapu, “Veikals” poga parāda kategorijas, “Kontakti” poga noved uz atsevišķo veikala 
+Atverot tīmekļa lietotnes internetveikalu, lietotājam ir iespēja aplūkot zīmola preču katalogu,
+filtrējot pēc kategorijām, pēc cenām, pēc jaunākajiem un populārākajiem produktiem un meklējot pēc
+to nosaukumiem latviešu vai angļu valodā. Internetveikalam ir sava navigācijas josla, kur mājas poga
+noved atpakaļ uz sākumlapu, “Veikals” poga parāda kategorijas, “Kontakti” poga noved uz atsevišķo veikala
 saistīto kontaktlapu, palielināmā stikla poga – pie meklētāja, nākamā poga – uz savu profilu, groziņš -
 uz groza lapu un pašā galā ir LV/EN tulkotājs (skat. 4. att.).
 
-> ![Veikals1](public/img/screenshots/shop1.png)
+> ![Veikals1](docs/screenshots/shop1.png)
 <div align="center"><i>4. att. Internetveikals ar pirmajiem četriem zīmola produktiem</i></div>
 
 #### ~Detalizēta produkta lapa~
-Atverot tīmekļa lietotnes internetveikalā informatīvu zīmola produkta lapu, ir atkarīgs, 
-vai lietotājs skatās produktu, kam loģiskā vērtība datubāzē ir piešķirta, lai varētu izvēlēties 
-konkrēto izmēru no XS līdz XXL. Tāpēc šajā piemērā var redzēt T-kreklu, kuram var nomainīt 
+Atverot tīmekļa lietotnes internetveikalā informatīvu zīmola produkta lapu, ir atkarīgs,
+vai lietotājs skatās produktu, kam loģiskā vērtība datubāzē ir piešķirta, lai varētu izvēlēties
+konkrēto izmēru no XS līdz XXL. Tāpēc šajā piemērā var redzēt T-kreklu, kuram var nomainīt
 izmēru un daudzumu (skat. 5. att.).
 
-> ![Veikals2](public/img/screenshots/shop2.png)
+> ![Veikals2](docs/screenshots/shop2.png)
 <div align="center"><i>5. att. Internetveikalā informatīva zīmola produkta lapa T-kreklam</i></div>
 
 #### ~Produkta lapa ar atsauksmēm~
 Paritinot zemāk var redzēt atsauksmes un līdzīgus produktus (skat. 6. att.).
 
-> ![Veikals3](public/img/screenshots/shop3.png)
+> ![Veikals3](docs/screenshots/shop3.png)
 <div align="center"><i>6. att. Internetveikalā informatīva zīmola produkta lapa ar atsauksmēm</i></div>
 
 ### Kontrolpanelis
-Atverot tīmekļa lietotnes kontrolpaneli, lietotājam tiek piedāvāts aplūkot savu profilu, 
-pasūtījumus, adreses, komentārus, atsauksmes, jaunumus (biežāk abonentiem), un iestatījumus. 
-Ja ir vēlme iziet no esošās lapas, uzklikšķina uz “Atpakaļ uz sākumlapu”. Šīs lapas pārskats kalpo 
-kā ātrā pieeja visam, lai apskatītu jaunākos veiktos pasūtījumus un trīs pogas, kuras noved 
+Atverot tīmekļa lietotnes kontrolpaneli, lietotājam tiek piedāvāts aplūkot savu profilu,
+pasūtījumus, adreses, komentārus, atsauksmes, jaunumus (biežāk abonentiem), un iestatījumus.
+Ja ir vēlme iziet no esošās lapas, uzklikšķina uz “Atpakaļ uz sākumlapu”. Šīs lapas pārskats kalpo
+kā ātrā pieeja visam, lai apskatītu jaunākos veiktos pasūtījumus un trīs pogas, kuras noved
 uz internetveikalu, groza lapu un profila rediģēšanas lapu (skat. 7. att.).
 
-> ![Panelis](public/img/screenshots/dashboard.png)
+> ![Panelis](docs/screenshots/dashboard.png)
 <div align="center"><i>7. att. Kontrolpaneļa pārskats</i></div>
 
 ---
@@ -544,7 +544,7 @@ Projekts izstrādāts kā kvalifikācijas darbs 2025./2026. mācību gadā.
 
 <div align="center">
 
-<img src="public/img/RoltonsLV_Icon.png" alt="RalphMania" width="48"/>
+<img src="docs/RoltonsLV_Icon.png" alt="RalphMania" width="48"/>
 
 *Izstrādāts ar  rūpi️ Latvijā*
 
