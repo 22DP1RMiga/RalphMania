@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Apache config
-COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
+COPY RalphMania/apache.conf /etc/apache2/sites-available/000-default.conf
 RUN a2enmod rewrite headers
 
 WORKDIR /var/www/html
@@ -32,6 +32,6 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 EXPOSE 80
 
-COPY docker/start.sh /start.sh
+COPY RalphMania/start.sh /start.sh
 RUN chmod +x /start.sh
 CMD ["/start.sh"]
