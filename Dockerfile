@@ -30,7 +30,7 @@ RUN npm run build
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-EXPOSE 80
+EXPOSE 3000
 
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
