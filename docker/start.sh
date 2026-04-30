@@ -5,7 +5,7 @@ echo "🚀 RalphMania startsolis..."
 
 cd /var/www/html
 
-# Izveido .env no env mainīgajiem ar pareizu formatēšanu
+# Izveido .env no env mainīgajiem
 if [ ! -f /var/www/html/.env ]; then
     echo "📝 Izveido .env..."
     cat > /var/www/html/.env << EOF
@@ -59,9 +59,20 @@ php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 php artisan route:clear 2>/dev/null || true
 
-# Migrācijas - nekrāšas pat ja fail
+# Migrācijas
 echo "🗄️  Palaiž migrācijas..."
 php artisan migrate --force || echo "⚠️  Migrācijas neizdevās, turpina..."
+
+# Importē SQL dump JA pastāv un JA datubāze ir tukša
+if [ -f /var/www/html/database/ralphmania.sql ]; then
+    TABLE_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_DATABASE}';" 2>/dev/null | tail -1 || echo "0")
+    if [ "$TABLE_COUNT" -lt "5" ]; then
+        echo "📦 Importē SQL dump..."
+        mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/html/database/ralphmania.sql && echo "✅ SQL imports veiksmīgs!" || echo "⚠️  SQL imports neizdevās"
+    else
+        echo "ℹ️  Datubāze jau satur datus, izlaiž importu."
+    fi
+fi
 
 # Production cache
 echo "⚡ Production cache..."
@@ -69,10 +80,8 @@ php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
 
-# Storage symlink
 php artisan storage:link 2>/dev/null || true
 
-# Permissions
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 echo "✅ Gatavs! Apache startē..."
