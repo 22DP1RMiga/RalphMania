@@ -1,36 +1,37 @@
-FROM php:8.3-apache
+#!/bin/bash
+set -e
 
-# System dependencies
-RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libonig-dev \
-    libxml2-dev libzip-dev nodejs npm \
-    && docker-php-ext-install pdo_mysql mbstring zip gd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+echo "🚀 RalphMania startsolis..."
 
-# Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+if [ ! -f /var/www/html/.env ]; then
+    echo "⚠️  .env fails nav atrasts! Kopē no .env.example..."
+    cp /var/www/html/.env.example /var/www/html/.env
+fi
 
-# Apache config
-COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
-RUN a2enmod rewrite headers
+cd /var/www/html
 
-WORKDIR /var/www/html
+if [ -z "$(grep -E '^APP_KEY=.+' .env)" ]; then
+    echo "🔑 Ģenerē APP_KEY..."
+    php artisan key:generate --force
+fi
 
-# Kopē VISU projektu uzreiz (artisan jābūt pirms composer install!)
-COPY . .
+echo "🧹 Attīra cache..."
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
 
-# PHP dependencies (tagad artisan eksistē)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+echo "🗄️  Palaiž migrācijas..."
+php artisan migrate --force
 
-# Node/Vite build
-RUN npm ci && npm run build && rm -rf node_modules
+echo "⚡ Optimizē production cache..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
-# Permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+php artisan storage:link 2>/dev/null || true
 
-EXPOSE 80
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-COPY docker/start.sh /start.sh
-RUN chmod +x /start.sh
-CMD ["/start.sh"]
+echo "✅ Gatavs! Apache startē..."
+exec apache2-foreground
