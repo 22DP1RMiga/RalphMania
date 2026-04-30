@@ -5,11 +5,51 @@ echo "🚀 RalphMania startsolis..."
 
 cd /var/www/html
 
-# Coolify padod env mainīgos tieši - nav vajadzīgs .env fails
-# Bet Laravel gaida .env - izveidojam to no env mainīgajiem
+# Izveido .env no env mainīgajiem ar pareizu formatēšanu
 if [ ! -f /var/www/html/.env ]; then
-    echo "📝 Izveido .env no environment mainīgajiem..."
-    printenv | grep -E '^(APP_|DB_|MAIL_|SESSION_|CACHE_|QUEUE_|LOG_|BCRYPT_|VITE_|FILESYSTEM_)' > /var/www/html/.env
+    echo "📝 Izveido .env..."
+    cat > /var/www/html/.env << EOF
+APP_NAME="${APP_NAME:-RalphMania}"
+APP_ENV="${APP_ENV:-production}"
+APP_KEY="${APP_KEY}"
+APP_DEBUG="${APP_DEBUG:-false}"
+APP_URL="${APP_URL}"
+APP_TIMEZONE="${APP_TIMEZONE:-Europe/Riga}"
+APP_LOCALE="${APP_LOCALE:-en}"
+APP_FALLBACK_LOCALE="${APP_FALLBACK_LOCALE:-en}"
+
+LOG_CHANNEL="${LOG_CHANNEL:-stack}"
+LOG_STACK="${LOG_STACK:-single}"
+LOG_LEVEL="${LOG_LEVEL:-error}"
+
+DB_CONNECTION="${DB_CONNECTION:-mysql}"
+DB_HOST="${DB_HOST}"
+DB_PORT="${DB_PORT:-3306}"
+DB_DATABASE="${DB_DATABASE}"
+DB_USERNAME="${DB_USERNAME}"
+DB_PASSWORD="${DB_PASSWORD}"
+
+SESSION_DRIVER="${SESSION_DRIVER:-file}"
+SESSION_LIFETIME="${SESSION_LIFETIME:-120}"
+SESSION_ENCRYPT="${SESSION_ENCRYPT:-false}"
+SESSION_PATH="${SESSION_PATH:-/}"
+
+CACHE_STORE="${CACHE_STORE:-file}"
+QUEUE_CONNECTION="${QUEUE_CONNECTION:-sync}"
+FILESYSTEM_DISK="${FILESYSTEM_DISK:-local}"
+
+MAIL_MAILER="${MAIL_MAILER:-smtp}"
+MAIL_HOST="${MAIL_HOST}"
+MAIL_PORT="${MAIL_PORT:-587}"
+MAIL_USERNAME="${MAIL_USERNAME}"
+MAIL_PASSWORD="${MAIL_PASSWORD}"
+MAIL_ENCRYPTION="${MAIL_ENCRYPTION:-tls}"
+MAIL_FROM_ADDRESS="${MAIL_FROM_ADDRESS}"
+MAIL_FROM_NAME="${MAIL_FROM_NAME:-RalphMania}"
+
+BCRYPT_ROUNDS="${BCRYPT_ROUNDS:-12}"
+VITE_APP_NAME="${VITE_APP_NAME:-RalphMania}"
+EOF
 fi
 
 # Cache attīrīšana
@@ -19,21 +59,21 @@ php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 php artisan route:clear 2>/dev/null || true
 
-# Migrācijas
+# Migrācijas - nekrāšas pat ja fail
 echo "🗄️  Palaiž migrācijas..."
-php artisan migrate --force
+php artisan migrate --force || echo "⚠️  Migrācijas neizdevās, turpina..."
 
 # Production cache
-echo "⚡ Optimizē production cache..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+echo "⚡ Production cache..."
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
 
 # Storage symlink
 php artisan storage:link 2>/dev/null || true
 
 # Permissions
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 echo "✅ Gatavs! Apache startē..."
 exec apache2-foreground
