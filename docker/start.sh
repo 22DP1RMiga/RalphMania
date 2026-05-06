@@ -63,14 +63,16 @@ php artisan route:clear 2>/dev/null || true
 echo "🗄️  Palaiž migrācijas..."
 php artisan migrate --force || echo "⚠️  Migrācijas neizdevās, turpina..."
 
-# Importē SQL dump JA pastāv un JA datubāze ir tukša
+# Importē SQL dump JA produktu tabula ir tukša
 if [ -f /var/www/html/database/ralphmania.sql ]; then
-    TABLE_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_DATABASE}';" 2>/dev/null | tail -1 || echo "0")
-    if [ "$TABLE_COUNT" -lt "5" ]; then
-        echo "📦 Importē SQL dump..."
-        mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/html/database/ralphmania.sql && echo "✅ SQL imports veiksmīgs!" || echo "⚠️  SQL imports neizdevās"
+    PRODUCT_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" -e "SELECT COUNT(*) FROM products;" 2>/dev/null | tail -1 || echo "0")
+    if [ "${PRODUCT_COUNT}" = "0" ] || [ -z "${PRODUCT_COUNT}" ]; then
+        echo "📦 Importē SQL dump (produkti nav atrasti)..."
+        mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/html/database/ralphmania.sql \
+            && echo "✅ SQL imports veiksmīgs!" \
+            || echo "⚠️  SQL imports neizdevās"
     else
-        echo "ℹ️  Datubāze jau satur datus, izlaiž importu."
+        echo "ℹ️  Produkti jau eksistē (${PRODUCT_COUNT} gab.), izlaiž importu."
     fi
 fi
 
