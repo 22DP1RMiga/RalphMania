@@ -52,6 +52,9 @@ VITE_APP_NAME="${VITE_APP_NAME:-RalphMania}"
 EOF
 fi
 
+# MySQL komanda ar SSL izslēgtu
+MYSQL_CMD="mysql --ssl-mode=DISABLED -h ${DB_HOST} -P ${DB_PORT:-3306} -u ${DB_USERNAME} -p${DB_PASSWORD} ${DB_DATABASE}"
+
 # Cache attīrīšana
 echo "🧹 Attīra cache..."
 php artisan config:clear 2>/dev/null || true
@@ -64,7 +67,7 @@ echo "🗄️  Palaiž migrācijas..."
 php artisan migrate --force || echo "⚠️  Migrācijas neizdevās, turpina..."
 
 # Roles seeder
-ROLE_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" -e "SELECT COUNT(*) FROM roles;" 2>/dev/null | tail -1 || echo "0")
+ROLE_COUNT=$(${MYSQL_CMD} -e "SELECT COUNT(*) FROM roles;" 2>/dev/null | tail -1 || echo "0")
 if [ "${ROLE_COUNT}" = "0" ] || [ -z "${ROLE_COUNT}" ]; then
     echo "🌱 Palaiž RoleSeeder..."
     php artisan db:seed --class=RoleSeeder --force || echo "⚠️  RoleSeeder neizdevās"
@@ -76,14 +79,14 @@ fi
 if [ -f /var/www/html/database/ralphmania.sql ]; then
     if [ "${FORCE_SQL_IMPORT}" = "true" ]; then
         echo "📦 FORCE_SQL_IMPORT=true — importē SQL dump..."
-        mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/html/database/ralphmania.sql \
+        ${MYSQL_CMD} < /var/www/html/database/ralphmania.sql \
             && echo "✅ SQL imports veiksmīgs!" \
             || echo "⚠️  SQL imports neizdevās"
     else
-        PRODUCT_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" -e "SELECT COUNT(*) FROM products;" 2>/dev/null | tail -1 || echo "0")
+        PRODUCT_COUNT=$(${MYSQL_CMD} -e "SELECT COUNT(*) FROM products;" 2>/dev/null | tail -1 || echo "0")
         if [ "${PRODUCT_COUNT}" = "0" ] || [ -z "${PRODUCT_COUNT}" ]; then
             echo "📦 Importē SQL dump (produkti nav)..."
-            mysql -h "${DB_HOST}" -P "${DB_PORT:-3306}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/html/database/ralphmania.sql \
+            ${MYSQL_CMD} < /var/www/html/database/ralphmania.sql \
                 && echo "✅ SQL imports veiksmīgs!" \
                 || echo "⚠️  SQL imports neizdevās"
         else
