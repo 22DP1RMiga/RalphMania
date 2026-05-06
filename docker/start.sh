@@ -52,9 +52,6 @@ VITE_APP_NAME="${VITE_APP_NAME:-RalphMania}"
 EOF
 fi
 
-# MySQL komanda ar SSL izslēgtu
-MYSQL_CMD="mysql --ssl-mode=DISABLED -h ${DB_HOST} -P ${DB_PORT:-3306} -u ${DB_USERNAME} -p${DB_PASSWORD} ${DB_DATABASE}"
-
 # Cache attīrīšana
 echo "🧹 Attīra cache..."
 php artisan config:clear 2>/dev/null || true
@@ -67,31 +64,41 @@ echo "🗄️  Palaiž migrācijas..."
 php artisan migrate --force || echo "⚠️  Migrācijas neizdevās, turpina..."
 
 # Roles seeder
-ROLE_COUNT=$(${MYSQL_CMD} -e "SELECT COUNT(*) FROM roles;" 2>/dev/null | tail -1 || echo "0")
-if [ "${ROLE_COUNT}" = "0" ] || [ -z "${ROLE_COUNT}" ]; then
-    echo "🌱 Palaiž RoleSeeder..."
-    php artisan db:seed --class=RoleSeeder --force || echo "⚠️  RoleSeeder neizdevās"
-else
-    echo "ℹ️  Lomas jau eksistē (${ROLE_COUNT} gab.)"
-fi
+echo "🌱 Palaiž RoleSeeder..."
+php artisan db:seed --class=RoleSeeder --force 2>/dev/null || echo "⚠️  RoleSeeder neizdevās"
 
-# SQL imports
+# SQL imports caur PHP (bez mysql klienta)
 if [ -f /var/www/html/database/ralphmania.sql ]; then
-    if [ "${FORCE_SQL_IMPORT}" = "true" ]; then
-        echo "📦 FORCE_SQL_IMPORT=true — importē SQL dump..."
-        ${MYSQL_CMD} < /var/www/html/database/ralphmania.sql \
-            && echo "✅ SQL imports veiksmīgs!" \
-            || echo "⚠️  SQL imports neizdevās"
+    PRODUCT_COUNT=$(php artisan tinker --no-interaction --execute="echo DB::table('products')->count();" 2>/dev/null | tail -1 || echo "0")
+    if [ "${FORCE_SQL_IMPORT}" = "true" ] || [ "${PRODUCT_COUNT}" = "0" ] || [ -z "${PRODUCT_COUNT}" ]; then
+        echo "📦 Importē SQL dump caur PHP..."
+        php -r "
+            \$host = getenv('DB_HOST');
+            \$port = getenv('DB_PORT') ?: '3306';
+            \$db   = getenv('DB_DATABASE');
+            \$user = getenv('DB_USERNAME');
+            \$pass = getenv('DB_PASSWORD');
+            try {
+                \$pdo = new PDO(
+                    \"mysql:host={\$host};port={\$port};dbname={\$db}\",
+                    \$user, \$pass,
+                    [PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false]
+                );
+                \$sql = file_get_contents('/var/www/html/database/ralphmania.sql');
+                \$statements = array_filter(array_map('trim', explode(';', \$sql)));
+                \$ok = 0; \$fail = 0;
+                foreach (\$statements as \$stmt) {
+                    if (empty(\$stmt) || strpos(\$stmt, '--') === 0) continue;
+                    try { \$pdo->exec(\$stmt); \$ok++; } catch(Exception \$e) { \$fail++; }
+                }
+                echo \"✅ Imports pabeigts: {\$ok} vaicājumi izpildīti, {\$fail} izlaisti.\n\";
+            } catch(Exception \$e) {
+                echo '❌ DB savienojuma kļūda: ' . \$e->getMessage() . \"\n\";
+                exit(1);
+            }
+        " && echo "✅ SQL imports veiksmīgs!" || echo "⚠️  SQL imports neizdevās"
     else
-        PRODUCT_COUNT=$(${MYSQL_CMD} -e "SELECT COUNT(*) FROM products;" 2>/dev/null | tail -1 || echo "0")
-        if [ "${PRODUCT_COUNT}" = "0" ] || [ -z "${PRODUCT_COUNT}" ]; then
-            echo "📦 Importē SQL dump (produkti nav)..."
-            ${MYSQL_CMD} < /var/www/html/database/ralphmania.sql \
-                && echo "✅ SQL imports veiksmīgs!" \
-                || echo "⚠️  SQL imports neizdevās"
-        else
-            echo "ℹ️  Produkti jau eksistē (${PRODUCT_COUNT} gab.), izlaiž importu."
-        fi
+        echo "ℹ️  Produkti jau eksistē (${PRODUCT_COUNT} gab.), izlaiž importu."
     fi
 fi
 
