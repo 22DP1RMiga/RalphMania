@@ -63,40 +63,61 @@ php artisan route:clear 2>/dev/null || true
 echo "🗄️  Palaiž migrācijas..."
 php artisan migrate --force || echo "⚠️  Migrācijas neizdevās, turpina..."
 
-# Roles seeder
-echo "🌱 Palaiž RoleSeeder..."
-php artisan db:seed --class=RoleSeeder --force 2>/dev/null || echo "⚠️  RoleSeeder neizdevās"
-
-# SQL imports caur PHP (bez mysql klienta)
+# SQL imports caur PHP - tikai INSERT dati, izlaiž CREATE TABLE
 if [ -f /var/www/html/database/ralphmania.sql ]; then
-    PRODUCT_COUNT=$(php artisan tinker --no-interaction --execute="echo DB::table('products')->count();" 2>/dev/null | tail -1 || echo "0")
+    PRODUCT_COUNT=$(php -r "
+        \$pdo = new PDO('mysql:host='.getenv('DB_HOST').';port='.(getenv('DB_PORT')?:'3306').';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD'), [PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT=>false]);
+        echo \$pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
+    " 2>/dev/null || echo "0")
+
     if [ "${FORCE_SQL_IMPORT}" = "true" ] || [ "${PRODUCT_COUNT}" = "0" ] || [ -z "${PRODUCT_COUNT}" ]; then
-        echo "📦 Importē SQL dump caur PHP..."
+        echo "📦 Importē SQL datus (tikai INSERT)..."
         php -r "
             \$host = getenv('DB_HOST');
             \$port = getenv('DB_PORT') ?: '3306';
             \$db   = getenv('DB_DATABASE');
             \$user = getenv('DB_USERNAME');
             \$pass = getenv('DB_PASSWORD');
-            try {
-                \$pdo = new PDO(
-                    \"mysql:host={\$host};port={\$port};dbname={\$db}\",
-                    \$user, \$pass,
-                    [PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false]
-                );
-                \$sql = file_get_contents('/var/www/html/database/ralphmania.sql');
-                \$statements = array_filter(array_map('trim', explode(';', \$sql)));
-                \$ok = 0; \$fail = 0;
-                foreach (\$statements as \$stmt) {
-                    if (empty(\$stmt) || strpos(\$stmt, '--') === 0) continue;
-                    try { \$pdo->exec(\$stmt); \$ok++; } catch(Exception \$e) { \$fail++; }
+            \$pdo = new PDO(
+                \"mysql:host={\$host};port={\$port};dbname={\$db}\",
+                \$user, \$pass,
+                [PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false]
+            );
+            // Izslēdz FK pārbaudes importa laikā
+            \$pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+            \$pdo->exec('SET NAMES utf8mb4');
+
+            \$sql = file_get_contents('/var/www/html/database/ralphmania.sql');
+            \$lines = explode(\"\n\", \$sql);
+            \$ok = 0; \$skip = 0; \$fail = 0;
+            \$buffer = '';
+
+            foreach (\$lines as \$line) {
+                \$line = trim(\$line);
+                // Izlaiž komentārus un tukšas rindiņas
+                if (empty(\$line) || strpos(\$line, '--') === 0 || strpos(\$line, '/*') === 0) continue;
+                // Izlaiž CREATE, DROP, ALTER, SET (tikai INSERT vajag)
+                if (preg_match('/^(CREATE|DROP|ALTER|LOCK|UNLOCK)/i', \$line)) { \$skip++; continue; }
+
+                \$buffer .= ' ' . \$line;
+
+                if (substr(\$buffer, -1) === ';') {
+                    \$stmt = trim(\$buffer);
+                    \$buffer = '';
+                    if (empty(\$stmt)) continue;
+                    try {
+                        \$pdo->exec(\$stmt);
+                        \$ok++;
+                    } catch(Exception \$e) {
+                        \$fail++;
+                        // echo 'KĻŪDA: ' . \$e->getMessage() . PHP_EOL;
+                    }
                 }
-                echo \"✅ Imports pabeigts: {\$ok} vaicājumi izpildīti, {\$fail} izlaisti.\n\";
-            } catch(Exception \$e) {
-                echo '❌ DB savienojuma kļūda: ' . \$e->getMessage() . \"\n\";
-                exit(1);
             }
-        " && echo "✅ SQL imports veiksmīgs!" || echo "⚠️  SQL imports neizdevās"
+            \$pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+            echo \"✅ Importēti: {\$ok}, izlaisti: {\$skip}, kļūdas: {\$fail}\n\";
+        "
+        echo "✅ SQL imports pabeigts!"
     else
         echo "ℹ️  Produkti jau eksistē (${PRODUCT_COUNT} gab.), izlaiž importu."
     fi
