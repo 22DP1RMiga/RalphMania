@@ -12,7 +12,7 @@ use Inertia\Inertia;
 class ContactController extends Controller
 {
     /**
-     * Store contact message (publisks — gan pieteicies, gan viesi)
+     * Store contact message (authenticated users only)
      */
     public function store(Request $request)
     {
@@ -37,6 +37,7 @@ class ContactController extends Controller
         // user_id neobligāts — viesi var arī rakstīt
         $userId = $request->user()?->id;
 
+        // Create contact message
         $contactMessage = ContactMessage::create([
             'user_id'      => $userId,
             'name'         => $validated['name'],
@@ -49,6 +50,7 @@ class ContactController extends Controller
             'is_replied'   => false,
         ]);
 
+        // Send email notification to admin
         try {
             Mail::to('ralphmania.roltonslv@gmail.com')
                 ->send(new ContactMessageReceived($contactMessage));
@@ -62,8 +64,10 @@ class ContactController extends Controller
                 'contact_message_id' => $contactMessage->id,
                 'error' => $e->getMessage(),
             ]);
+            // Don't fail the request if email fails - message is still saved
         }
 
+        // Return Inertia response with flash message
         return back()->with('success', 'Paldies! Jūsu ziņojums ir veiksmīgi nosūtīts. Mēs ar jums sazināsimies pēc iespējas ātrāk!');
     }
 
@@ -74,14 +78,17 @@ class ContactController extends Controller
     {
         $query = ContactMessage::query()->with('user');
 
+        // Filter by read status
         if ($request->has('is_read')) {
             $query->where('is_read', $request->boolean('is_read'));
         }
 
+        // Filter by replied status
         if ($request->has('is_replied')) {
             $query->where('is_replied', $request->boolean('is_replied'));
         }
 
+        // Search
         if ($request->has('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'LIKE', "%{$request->search}%")
@@ -91,7 +98,8 @@ class ContactController extends Controller
             });
         }
 
-        $messages = $query->orderBy('created_at', 'desc')->paginate(20);
+        $messages = $query->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return Inertia::render('Admin/Contacts/Index', [
             'messages' => $messages,
@@ -99,10 +107,14 @@ class ContactController extends Controller
         ]);
     }
 
+    /**
+     * Admin: Show single contact message
+     */
     public function show($id)
     {
         $message = ContactMessage::with('user')->findOrFail($id);
 
+        // Mark as read
         if (!$message->is_read) {
             $message->update(['is_read' => true]);
         }
@@ -112,13 +124,20 @@ class ContactController extends Controller
         ]);
     }
 
+    /**
+     * Admin: Mark as read
+     */
     public function markAsRead($id)
     {
         $message = ContactMessage::findOrFail($id);
         $message->update(['is_read' => true]);
+
         return back()->with('success', 'Ziņojums atzīmēts kā izlasīts.');
     }
 
+    /**
+     * Admin: Reply to message
+     */
     public function reply(Request $request, $id)
     {
         $validated = $request->validate([
@@ -126,6 +145,9 @@ class ContactController extends Controller
         ]);
 
         $message = ContactMessage::findOrFail($id);
+
+        // Here you would typically send an email
+        // For now, just mark as replied
         $message->update([
             'is_replied' => true,
             'replied_at' => now(),

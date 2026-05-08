@@ -34,11 +34,11 @@ use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| Web maršruti
+| Web Routes
 |--------------------------------------------------------------------------
 */
 
-// ========== PUBLISKIE MARŠRUTI ==========
+// ========== PUBLIC ROUTES ==========
 
 // Home Page
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -70,7 +70,7 @@ Route::prefix('shop')->group(function () {
     // Category Products
     Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('shop.category.show');
 
-    // Shop Contact — publiski pieejams
+    // Shop Contact — PRASA AUTORIZĀCIJU (lai novērstu anonīmus troļļus)
     Route::get('/contact', function () {
         return Inertia::render('Shop/Contact');
     })->name('shop.contact');
