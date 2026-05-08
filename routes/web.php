@@ -34,11 +34,11 @@ use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| Web maršruti
+| Web Routes
 |--------------------------------------------------------------------------
 */
 
-// ========== PUBLISKIE MARŠRUTI ==========
+// ========== PUBLIC ROUTES ==========
 
 // Home Page
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -48,12 +48,16 @@ Route::get('/about', function () {
     return Inertia::render('About');
 })->name('about');
 
-// Contact Page - publiski pieejams
-Route::get('/contact', function () {
-    return Inertia::render('Contact');
-})->name('contact');
+// Contact Page - REQUIRES AUTHENTICATION
+Route::middleware('auth')->group(function () {
+    // Contact Page View
+    Route::get('/contact', function () {
+        return Inertia::render('Contact');
+    })->name('contact');
 
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+    // Contact Form Submission
+    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+});
 
 // Newsletter subscription (public - can be guest)
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
@@ -70,13 +74,13 @@ Route::prefix('shop')->group(function () {
     // Category Products
     Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('shop.category.show');
 
-    // Shop Contact — publiski pieejams
+    // Shop Contact — PRASA AUTORIZĀCIJU (lai novērstu anonīmus troļļus)
     Route::get('/contact', function () {
         return Inertia::render('Shop/Contact');
-    })->name('shop.contact');
+    })->middleware('auth')->name('shop.contact');
 
     // Shop Contact Form Submission
-    Route::post('/contact', [ContactController::class, 'store'])->name('shop.contact.store');
+    Route::post('/contact', [ContactController::class, 'store'])->middleware('auth')->name('shop.contact.store');
 
     // FAQ, Shipping, Returns — publiski
     Route::get('/faq',      fn() => Inertia::render('Shop/FAQ'))->name('shop.faq');

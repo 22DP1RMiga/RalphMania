@@ -66,12 +66,17 @@ const form = useForm({
     message: '',
 });
 
-// Aizpilda formu ar lietotāja datiem (ja pieteicies)
+// Nepieteicies lietotājus novirza uz login lapu
 onMounted(() => {
-    if (user.value) {
-        form.name  = user.value.username || user.value.first_name || '';
-        form.email = user.value.email || '';
+    if (!user.value) {
+        router.visit('/login', {
+            onSuccess: () => {},
+        });
+        return;
     }
+    // Aizpilda formu ar lietotāja datiem
+    form.name  = user.value.username || user.value.first_name || '';
+    form.email = user.value.email || '';
 });
 
 // Select country code
