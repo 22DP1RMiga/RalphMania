@@ -56,13 +56,11 @@ const form = useForm({
     message: '',
 });
 
-// Pre-fill form with user data on mount
+// Aizpilda formu ar lietotāja datiem (ja pieteicies)
 onMounted(() => {
     if (user.value) {
-        form.username = user.value.username || '';
+        form.name  = user.value.username || user.value.first_name || '';
         form.email = user.value.email || '';
-        // If user has phone saved in profile, could use it here
-        // form.phone = user.value.phone || '';
     }
 });
 
