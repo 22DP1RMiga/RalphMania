@@ -1,43 +1,42 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
-import MainLayout from '@/Layouts/MainLayout.vue';
+import { Head, useForm, usePage, Link, router } from '@inertiajs/vue3';
+import ShopLayout from '@/Layouts/ShopLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
-import LoadingSpinner from '@/Components/LoadingSpinner.vue';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
 const page = usePage();
+const { t } = useI18n();
 
 // Get authenticated user data
 const user = computed(() => page.props.auth?.user);
 
 // Country codes list
 const countryCodes = [
-    { code: '+371', country: 'LV', flag: '🇱🇻', name: 'Latvija' },
-    { code: '+370', country: 'LT', flag: '🇱🇹', name: 'Lietuva' },
-    { code: '+372', country: 'EE', flag: '🇪🇪', name: 'Igaunija' },
-    { code: '+7', country: 'RU', flag: '🇷🇺', name: 'Krievija' },
-    { code: '+380', country: 'UA', flag: '🇺🇦', name: 'Ukraina' },
-    { code: '+48', country: 'PL', flag: '🇵🇱', name: 'Polija' },
-    { code: '+49', country: 'DE', flag: '🇩🇪', name: 'Vācija' },
-    { code: '+44', country: 'GB', flag: '🇬🇧', name: 'Apvienotā Karaliste' },
-    { code: '+1', country: 'US', flag: '🇺🇸', name: 'ASV' },
-    { code: '+33', country: 'FR', flag: '🇫🇷', name: 'Francija' },
-    { code: '+34', country: 'ES', flag: '🇪🇸', name: 'Spānija' },
-    { code: '+39', country: 'IT', flag: '🇮🇹', name: 'Itālija' },
-    { code: '+46', country: 'SE', flag: '🇸🇪', name: 'Zviedrija' },
-    { code: '+47', country: 'NO', flag: '🇳🇴', name: 'Norvēģija' },
-    { code: '+45', country: 'DK', flag: '🇩🇰', name: 'Dānija' },
-    { code: '+358', country: 'FI', flag: '🇫🇮', name: 'Somija' },
-    { code: '+31', country: 'NL', flag: '🇳🇱', name: 'Nīderlande' },
-    { code: '+32', country: 'BE', flag: '🇧🇪', name: 'Beļģija' },
-    { code: '+43', country: 'AT', flag: '🇦🇹', name: 'Austrija' },
-    { code: '+41', country: 'CH', flag: '🇨🇭', name: 'Šveice' },
+    { code: '+371', country: 'LV', flag: '🇱🇻', name: t('country.latvia') },
+    { code: '+370', country: 'LT', flag: '🇱🇹', name: t('country.lithuania') },
+    { code: '+372', country: 'EE', flag: '🇪🇪', name: t('country.estonia') },
+    { code: '+7', country: 'RU', flag: '🇷🇺', name: t('country.russia') },
+    { code: '+380', country: 'UA', flag: '🇺🇦', name: t('country.ukraine') },
+    { code: '+48', country: 'PL', flag: '🇵🇱', name: t('country.poland') },
+    { code: '+49', country: 'DE', flag: '🇩🇪', name: t('country.germany') },
+    { code: '+44', country: 'GB', flag: '🇬🇧', name: t('country.united_kingdom') },
+    { code: '+1', country: 'US', flag: '🇺🇸', name: t('country.united_states') },
+    { code: '+33', country: 'FR', flag: '🇫🇷', name: t('country.france') },
+    { code: '+34', country: 'ES', flag: '🇪🇸', name: t('country.spain') },
+    { code: '+39', country: 'IT', flag: '🇮🇹', name: t('country.italy') },
+    { code: '+46', country: 'SE', flag: '🇸🇪', name: t('country.sweden') },
+    { code: '+47', country: 'NO', flag: '🇳🇴', name: t('country.norway') },
+    { code: '+45', country: 'DK', flag: '🇩🇰', name: t('country.denmark') },
+    { code: '+358', country: 'FI', flag: '🇫🇮', name: t('country.finland') },
+    { code: '+31', country: 'NL', flag: '🇳🇱', name: t('country.netherlands') },
+    { code: '+32', country: 'BE', flag: '🇧🇪', name: t('country.belgium') },
+    { code: '+43', country: 'AT', flag: '🇦🇹', name: t('country.austria') },
+    { code: '+41', country: 'CH', flag: '🇨🇭', name: t('country.switzerland') },
 ];
 
 const showCountryDropdown = ref(false);
-const selectedCountry = ref(countryCodes[0]); // Default to Latvia
+const selectedCountry = ref(countryCodes[0]);
 
 // Toast notification state
 const toast = ref({
@@ -46,13 +45,24 @@ const toast = ref({
     type: 'success',
 });
 
-// Form with pre-filled user data
+// Subject options
+const subjects = [
+    { value: 'order', label: t('shop_contact.subjects.order') },
+    { value: 'shipping', label: t('shop_contact.subjects.shipping') },
+    { value: 'returns', label: t('shop_contact.subjects.returns') },
+    { value: 'product', label: t('shop_contact.subjects.product') },
+    { value: 'payment', label: t('shop_contact.subjects.payment') },
+    { value: 'other', label: t('shop_contact.subjects.other') },
+];
+
+// Form
 const form = useForm({
-    username: '',
+    name: '',
     email: '',
     country_code: '+371',
     phone: '',
     subject: '',
+    order_number: '',
     message: '',
 });
 
@@ -68,11 +78,6 @@ onMounted(() => {
 const selectCountry = (country) => {
     selectedCountry.value = country;
     form.country_code = country.code;
-    showCountryDropdown.value = false;
-};
-
-// Close dropdown when clicking outside
-const closeDropdown = () => {
     showCountryDropdown.value = false;
 };
 
@@ -92,24 +97,32 @@ const closeToast = () => {
 
 // Submit form
 const submit = () => {
-    form.post(route('contact.store'), {
+    form.post('/shop/contact', {
         preserveScroll: true,
         onSuccess: () => {
-            form.reset('subject', 'message', 'phone');
-            showToast('Paldies! Jūsu ziņojums ir veiksmīgi nosūtīts. Mēs ar jums sazināsimies pēc iespējas ātrāk!', 'success');
+            form.reset('subject', 'message', 'phone', 'order_number');
+            showToast(t('shop_contact.success'), 'success');
         },
         onError: (errors) => {
             const firstError = Object.values(errors)[0];
-            showToast(firstError || 'Kļūda nosūtot ziņojumu. Lūdzu, mēģiniet vēlreiz.', 'error');
+            showToast(firstError || t('shop_contact.error'), 'error');
         },
     });
 };
+
+// Contact info
+const contactInfo = [
+    { icon: 'fas fa-envelope', label: t('shop_contact.email'), value: 'ralphmania.roltonslv@gmail.com', href: 'mailto:ralphmania.roltonslv@gmail.com' },
+    { icon: 'fas fa-phone', label: t('shop_contact.phone'), value: '+371 20 000 000', href: 'tel:+37120000000' },
+    { icon: 'fas fa-clock', label: t('shop_contact.worktime'), value: t('shop_contact.working_hours'), href: null },
+    { icon: 'fas fa-map-marker-alt', label: t('shop_contact.address'), value: t('shop_contact.riga_latvia'), href: null },
+];
 </script>
 
 <template>
-    <Head :title="$t('nav.contact')" />
+    <ShopLayout>
+        <Head title="Sazināties ar mums" />
 
-    <MainLayout>
         <!-- Toast Notification -->
         <ToastNotification
             :show="toast.show"
@@ -118,408 +131,363 @@ const submit = () => {
             @close="closeToast"
         />
 
-        <!-- Loading Overlay -->
-        <LoadingSpinner
-            v-if="form.processing"
-            :fullscreen="true"
-            size="lg"
-            :text="$t('contact.form.sending') || 'Nosūta...'"
-        />
-
-        <!-- Contact Hero -->
-        <section class="contact-hero">
-            <div class="hero-container">
-                <h1 class="hero-title">{{ $t('contact.hero.title') }}</h1>
-                <p class="hero-subtitle">{{ $t('contact.hero.subtitle') }}</p>
+        <!-- Auth siena — rāda viesiem, ja JS redirect nestrādāja -->
+        <div v-if="!user" class="auth-wall">
+            <div class="auth-wall-inner">
+                <div class="auth-wall-icon"><i class="fas fa-lock"></i></div>
+                <h2 class="auth-wall-title">
+                    {{ t('shop_contact.login_required') || 'Nepieciešams pieteikties' }}
+                </h2>
+                <p class="auth-wall-text">
+                    {{ t('shop_contact.login_required_desc') || 'Lai sazinātos ar mums, lūdzu vispirms piesakies savā kontā.' }}
+                </p>
+                <div class="auth-wall-btns">
+                    <Link href="/login" class="auth-btn-login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        {{ t('auth.login') || 'Pieteikties' }}
+                    </Link>
+                    <Link href="/register" class="auth-btn-register">
+                        <i class="fas fa-user-plus"></i>
+                        {{ t('auth.register') || 'Reģistrēties' }}
+                    </Link>
+                </div>
+                <Link href="/shop" class="auth-back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    {{ t('shop.back_to_shop') || 'Atpakaļ uz veikalu' }}
+                </Link>
             </div>
-            <!-- Wave -->
-            <div class="hero-wave">
-                <svg viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-                    <path
-                        fill="#ffffff"
-                        d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"
-                    ></path>
-                </svg>
-            </div>
-        </section>
+        </div>
 
-        <!-- Contact Content -->
-        <section class="contact-section">
-            <div class="section-container">
+        <div v-else class="contact-page">
+            <!-- Hero Section -->
+            <div class="contact-hero">
+                <div class="hero-content">
+                    <div class="hero-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h1 class="hero-title">{{ t('shop_contact.title') }}</h1>
+                    <p class="hero-subtitle">{{ t('shop_contact.subtitle') }}</p>
+                </div>
+            </div>
+
+            <div class="contact-container">
                 <div class="contact-grid">
                     <!-- Contact Form -->
-                    <div class="contact-form-container">
-                        <h2 class="form-title">{{ $t('contact.form.title') }}</h2>
-                        <p class="form-subtitle">{{ $t('contact.form.subtitle') }}</p>
+                    <div class="form-section">
+                        <div class="form-card">
+                            <h2 class="form-title">
+                                <i class="fas fa-paper-plane"></i>
+                                {{ t('shop_contact.form_title') }}
+                            </h2>
 
-                        <!-- Auth Notice -->
-                        <div class="auth-notice">
-                            <i class="fas fa-user-check"></i>
-                            <span>{{ $t('contact.hero.youAreLoggedInAs') }} <strong>{{ user.username }}</strong></span>
-                        </div>
-
-                        <form @submit.prevent="submit" class="contact-form">
-                            <!-- Username (readonly - from user) -->
-                            <div class="form-group">
-                                <label for="username" class="form-label">
-                                    {{ $t('contact.form.username') }}
-                                    <span class="required">*</span>
-                                </label>
-                                <input
-                                    id="username"
-                                    v-model="form.username"
-                                    type="text"
-                                    class="form-input readonly"
-                                    readonly
-                                    required
-                                />
-                                <span class="form-hint">{{ $t('contact.form.usernameHint') }}</span>
-                                <span v-if="form.errors.username" class="form-error">{{ form.errors.username }}</span>
+                            <!-- Auth Notice (if logged in) -->
+                            <div v-if="user" class="auth-notice">
+                                <i class="fas fa-user-check"></i>
+                                <span>{{ t('shop_contact.youAreLoggedInAs') }} <strong>{{ user.username }}</strong></span>
                             </div>
 
-                            <!-- Email (readonly - from user) -->
-                            <div class="form-group">
-                                <label for="email" class="form-label">
-                                    {{ $t('contact.form.email') }}
-                                    <span class="required">*</span>
-                                </label>
-                                <input
-                                    id="email"
-                                    v-model="form.email"
-                                    type="email"
-                                    class="form-input readonly"
-                                    readonly
-                                    required
-                                />
-                                <span class="form-hint">{{ $t('contact.form.emailHint') }}</span>
-                                <span v-if="form.errors.email" class="form-error">{{ form.errors.email }}</span>
-                            </div>
-
-                            <!-- Phone with Country Code -->
-                            <div class="form-group">
-                                <label for="phone" class="form-label">
-                                    {{ $t('contact.form.phone') }}
-                                    <span class="required">*</span>
-                                </label>
-                                <div class="phone-input-wrapper">
-                                    <!-- Country Code Selector -->
-                                    <div class="country-selector" @click.stop>
-                                        <button
-                                            type="button"
-                                            class="country-button"
-                                            @click="showCountryDropdown = !showCountryDropdown"
+                            <form @submit.prevent="submit" class="contact-form">
+                                <!-- Name & Email Row -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            {{ t('shop_contact.name') }} <span class="required">*</span>
+                                        </label>
+                                        <input
+                                            v-model="form.name"
+                                            type="text"
+                                            class="form-input"
+                                            :class="{ 'input-error': form.errors.name, 'readonly': user }"
+                                            placeholder="Jūsu vārds"
+                                            :readonly="!!user"
+                                            required
                                         >
-                                            <span class="country-flag">{{ selectedCountry.flag }}</span>
-                                            <span class="country-code">{{ selectedCountry.code }}</span>
-                                            <i class="fas fa-chevron-down dropdown-icon" :class="{ 'rotated': showCountryDropdown }"></i>
-                                        </button>
-
-                                        <!-- Dropdown -->
-                                        <div v-if="showCountryDropdown" class="country-dropdown" @click.stop>
-                                            <div
-                                                v-for="country in countryCodes"
-                                                :key="country.code"
-                                                class="country-option"
-                                                :class="{ 'selected': selectedCountry.code === country.code }"
-                                                @click="selectCountry(country)"
-                                            >
-                                                <span class="country-flag">{{ country.flag }}</span>
-                                                <span class="country-name">{{ country.name }}</span>
-                                                <span class="country-code">{{ country.code }}</span>
-                                            </div>
-                                        </div>
+                                        <span v-if="form.errors.name" class="error-text">{{ form.errors.name }}</span>
                                     </div>
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            {{ t('shop_contact.email') }} <span class="required">*</span>
+                                        </label>
+                                        <input
+                                            v-model="form.email"
+                                            type="email"
+                                            class="form-input"
+                                            :class="{ 'input-error': form.errors.email, 'readonly': user }"
+                                            placeholder="jusu@epasts.lv"
+                                            :readonly="!!user"
+                                            required
+                                        >
+                                        <span v-if="form.errors.email" class="error-text">{{ form.errors.email }}</span>
+                                    </div>
+                                </div>
 
-                                    <!-- Phone Number Input -->
+                                <!-- Phone with Country Code & Subject -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ t('shop_contact.phone') }} <span class="required">*</span></label>
+                                        <div class="phone-input-wrapper">
+                                            <!-- Country Code Selector -->
+                                            <div class="country-selector" @click.stop>
+                                                <button
+                                                    type="button"
+                                                    class="country-button"
+                                                    @click="showCountryDropdown = !showCountryDropdown"
+                                                >
+                                                    <span class="country-flag">{{ selectedCountry.flag }}</span>
+                                                    <span class="country-code-text">{{ selectedCountry.code }}</span>
+                                                    <i class="fas fa-chevron-down dropdown-icon" :class="{ 'rotated': showCountryDropdown }"></i>
+                                                </button>
+
+                                                <!-- Dropdown -->
+                                                <div v-if="showCountryDropdown" class="country-dropdown">
+                                                    <div
+                                                        v-for="country in countryCodes"
+                                                        :key="country.code"
+                                                        class="country-option"
+                                                        :class="{ 'selected': selectedCountry.code === country.code }"
+                                                        @click="selectCountry(country)"
+                                                    >
+                                                        <span class="country-flag">{{ country.flag }}</span>
+                                                        <span class="country-name">{{ country.name }}</span>
+                                                        <span class="country-code-text">{{ country.code }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Phone Number Input -->
+                                            <input
+                                                v-model="form.phone"
+                                                type="tel"
+                                                class="form-input phone-input"
+                                                placeholder="20 000 000"
+                                                @focus="showCountryDropdown = false"
+                                            >
+                                        </div>
+                                        <span v-if="form.errors.phone" class="error-text">{{ form.errors.phone }}</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            {{ t('shop_contact.subject') }} <span class="required">*</span>
+                                        </label>
+                                        <select
+                                            v-model="form.subject"
+                                            class="form-input"
+                                            :class="{ 'input-error': form.errors.subject }"
+                                            required
+                                        >
+                                            <option value="">{{ t('shop_contact.select_subject') }}</option>
+                                            <option v-for="subject in subjects" :key="subject.value" :value="subject.value">
+                                                {{ subject.label }}
+                                            </option>
+                                        </select>
+                                        <span v-if="form.errors.subject" class="error-text">{{ form.errors.subject }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Order Number (conditional) -->
+                                <div v-if="form.subject === 'order' || form.subject === 'shipping' || form.subject === 'returns'" class="form-group">
+                                    <label class="form-label">{{ t('shop_contact.order_number') }}</label>
                                     <input
-                                        id="phone"
-                                        v-model="form.phone"
-                                        type="tel"
-                                        class="form-input phone-input"
-                                        placeholder="20 000 000"
+                                        v-model="form.order_number"
+                                        type="text"
+                                        class="form-input"
+                                        placeholder="RM-2025-XXXXX"
+                                    >
+                                </div>
+
+                                <!-- Message -->
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        {{ t('shop_contact.message') }} <span class="required">*</span>
+                                    </label>
+                                    <textarea
+                                        v-model="form.message"
+                                        class="form-textarea"
+                                        :class="{ 'input-error': form.errors.message }"
+                                        :placeholder="t('shop_contact.message_placeholder')"
+                                        rows="5"
                                         required
-                                        @focus="showCountryDropdown = false"
-                                    />
+                                    ></textarea>
+                                    <span v-if="form.errors.message" class="error-text">{{ form.errors.message }}</span>
                                 </div>
-                                <span v-if="form.errors.phone" class="form-error">{{ form.errors.phone }}</span>
-                                <span v-if="form.errors.country_code" class="form-error">{{ form.errors.country_code }}</span>
-                            </div>
 
-                            <!-- Subject -->
-                            <div class="form-group">
-                                <label for="subject" class="form-label">
-                                    {{ $t('contact.form.subject') }}
-                                    <span class="required">*</span>
-                                </label>
-                                <input
-                                    id="subject"
-                                    v-model="form.subject"
-                                    type="text"
-                                    class="form-input"
-                                    :placeholder="$t('contact.form.subjectPlaceholder') || 'Par ko jūs vēlaties runāt?'"
-                                    required
-                                />
-                                <span v-if="form.errors.subject" class="form-error">{{ form.errors.subject }}</span>
-                            </div>
-
-                            <!-- Message -->
-                            <div class="form-group">
-                                <label for="message" class="form-label">
-                                    {{ $t('contact.form.message') }}
-                                    <span class="required">*</span>
-                                </label>
-                                <textarea
-                                    id="message"
-                                    v-model="form.message"
-                                    class="form-textarea"
-                                    rows="5"
-                                    :placeholder="$t('contact.form.messagePlaceholder') || 'Jūsu ziņojums...'"
-                                    required
-                                    maxlength="1000"
-                                ></textarea>
-                                <div class="textarea-footer">
-                                    <span v-if="form.errors.message" class="form-error">{{ form.errors.message }}</span>
-                                    <span class="char-count" :class="{ 'near-limit': form.message.length > 900 }">
-                                        {{ form.message.length }}/1000
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <button type="submit" class="submit-button" :disabled="form.processing">
-                                <span v-if="form.processing" class="button-content">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                    {{ $t('contact.form.sending') || 'Nosūta...' }}
-                                </span>
-                                <span v-else class="button-content">
-                                    <i class="fas fa-paper-plane"></i>
-                                    {{ $t('contact.form.send') || 'Nosūtīt ziņojumu' }}
-                                </span>
-                            </button>
-                        </form>
+                                <!-- Submit Button -->
+                                <button
+                                    type="submit"
+                                    class="btn-submit"
+                                    :disabled="form.processing"
+                                >
+                                    <i v-if="form.processing" class="fas fa-spinner fa-spin"></i>
+                                    <i v-else class="fas fa-paper-plane"></i>
+                                    {{ form.processing ? t('shop_contact.sending') : t('shop_contact.send') }}
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    <!-- Contact Info -->
-                    <div class="contact-info-container">
-                        <h2 class="info-title">{{ $t('contact.info.title') }}</h2>
-
-                        <div class="info-items">
-                            <!-- Email -->
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-envelope"></i>
-                                </div>
-                                <div class="info-content">
-                                    <h3 class="info-label">{{ $t('contact.info.email') }}</h3>
-                                    <p class="info-value">
-                                        <a href="mailto:ralphmania.roltonslv@gmail.com">ralphmania.roltonslv@gmail.com</a>
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Phone -->
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-phone"></i>
-                                </div>
-                                <div class="info-content">
-                                    <h3 class="info-label">{{ $t('contact.info.phone') }}</h3>
-                                    <p class="info-value">+371 20 000 000</p>
-                                </div>
-                            </div>
-
-                            <!-- Address -->
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </div>
-                                <div class="info-content">
-                                    <h3 class="info-label">{{ $t('contact.info.address') }}</h3>
-                                    <p class="info-value">{{ $t('contact.contact_info.place') }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Response Time -->
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="info-content">
-                                    <h3 class="info-label">{{ $t('contact.info.responseTime') }}</h3>
-                                    <p class="info-value">{{ $t('contact.contact_info.responseTimePrompt') }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Social Media -->
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-share-alt"></i>
-                                </div>
-                                <div class="info-content">
-                                    <h3 class="info-label">{{ $t('contact.info.social') }}</h3>
-                                    <div class="social-links">
-                                        <a href="https://www.youtube.com/@RoltonsLV" class="social-link youtube" title="YouTube">
-                                            <i class="fab fa-youtube"></i>
+                    <!-- Contact Info Sidebar -->
+                    <div class="info-section">
+                        <!-- Contact Cards -->
+                        <div class="info-card">
+                            <h3 class="info-title">{{ t('shop_contact.contact_info') }}</h3>
+                            <div class="info-list">
+                                <div v-for="info in contactInfo" :key="info.label" class="info-item">
+                                    <div class="info-icon">
+                                        <i :class="info.icon"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">{{ info.label }}</span>
+                                        <a v-if="info.href" :href="info.href" class="info-value link">
+                                            {{ info.value }}
                                         </a>
-                                        <a href="https://www.tiktok.com/@realroltonslv" class="social-link tiktok" title="TikTok">
-                                            <i class="fab fa-tiktok"></i>
-                                        </a>
-                                        <a href="https://www.instagram.com/ralfsmigals/" class="social-link instagram" title="Instagram">
-                                            <i class="fab fa-instagram"></i>
-                                        </a>
-                                        <a href="https://x.com/RealRoltonsLV" class="social-link social-x-twitter" title="Twitter/X">
-                                            <i class="fab fa-x-twitter"></i>
-                                        </a>
+                                        <span v-else class="info-value">{{ info.value }}</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Response Time -->
+                        <div class="response-card">
+                            <div class="response-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h4>{{ t('shop_contact.response_time') }}</h4>
+                            <p>{{ t('shop_contact.response_time_text') }}</p>
+                        </div>
+
+                        <!-- Quick Links -->
+                        <div class="quick-links-card">
+                            <h4>{{ t('shop_contact.quick_links') }}</h4>
+                            <div class="quick-links">
+                                <Link href="/shop/faq" class="quick-link">
+                                    <i class="fas fa-question-circle"></i>
+                                    {{ t('shop_contact.faq_link') }}
+                                </Link>
+                                <Link href="/shop/shipping" class="quick-link">
+                                    <i class="fas fa-truck"></i>
+                                    {{ t('shop_contact.shipping_link') }}
+                                </Link>
+                                <Link href="/shop/returns" class="quick-link">
+                                    <i class="fas fa-undo"></i>
+                                    {{ t('shop_contact.returns_link') }}
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-    </MainLayout>
+        </div>
+    </ShopLayout>
 </template>
 
 <style scoped>
-/* Hero Section */
+.contact-page {
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
 .contact-hero {
-    position: relative;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
-    color: white;
-    padding: 6rem 2rem 8rem;
-    overflow: hidden;
-}
-
-.contact-hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.1;
-}
-
-.hero-container {
-    position: relative;
-    max-width: 1200px;
-    margin: 0 auto;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    padding: 4rem 2rem;
     text-align: center;
-    z-index: 1;
+    color: white;
+}
+
+.hero-icon {
+    width: 5rem;
+    height: 5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
 }
 
 .hero-title {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     font-weight: 800;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .hero-subtitle {
-    font-size: 1.5rem;
-    opacity: 0.95;
+    font-size: 1.125rem;
+    opacity: 0.9;
 }
 
-.hero-wave {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    line-height: 0;
-}
-
-.hero-wave svg {
-    position: relative;
-    display: block;
-    width: calc(100% + 1.3px);
-    height: 120px;
-}
-
-/* Contact Section */
-.contact-section {
-    padding: 4rem 2rem;
-}
-
-.section-container {
-    max-width: 1200px;
+.contact-container {
+    max-width: 1100px;
     margin: 0 auto;
+    padding: 2rem;
 }
 
 .contact-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
-    gap: 4rem;
+    gap: 2rem;
 }
 
-@media (max-width: 1024px) {
-    .contact-grid {
-        grid-template-columns: 1fr;
-        gap: 3rem;
-    }
-}
-
-/* Contact Form */
-.contact-form-container {
+.form-card {
     background: white;
-    padding: 2.5rem;
     border-radius: 1rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .form-title {
-    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: #111827;
-    margin-bottom: 0.5rem;
+    margin: 0 0 1.5rem;
 }
 
-.form-subtitle {
-    font-size: 1rem;
-    color: #6b7280;
-    margin-bottom: 1.5rem;
+.form-title i {
+    color: #dc2626;
 }
 
-/* Auth Notice */
 .auth-notice {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 1rem 1.25rem;
+    padding: 0.875rem 1rem;
     background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
     border: 1px solid #10b981;
-    border-radius: 0.75rem;
-    margin-bottom: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
     color: #065f46;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .auth-notice i {
-    font-size: 1.25rem;
     color: #10b981;
-}
-
-.auth-notice strong {
-    color: #047857;
 }
 
 .contact-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
 }
 
 .form-label {
-    font-size: 0.875rem;
     font-weight: 600;
+    font-size: 0.875rem;
     color: #374151;
-    margin-bottom: 0.5rem;
 }
 
 .required {
@@ -528,13 +496,12 @@ const submit = () => {
 
 .form-input,
 .form-textarea {
-    width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #d1d5db;
+    border: 2px solid #e5e7eb;
     border-radius: 0.5rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: white;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    width: 100%;
 }
 
 .form-input:focus,
@@ -545,15 +512,19 @@ const submit = () => {
 }
 
 .form-input.readonly {
-    background-color: #f3f4f6;
+    background: #f3f4f6;
     color: #6b7280;
     cursor: not-allowed;
 }
 
-.form-hint {
+.form-input.input-error,
+.form-textarea.input-error {
+    border-color: #ef4444;
+}
+
+.error-text {
     font-size: 0.75rem;
-    color: #9ca3af;
-    margin-top: 0.25rem;
+    color: #ef4444;
 }
 
 .form-textarea {
@@ -561,30 +532,6 @@ const submit = () => {
     min-height: 120px;
 }
 
-.textarea-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.25rem;
-}
-
-.char-count {
-    font-size: 0.75rem;
-    color: #9ca3af;
-}
-
-.char-count.near-limit {
-    color: #f59e0b;
-    font-weight: 600;
-}
-
-.form-error {
-    color: #dc2626;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-/* Phone Input with Country Code */
 .phone-input-wrapper {
     display: flex;
     gap: 0;
@@ -600,11 +547,11 @@ const submit = () => {
     gap: 0.5rem;
     padding: 0.75rem 1rem;
     background: #f3f4f6;
-    border: 1px solid #d1d5db;
+    border: 2px solid #e5e7eb;
     border-right: none;
     border-radius: 0.5rem 0 0 0.5rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     height: 100%;
 }
 
@@ -616,7 +563,7 @@ const submit = () => {
     font-size: 1.25rem;
 }
 
-.country-code {
+.country-code-text {
     font-weight: 600;
     color: #374151;
     font-size: 0.9rem;
@@ -625,7 +572,7 @@ const submit = () => {
 .dropdown-icon {
     font-size: 0.75rem;
     color: #6b7280;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s;
 }
 
 .dropdown-icon.rotated {
@@ -653,7 +600,7 @@ const submit = () => {
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.2s;
 }
 
 .country-option:hover {
@@ -669,67 +616,61 @@ const submit = () => {
     color: #374151;
 }
 
-.country-option .country-code {
-    color: #6b7280;
-    font-size: 0.875rem;
-}
-
 .phone-input {
     flex: 1;
     border-radius: 0 0.5rem 0.5rem 0 !important;
 }
 
-/* Submit Button */
-.submit-button {
-    width: 100%;
-    padding: 1rem;
-    background-color: #dc2626;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.submit-button:hover:not(:disabled) {
-    background-color: #b91c1c;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-}
-
-.submit-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.button-content {
+.btn-submit {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-/* Contact Info */
-.contact-info-container {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
-.info-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 1rem;
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
-.info-items {
+.info-section {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+.info-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.info-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1.25rem;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .info-item {
@@ -739,110 +680,207 @@ const submit = () => {
 }
 
 .info-icon {
-    width: 3rem;
-    height: 3rem;
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.info-content {
-    flex: 1;
-}
-
-.info-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #6b7280;
-    margin-bottom: 0.25rem;
-}
-
-.info-value {
-    font-size: 1.125rem;
-    color: #111827;
-    font-weight: 500;
-}
-
-.info-value a {
-    color: #dc2626;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.info-value a:hover {
-    color: #b91c1c;
-    text-decoration: underline;
-}
-
-.social-links {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-.social-link {
     width: 2.5rem;
     height: 2.5rem;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
     border-radius: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #dc2626;
+    flex-shrink: 0;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.info-value {
+    font-weight: 600;
+    color: #111827;
+}
+
+.info-value.link {
+    color: #dc2626;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: color 0.2s;
 }
 
-.social-link:hover {
-    transform: translateY(-2px);
+.info-value.link:hover {
+    color: #b91c1c;
 }
 
-.social-link.youtube {
-    background-color: #FF0000;
+.response-card {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #10b981;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
 }
 
-.social-link.tiktok {
-    background-color: #000000;
+.response-icon {
+    width: 3rem;
+    height: 3rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    color: white;
+    font-size: 1.25rem;
 }
 
-.social-link.instagram {
-    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+.response-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #065f46;
+    margin: 0 0 0.25rem;
 }
 
-.social-x-twitter {
-    background: #181a1c;
+.response-card p {
+    font-size: 0.875rem;
+    color: #047857;
+    margin: 0;
 }
 
-.social-x-twitter:hover {
-    background-color: #222629;
+.quick-links-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 640px) {
+.quick-links-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1rem;
+}
+
+.quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quick-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.quick-link i {
+    color: #dc2626;
+}
+
+.quick-link:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+@media (max-width: 900px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .contact-hero {
+        padding: 3rem 1.5rem;
+    }
+
     .hero-title {
-        font-size: 2.5rem;
+        font-size: 2rem;
     }
 
-    .hero-subtitle {
-        font-size: 1.125rem;
-    }
-
-    .contact-form-container {
+    .contact-container {
         padding: 1.5rem;
     }
 
-    .form-title,
-    .info-title {
-        font-size: 1.5rem;
-    }
-
-    .country-dropdown {
-        width: 100%;
-        left: 0;
-        right: 0;
+    .form-row {
+        grid-template-columns: 1fr;
     }
 }
+
+/* ── AUTH SIENA (nepieteicies lietotājiem) ── */
+.auth-wall {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 3rem 1.5rem;
+    background: #f9fafb;
+}
+.auth-wall-inner {
+    text-align: center;
+    max-width: 420px;
+    background: white;
+    border-radius: 1.25rem;
+    padding: 3rem 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,.10);
+}
+.auth-wall-icon {
+    font-size: 3rem;
+    color: #dc2626;
+    margin-bottom: 1.25rem;
+}
+.auth-wall-title {
+    font-size: 1.625rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: .875rem;
+}
+.auth-wall-text {
+    font-size: 1rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+.auth-wall-btns {
+    display: flex;
+    gap: .875rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+.auth-btn-login {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .75rem 1.75rem;
+    background: #dc2626; color: white;
+    border-radius: .625rem; font-weight: 700; font-size: 1rem;
+    text-decoration: none; transition: all .25s;
+}
+.auth-btn-login:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(220,38,38,.3); }
+.auth-btn-register {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .75rem 1.75rem;
+    background: white; color: #374151;
+    border: 2px solid #e5e7eb;
+    border-radius: .625rem; font-weight: 600; font-size: 1rem;
+    text-decoration: none; transition: all .25s;
+}
+.auth-btn-register:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.auth-back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #9ca3af; font-size: .9375rem; text-decoration: none;
+    transition: color .2s;
+}
+.auth-back-link:hover { color: #dc2626; }
+
 </style>

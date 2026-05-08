@@ -34,11 +34,11 @@ use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Web maršruti
 |--------------------------------------------------------------------------
 */
 
-// ========== PUBLIC ROUTES ==========
+// ========== PUBLISKIE MARŠRUTI ==========
 
 // Home Page
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -70,13 +70,13 @@ Route::prefix('shop')->group(function () {
     // Category Products
     Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('shop.category.show');
 
-    // Shop Contact — PRASA AUTORIZĀCIJU (lai novērstu anonīmus troļļus)
+    // Shop Contact — publiski pieejams
     Route::get('/contact', function () {
         return Inertia::render('Shop/Contact');
-    })->middleware('auth')->name('shop.contact');
+    })->name('shop.contact');
 
     // Shop Contact Form Submission
-    Route::post('/contact', [ContactController::class, 'store'])->middleware('auth')->name('shop.contact.store');
+    Route::post('/contact', [ContactController::class, 'store'])->name('shop.contact.store');
 
     // FAQ, Shipping, Returns — publiski
     Route::get('/faq',      fn() => Inertia::render('Shop/FAQ'))->name('shop.faq');
