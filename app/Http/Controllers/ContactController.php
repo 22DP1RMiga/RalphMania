@@ -34,12 +34,12 @@ class ContactController extends Controller
             'message.max'           => 'Ziņojums nedrīkst pārsniegt 1000 rakstzīmes.',
         ]);
 
-        // Get authenticated user
-        $user = $request->user();
+        // user_id neobligāts — viesi var arī rakstīt
+        $userId = $request->user()?->id;
 
         // Create contact message
         $contactMessage = ContactMessage::create([
-            'user_id'      => $user->id,
+            'user_id'      => $userId,
             'name'         => $validated['name'],
             'email'        => $validated['email'],
             'country_code' => $validated['country_code'],

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Head, useForm, usePage, Link, router } from '@inertiajs/vue3';
+import { Head, useForm, usePage, Link } from '@inertiajs/vue3';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
 import { useI18n } from 'vue-i18n';
@@ -46,14 +46,14 @@ const toast = ref({
 });
 
 // Subject options
-const subjects = [
+const subjects = computed(() => [
     { value: 'order', label: t('shop_contact.subjects.order') },
     { value: 'shipping', label: t('shop_contact.subjects.shipping') },
     { value: 'returns', label: t('shop_contact.subjects.returns') },
     { value: 'product', label: t('shop_contact.subjects.product') },
     { value: 'payment', label: t('shop_contact.subjects.payment') },
     { value: 'other', label: t('shop_contact.subjects.other') },
-];
+]);
 
 // Form
 const form = useForm({
@@ -66,17 +66,12 @@ const form = useForm({
     message: '',
 });
 
-// Nepieteicies lietotājus novirza uz login lapu
+// Aizpilda formu ar lietotāja datiem (ja pieteicies)
 onMounted(() => {
-    if (!user.value) {
-        router.visit('/login', {
-            onSuccess: () => {},
-        });
-        return;
+    if (user.value) {
+        form.name  = user.value.username || user.value.first_name || '';
+        form.email = user.value.email || '';
     }
-    // Aizpilda formu ar lietotāja datiem
-    form.name  = user.value.username || user.value.first_name || '';
-    form.email = user.value.email || '';
 });
 
 // Select country code
@@ -116,12 +111,12 @@ const submit = () => {
 };
 
 // Contact info
-const contactInfo = [
+const contactInfo = computed(() => [
     { icon: 'fas fa-envelope', label: t('shop_contact.email'), value: 'ralphmania.roltonslv@gmail.com', href: 'mailto:ralphmania.roltonslv@gmail.com' },
     { icon: 'fas fa-phone', label: t('shop_contact.phone'), value: '+371 20 000 000', href: 'tel:+37120000000' },
     { icon: 'fas fa-clock', label: t('shop_contact.worktime'), value: t('shop_contact.working_hours'), href: null },
     { icon: 'fas fa-map-marker-alt', label: t('shop_contact.address'), value: t('shop_contact.riga_latvia'), href: null },
-];
+]);
 </script>
 
 <template>
@@ -136,34 +131,7 @@ const contactInfo = [
             @close="closeToast"
         />
 
-        <!-- Auth siena — rāda viesiem, ja JS redirect nestrādāja -->
-        <div v-if="!user" class="auth-wall">
-            <div class="auth-wall-inner">
-                <div class="auth-wall-icon"><i class="fas fa-lock"></i></div>
-                <h2 class="auth-wall-title">
-                    {{ t('shop_contact.login_required') || 'Nepieciešams pieteikties' }}
-                </h2>
-                <p class="auth-wall-text">
-                    {{ t('shop_contact.login_required_desc') || 'Lai sazinātos ar mums, lūdzu vispirms piesakies savā kontā.' }}
-                </p>
-                <div class="auth-wall-btns">
-                    <Link href="/login" class="auth-btn-login">
-                        <i class="fas fa-sign-in-alt"></i>
-                        {{ t('auth.login') || 'Pieteikties' }}
-                    </Link>
-                    <Link href="/register" class="auth-btn-register">
-                        <i class="fas fa-user-plus"></i>
-                        {{ t('auth.register') || 'Reģistrēties' }}
-                    </Link>
-                </div>
-                <Link href="/shop" class="auth-back-link">
-                    <i class="fas fa-arrow-left"></i>
-                    {{ t('shop.back_to_shop') || 'Atpakaļ uz veikalu' }}
-                </Link>
-            </div>
-        </div>
-
-        <div v-else class="contact-page">
+        <div class="contact-page">
             <!-- Hero Section -->
             <div class="contact-hero">
                 <div class="hero-content">

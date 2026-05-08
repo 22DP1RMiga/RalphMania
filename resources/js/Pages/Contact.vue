@@ -48,7 +48,7 @@ const toast = ref({
 
 // Form with pre-filled user data
 const form = useForm({
-    username: '',
+    name: '',
     email: '',
     country_code: '+371',
     phone: '',
@@ -59,7 +59,7 @@ const form = useForm({
 // Pre-fill form with user data on mount
 onMounted(() => {
     if (user.value) {
-        form.username = user.value.username || '';
+        form.name = user.value.username || user.value.first_name || '';
         form.email = user.value.email || '';
         // If user has phone saved in profile, could use it here
         // form.phone = user.value.phone || '';
@@ -155,7 +155,7 @@ const submit = () => {
                         <p class="form-subtitle">{{ $t('contact.form.subtitle') }}</p>
 
                         <!-- Auth Notice -->
-                        <div class="auth-notice">
+                        <div v-if="user" class="auth-notice">
                             <i class="fas fa-user-check"></i>
                             <span>{{ $t('contact.hero.youAreLoggedInAs') }} <strong>{{ user.username }}</strong></span>
                         </div>
@@ -169,14 +169,14 @@ const submit = () => {
                                 </label>
                                 <input
                                     id="username"
-                                    v-model="form.username"
+                                    v-model="form.name"
                                     type="text"
-                                    class="form-input readonly"
-                                    readonly
+                                    :class="['form-input', user ? 'readonly' : '']"
+                                    :readonly="!!user"
                                     required
                                 />
-                                <span class="form-hint">{{ $t('contact.form.usernameHint') }}</span>
-                                <span v-if="form.errors.username" class="form-error">{{ form.errors.username }}</span>
+                                <span v-if="user" class="form-hint">{{ $t('contact.form.usernameHint') }}</span>
+                                <span v-if="form.errors.name" class="form-error">{{ form.errors.name }}</span>
                             </div>
 
                             <!-- Email (readonly - from user) -->
@@ -189,11 +189,11 @@ const submit = () => {
                                     id="email"
                                     v-model="form.email"
                                     type="email"
-                                    class="form-input readonly"
-                                    readonly
+                                    :class="['form-input', user ? 'readonly' : '']"
+                                    :readonly="!!user"
                                     required
                                 />
-                                <span class="form-hint">{{ $t('contact.form.emailHint') }}</span>
+                                <span v-if="user" class="form-hint">{{ $t('contact.form.emailHint') }}</span>
                                 <span v-if="form.errors.email" class="form-error">{{ form.errors.email }}</span>
                             </div>
 
