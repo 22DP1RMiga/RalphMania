@@ -48,16 +48,12 @@ Route::get('/about', function () {
     return Inertia::render('About');
 })->name('about');
 
-// Contact Page - REQUIRES AUTHENTICATION
-Route::middleware('auth')->group(function () {
-    // Contact Page View
-    Route::get('/contact', function () {
-        return Inertia::render('Contact');
-    })->name('contact');
+// Contact Page - publiski pieejams
+Route::get('/contact', function () {
+    return Inertia::render('Contact');
+})->name('contact');
 
-    // Contact Form Submission
-    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
-});
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 // Newsletter subscription (public - can be guest)
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
