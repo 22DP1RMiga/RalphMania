@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Mail;
+use App\Helpers\LocaleHelper;
 use App\Mail\OrderConfirmation;
 
 class OrderController extends Controller
@@ -271,7 +272,7 @@ class OrderController extends Controller
 
             // ─── APSTIPRINĀJUMA E-PASTS ──────────────────────────────────────
             try {
-                Mail::to($order->customer_email)->send(new OrderConfirmation($order));
+                Mail::to($order->customer_email)->send(new OrderConfirmation($order, auth()->user()?->locale ?? 'en'));
                 \Log::info('Order confirmation email sent', ['order_id' => $order->id]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send order confirmation email', [

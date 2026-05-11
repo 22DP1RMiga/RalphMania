@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -95,20 +96,24 @@ class ProductController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(8)
             ->get()
-            ->map(fn($p) => [
-                'id'             => $p->id,
-                'name_lv'        => $p->name_lv,
-                'name_en'        => $p->name_en,
-                'slug'           => $p->slug,
-                'price'          => (float) $p->price,
-                'price_ex_vat'   => $p->price_ex_vat,
-                'vat_amount'     => $p->vat_amount,
-                'vat_rate'       => $vatRate,
-                'compare_price'  => $p->compare_price ? (float) $p->compare_price : null,
-                'image'          => $p->image,
-                'stock_quantity' => $p->stock_quantity,
-                'has_sizes'      => (bool) $p->has_sizes,
-            ]);
+            ->map(function($p) {
+                $locale = App::getLocale();
+                return [
+                    'id'             => $p->id,
+                    'name'           => $locale === 'en' ? ($p->name_en ?: $p->name_lv) : $p->name_lv,
+                    'name_lv'        => $p->name_lv,
+                    'name_en'        => $p->name_en,
+                    'slug'           => $p->slug,
+                    'price'          => (float) $p->price,
+                    'price_ex_vat'   => $p->price_ex_vat,
+                    'vat_amount'     => $p->vat_amount,
+                    'vat_rate'       => $vatRate,
+                    'compare_price'  => $p->compare_price ? (float) $p->compare_price : null,
+                    'image'          => $p->image,
+                    'stock_quantity' => $p->stock_quantity,
+                    'has_sizes'      => (bool) $p->has_sizes,
+                ];
+            });
 
         return response()->json(['data' => $products]);
     }
@@ -132,12 +137,16 @@ class ProductController extends Controller
     {
         $vatRate = Product::vatRate();
 
+        $locale = App::getLocale();
+
         return [
             'id'                  => $p->id,
+            'name'                => $locale === 'en' ? ($p->name_en ?: $p->name_lv) : $p->name_lv,
             'name_lv'             => $p->name_lv,
             'name_en'             => $p->name_en,
             'slug'                => $p->slug,
             'sku'                 => $p->sku,
+            'description'         => $locale === 'en' ? ($p->description_en ?: $p->description_lv) : $p->description_lv,
             'description_lv'      => $p->description_lv,
             'description_en'      => $p->description_en,
             'price'               => (float) $p->price,

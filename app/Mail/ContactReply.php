@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use App\Helpers\LocaleHelper;
 use Illuminate\Queue\SerializesModels;
 
 class ContactReply extends Mailable
@@ -16,14 +17,16 @@ class ContactReply extends Mailable
 
     public ContactMessage $contactMessage;
     public string $replyText;
+    public string $locale;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(ContactMessage $contactMessage, string $replyText)
+    public function __construct(ContactMessage $contactMessage, string $replyText, string $locale = 'lv')
     {
         $this->contactMessage = $contactMessage;
         $this->replyText = $replyText;
+        $this->locale = $locale;
     }
 
     /**
@@ -42,6 +45,8 @@ class ContactReply extends Mailable
      */
     public function content(): Content
     {
+        LocaleHelper::set($this->locale);
+
         return new Content(
             view: 'emails.contact-reply',
             with: [

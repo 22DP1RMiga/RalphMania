@@ -54,6 +54,15 @@ watch(currentLocale, (newLang) => {
 
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
+
+    showToast(
+        currentLocale.value === 'lv'
+            ? 'Valoda nomainīta uz latviešu'
+            : 'Language changed to English',
+        'success'
+    );
+
+    window.axios.put('/profile/locale', { locale: currentLocale.value });
 };
 
 // Active section

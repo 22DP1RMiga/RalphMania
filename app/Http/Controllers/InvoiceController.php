@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Helpers\LocaleHelper;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -30,12 +31,15 @@ class InvoiceController extends Controller
                 'city' => 'Rīga, LV-1010',
                 'country' => 'Latvia',
                 'phone' => '+371 20000000',
-                'email' => 'info@ralphmania.com',
-                'website' => 'www.ralphmania.com',
+                'email' => 'ralphmania.roltonslv@gmail.com',
+                'website' => 'https://ralphmania.rvtdev.tech/',
                 'reg_number' => '40103123456',
                 'vat_number' => 'LV40103123456',
             ],
         ];
+
+        // Iestata valodu pēc lietotāja preferences
+        LocaleHelper::setForUser($order->user);
 
         // Generate PDF
         $pdf = Pdf::loadView('invoices.order', $data);
@@ -64,12 +68,14 @@ class InvoiceController extends Controller
                 'city' => 'Rīga, LV-1010',
                 'country' => 'Latvia',
                 'phone' => '+371 20000000',
-                'email' => 'info@ralphmania.com',
-                'website' => 'www.ralphmania.com',
+                'email' => 'ralphmania.roltonslv@gmail.com',
+                'website' => 'https://ralphmania.rvtdev.tech/',
                 'reg_number' => '40103123456',
                 'vat_number' => 'LV40103123456',
             ],
         ];
+
+        LocaleHelper::setForUser($order->user);
 
         $pdf = Pdf::loadView('invoices.order', $data);
 

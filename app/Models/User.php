@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'role_id',
         'is_active',
         'is_public',
+        'locale',
         'last_login_at',
     ];
 

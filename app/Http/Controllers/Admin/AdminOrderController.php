@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Helpers\LocaleHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminOrderController extends Controller
@@ -19,9 +20,9 @@ class AdminOrderController extends Controller
             'country' => 'Latvija',
             'reg_number' => '40001234567',
             'vat_number' => 'LV40001234567',
-            'email' => 'info@ralphmania.lv',
+            'email' => 'ralphmania.roltonslv@gmail.lv',
             'phone' => '+371 20000000',
-            'website' => 'www.ralphmania.lv',
+            'website' => 'https://ralphmania.rvtdev.tech/',
         ];
     }
 
@@ -97,6 +98,8 @@ class AdminOrderController extends Controller
     {
         $order->load('items.product', 'payment', 'user');
 
+        LocaleHelper::setForUser($order->user);
+
         $pdf = Pdf::loadView('invoices.order', [
             'order' => $order,
             'company' => $this->getCompanyInfo(),
@@ -108,6 +111,8 @@ class AdminOrderController extends Controller
     public function printInvoice(Order $order)
     {
         $order->load('items.product', 'payment', 'user');
+
+        LocaleHelper::setForUser($order->user);
 
         return view('invoices.order', [
             'order' => $order,

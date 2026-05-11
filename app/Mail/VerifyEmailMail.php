@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use App\Helpers\LocaleHelper;
 use Illuminate\Queue\SerializesModels;
 
 class VerifyEmailMail extends Mailable
@@ -14,14 +15,16 @@ class VerifyEmailMail extends Mailable
 
     public string $verificationUrl;
     public string $userName;
+    public string $locale;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $verificationUrl, string $userName)
+    public function __construct(string $verificationUrl, string $userName, string $locale = 'lv')
     {
         $this->verificationUrl = $verificationUrl;
         $this->userName = $userName;
+        $this->locale = $locale;
     }
 
     /**
@@ -29,8 +32,10 @@ class VerifyEmailMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        LocaleHelper::set($this->locale);
+
         return new Envelope(
-            subject: 'Apstipriniet savu e-pasta adresi - RalphMania',
+            subject: __('email.verify.subject') . ' - RalphMania',
         );
     }
 
@@ -39,6 +44,8 @@ class VerifyEmailMail extends Mailable
      */
     public function content(): Content
     {
+        LocaleHelper::set($this->locale);
+
         return new Content(
             view: 'emails.verify-email',
             with: [

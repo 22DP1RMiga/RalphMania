@@ -23,8 +23,9 @@ class VerifyEmailNotification extends BaseVerifyEmail
     {
         $verificationUrl = $this->verificationUrl($notifiable);
         $userName        = $notifiable->username ?? $notifiable->name ?? $notifiable->email;
+        $locale          = $notifiable->locale ?? 'lv';
 
-        return (new VerifyEmailMail($verificationUrl, $userName))
+        return (new VerifyEmailMail($verificationUrl, $userName, $locale))
             ->to($notifiable->email);
     }
 
