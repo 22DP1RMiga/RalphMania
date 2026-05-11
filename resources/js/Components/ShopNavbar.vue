@@ -2,6 +2,7 @@
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ToastNotification from '@/Components/ToastNotification.vue';
 import axios from 'axios';
 
 const page = usePage();
@@ -31,7 +32,22 @@ const isUserDropdownOpen = ref(false);
 // Navbar augstums (lai pareizi pozicionētu slideout paneļus)
 const NAVBAR_H = 64; // px — atbilst navbar augstumam
 
-const toggleLocale = () => { currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv'; };
+const toast = ref({ show: false, message: '', type: 'success' });
+
+const toggleLocale = () => {
+    currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
+
+    toast.value = {
+        show: true,
+        message: currentLocale.value === 'en' ? 'Language changed to English' : 'Valoda nomainīta uz latviešu',
+        type: 'success',
+    };
+
+    const user = page.props.auth?.user;
+    if (user) {
+        window.axios.put('/profile/locale', { locale: currentLocale.value });
+    }
+};
 
 const toggleCategories = () => {
     isCategoriesOpen.value = !isCategoriesOpen.value;
@@ -142,6 +158,12 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 </script>
 
 <template>
+    <ToastNotification
+        :show="toast.show"
+        :message="toast.message"
+        :type="toast.type"
+        @close="toast.show = false"
+    />
     <nav class="shop-navbar">
         <div class="shop-navbar-container">
             <!-- ── KREISĀ PUSE ── -->
@@ -217,6 +239,16 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                     </Transition>
                 </div>
 
+                <!-- Guest pogas -->
+                <div v-else class="navbar-guest">
+                    <Link href="/login" class="guest-btn guest-btn-login">
+                        {{ $t('auth.login') }}
+                    </Link>
+                    <Link href="/register" class="guest-btn guest-btn-register">
+                        {{ $t('auth.register') }}
+                    </Link>
+                </div>
+
                 <!-- Grozs -->
                 <Link href="/cart" class="shop-icon-btn cart-btn">
                     <i class="fas fa-shopping-cart"></i>
@@ -243,6 +275,18 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                         <button @click="closeMenus" class="cats-close-btn">
                             <i class="fas fa-times"></i>
                         </button>
+                    </div>
+
+                    <!-- Guest pogas mobilajā panelī -->
+                    <div v-if="!isAuthenticated" class="cats-guest-btns">
+                        <Link href="/login" class="cats-guest-btn cats-guest-login" @click="closeMenus">
+                            <i class="fas fa-sign-in-alt"></i>
+                            {{ $t('auth.login') }}
+                        </Link>
+                        <Link href="/register" class="cats-guest-btn cats-guest-register" @click="closeMenus">
+                            <i class="fas fa-user-plus"></i>
+                            {{ $t('auth.register') }}
+                        </Link>
                     </div>
 
                     <nav class="cats-nav">
@@ -765,5 +809,90 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     .shop-navbar-container { padding: 0 1rem; }
     .cats-panel { width: 100%; max-width: 100%; }
     .locale-btn { display: none; } /* Par mazu ekrānam - pa tiešo poga*/
+}
+
+
+/* ══ GUEST POGAS — NAVBAR (desktop/tablet) ══════════════════════ */
+.navbar-guest {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.guest-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.guest-btn-login {
+    color: #dc2626;
+    border: 1px solid #dc2626;
+}
+.guest-btn-login:hover { background-color: #fef2f2; }
+
+.guest-btn-register {
+    background-color: #dc2626;
+    color: white;
+    border: 1px solid #dc2626;
+}
+.guest-btn-register:hover { background-color: #b91c1c; }
+
+/* Tablet (≤768px) — mazāks teksts */
+@media (max-width: 768px) {
+    .guest-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Mobilais (≤480px) — paslēpj navbar-guest, rāda cats panelī */
+@media (max-width: 480px) {
+    .navbar-guest { display: none; }
+}
+
+/* ══ GUEST POGAS — KATEGORIJU PANELIS (mobilais) ════════════════ */
+.cats-guest-btns {
+    display: none; /* paslēpts uz desktop */
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.cats-guest-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.cats-guest-login {
+    color: #dc2626;
+    border: 1.5px solid #dc2626;
+}
+.cats-guest-login:hover { background: #fef2f2; }
+
+.cats-guest-register {
+    background: #dc2626;
+    color: white;
+    border: 1.5px solid #dc2626;
+}
+.cats-guest-register:hover { background: #b91c1c; }
+
+@media (max-width: 480px) {
+    .cats-guest-btns { display: flex; }
 }
 </style>

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import ToastNotification from '@/Components/ToastNotification.vue';
 
 // Click outside directive
 const vClickOutside = {
@@ -60,17 +61,20 @@ watch(currentLocale, (newLang) => {
     localStorage.setItem('lang', newLang);
 });
 
+const toast = ref({ show: false, message: '', type: 'success' });
+
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
 
-    // Saglabā serverī ja lietotājs ir pieteicies
+    toast.value = {
+        show: true,
+        message: currentLocale.value === 'en' ? 'Language changed to English' : 'Valoda nomainīta uz latviešu',
+        type: 'success',
+    };
+
     const user = page.props.auth?.user;
     if (user) {
-        router.put('/profile/locale', { locale: currentLocale.value }, {
-            preserveScroll: true,
-            preserveState: true,
-            only: [],
-        });
+        window.axios.put('/profile/locale', { locale: currentLocale.value });
     }
 };
 
@@ -218,6 +222,12 @@ const isActiveRoute = (url) => {
 </script>
 
 <template>
+    <ToastNotification
+        :show="toast.show"
+        :message="toast.message"
+        :type="toast.type"
+        @close="toast.show = false"
+    />
     <div class="admin-layout" :class="{ 'sidebar-collapsed': !isSidebarOpen }">
         <!-- Sidebar -->
         <aside class="admin-sidebar" :class="{ 'mobile-open': isMobileSidebarOpen }">

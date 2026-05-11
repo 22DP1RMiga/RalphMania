@@ -2,6 +2,7 @@
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ToastNotification from '@/Components/ToastNotification.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -38,8 +39,21 @@ watch(currentLocale, (newLang) => {
 });
 
 // Toggle locale function
+const toast = ref({ show: false, message: '', type: 'success' });
+
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
+
+    toast.value = {
+        show: true,
+        message: currentLocale.value === 'en' ? 'Language changed to English' : 'Valoda nomainīta uz latviešu',
+        type: 'success',
+    };
+
+    const user = page.props.auth?.user;
+    if (user) {
+        window.axios.put('/profile/locale', { locale: currentLocale.value });
+    }
 };
 
 // Mobile menu
@@ -107,6 +121,12 @@ const goToCourierDashboard = () => {
 </script>
 
 <template>
+    <ToastNotification
+        :show="toast.show"
+        :message="toast.message"
+        :type="toast.type"
+        @close="toast.show = false"
+    />
     <nav class="main-navbar">
         <div class="navbar-container">
             <!-- Left: Logo & Name -->

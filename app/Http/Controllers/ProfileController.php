@@ -254,7 +254,7 @@ class ProfileController extends Controller
     /**
      * Update the user's preferred language.
      */
-    public function updateLocale(Request $request): \Illuminate\Http\Response
+    public function updateLocale(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
             'locale' => ['required', 'string', 'in:lv,en'],
@@ -262,6 +262,7 @@ class ProfileController extends Controller
 
         $request->user()->update(['locale' => $validated['locale']]);
 
-        return response()->noContent();
+        return response()->json(['ok' => true])
+            ->header('X-Inertia', 'false');
     }
 }
