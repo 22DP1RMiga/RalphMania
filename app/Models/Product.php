@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\App;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -42,6 +43,8 @@ class Product extends Model
         'discount_percentage',
         'price_ex_vat',
         'vat_amount',
+        'name',
+        'description',
     ];
 
     // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
@@ -85,6 +88,24 @@ class Product extends Model
     }
 
     // ─── ACCESSORS ───────────────────────────────────────────────────────────
+
+    /**
+     * Atgriež nosaukumu aktīvajā valodā.
+     */
+    public function getNameAttribute(): string
+    {
+        $locale = App::getLocale();
+        return $locale === 'en' ? ($this->name_en ?: $this->name_lv) : $this->name_lv;
+    }
+
+    /**
+     * Atgriež aprakstu aktīvajā valodā.
+     */
+    public function getDescriptionAttribute(): ?string
+    {
+        $locale = App::getLocale();
+        return $locale === 'en' ? ($this->description_en ?: $this->description_lv) : $this->description_lv;
+    }
 
     public function getDiscountPercentageAttribute(): int
     {

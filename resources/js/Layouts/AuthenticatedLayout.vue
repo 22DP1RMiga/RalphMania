@@ -48,6 +48,16 @@ watch(currentLocale, (newLang) => {
 
 const toggleLocale = () => {
     currentLocale.value = currentLocale.value === 'lv' ? 'en' : 'lv';
+
+    // Saglabā serverī ja lietotājs ir pieteicies
+    const user = page.props.auth?.user;
+    if (user) {
+        router.put('/profile/locale', { locale: currentLocale.value }, {
+            preserveScroll: true,
+            preserveState: true,
+            only: [],
+        });
+    }
 };
 
 // User dropdown

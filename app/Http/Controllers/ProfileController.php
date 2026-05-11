@@ -250,4 +250,18 @@ class ProfileController extends Controller
             'message' => 'Privacy settings updated successfully'
         ]);
     }
+
+    /**
+     * Update the user's preferred language.
+     */
+    public function updateLocale(Request $request): \Illuminate\Http\Response
+    {
+        $validated = $request->validate([
+            'locale' => ['required', 'string', 'in:lv,en'],
+        ]);
+
+        $request->user()->update(['locale' => $validated['locale']]);
+
+        return response()->noContent();
+    }
 }

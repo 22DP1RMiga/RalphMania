@@ -26,6 +26,7 @@ return new class extends Migration
             $table->foreignId('role_id')->default(2)->constrained('roles')->comment('FK to roles (1=guest, 2=user, 3=admin, 4=courier)');
             $table->boolean('is_active')->default(true)->comment('Vai konts ir aktīvs / Is account active');
             $table->boolean('is_public')->default(true)->comment('Vai profils ir publiski redzams / Is profile publicly visible');
+            $table->string('locale', 5)->default('lv')->comment('Lietotāja valoda / User language (lv/en)');
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

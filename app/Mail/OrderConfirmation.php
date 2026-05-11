@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
+use App\Helpers\LocaleHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderConfirmation extends Mailable
@@ -19,7 +20,8 @@ class OrderConfirmation extends Mailable
      * Create a new message instance.
      */
     public function __construct(
-        public Order $order
+        public Order $order,
+        public string $locale = 'lv',
     ) {}
 
     /**
@@ -27,8 +29,10 @@ class OrderConfirmation extends Mailable
      */
     public function envelope(): Envelope
     {
+        LocaleHelper::set($this->locale);
+
         return new Envelope(
-            subject: 'Pasūtījuma apstiprinājums - ' . $this->order->order_number,
+            subject: __('email.order.subject') . ' - ' . $this->order->order_number,
         );
     }
 
@@ -37,6 +41,8 @@ class OrderConfirmation extends Mailable
      */
     public function content(): Content
     {
+        LocaleHelper::set($this->locale);
+
         return new Content(
             view: 'emails.order-confirmation',
             with: [
@@ -66,6 +72,8 @@ class OrderConfirmation extends Mailable
      */
     private function generateInvoicePdf()
     {
+        $this->order->loadMissing(['items.product', 'payment']);
+
         $data = [
             'order' => $this->order,
             'company' => [
@@ -74,8 +82,8 @@ class OrderConfirmation extends Mailable
                 'city' => 'Rīga, LV-1010',
                 'country' => 'Latvia',
                 'phone' => '+371 20000000',
-                'email' => 'info@ralphmania.com',
-                'website' => 'www.ralphmania.com',
+                'email' => 'ralphmania.roltonslv@gmail.com',
+                'website' => 'https://ralphmania.rvtdev.tech/',
                 'reg_number' => '40103123456',
                 'vat_number' => 'LV40103123456',
             ],

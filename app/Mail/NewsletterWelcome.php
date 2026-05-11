@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use App\Helpers\LocaleHelper;
 use Illuminate\Queue\SerializesModels;
 
 class NewsletterWelcome extends Mailable
@@ -16,17 +17,22 @@ class NewsletterWelcome extends Mailable
     public function __construct(
         public NewsletterSubscriber $subscriber,
         public string $userName = '',
+        public string $locale = 'lv',
     ) {}
 
     public function envelope(): Envelope
     {
+        LocaleHelper::set($this->locale);
+
         return new Envelope(
-            subject: 'Laipni lūdzam RalphMania abonentiem! 🎉',
+            subject: __('email.newsletter.subject'),
         );
     }
 
     public function content(): Content
     {
+        LocaleHelper::set($this->locale);
+
         return new Content(
             view: 'emails.newsletter-welcome',
             with: [

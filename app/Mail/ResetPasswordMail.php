@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use App\Helpers\LocaleHelper;
 use Illuminate\Queue\SerializesModels;
 
 class ResetPasswordMail extends Mailable
@@ -14,14 +15,16 @@ class ResetPasswordMail extends Mailable
 
     public string $resetUrl;
     public string $userName;
+    public string $locale;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $resetUrl, string $userName)
+    public function __construct(string $resetUrl, string $userName, string $locale = 'lv')
     {
         $this->resetUrl = $resetUrl;
         $this->userName = $userName;
+        $this->locale = $locale;
     }
 
     /**
@@ -29,8 +32,10 @@ class ResetPasswordMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        LocaleHelper::set($this->locale);
+
         return new Envelope(
-            subject: 'Paroles atjaunošana - RalphMania',
+            subject: __('email.reset.subject') . ' - RalphMania',
         );
     }
 
@@ -39,6 +44,8 @@ class ResetPasswordMail extends Mailable
      */
     public function content(): Content
     {
+        LocaleHelper::set($this->locale);
+
         return new Content(
             view: 'emails.reset-password',
             with: [

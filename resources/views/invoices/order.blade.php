@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ $order->delivery_country === 'Latvia' ? 'lv' : 'en' }}">
+<html lang="{{ App::getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-        {{ $order->delivery_country === 'Latvia' ? 'Rēķins' : 'Invoice' }}
-        — {{ $order->order_number }}
+        {{ __('email.invoice.title') }} — {{ $order->order_number }}
     </title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -141,7 +140,7 @@
      PVN = subtotal × 21 / 121  (NEvis × 0.21)
      ════════════════════════════════════════════════════════════════ --}}
 @php
-    $isLv = $order->delivery_country === 'Latvia';
+    $isLv = App::getLocale() === 'lv';
 
     // ── PVN APRĒĶINS (t.sk. no bruto) ────────────────────────────
     $vatRate     = 21; // %
@@ -196,16 +195,16 @@
                 {{ $company['address'] }}<br>
                 {{ $company['city'] }}<br>
                 {{ $company['country'] }}<br>
-                {{ $isLv ? 'Reģ. Nr' : 'Reg. No' }}: {{ $company['reg_number'] }}<br>
-                {{ $isLv ? 'PVN Nr' : 'VAT No' }}: {{ $company['vat_number'] }}
+                {{ __('email.invoice.reg_no') }}: {{ $company['reg_number'] }}<br>
+                {{ __('email.invoice.vat_no') }}: {{ $company['vat_number'] }}
             </div>
         </div>
         <div class="header-right">
-            <div class="invoice-title">{{ $isLv ? 'RĒĶINS' : 'INVOICE' }}</div>
+            <div class="invoice-title">{{ __('email.invoice.title') }}</div>
             <div class="invoice-meta" style="line-height: 2;">
-                <strong>{{ $isLv ? 'Pasūtījums' : 'Order' }}:</strong> {{ $order->order_number }}<br>
-                <strong>{{ $isLv ? 'Datums' : 'Date' }}:</strong> {{ $order->created_at->format('d.m.Y') }}<br>
-                <strong>{{ $isLv ? 'Statuss' : 'Status' }}:</strong>
+                <strong>{{ __('email.invoice.order') }}:</strong> {{ $order->order_number }}<br>
+                <strong>{{ __('email.invoice.date') }}:</strong> {{ $order->created_at->format('d.m.Y') }}<br>
+                <strong>{{ __('email.invoice.status') }}:</strong>
                 <span class="status-badge status-{{ $order->status }}">{{ $statusLabel }}</span>
             </div>
         </div>
@@ -214,11 +213,11 @@
     {{-- ── KLIENTA UN PIEGĀDES INFO ────────────────────────────── --}}
     <div class="section">
         <div class="section-title">
-            {{ $isLv ? 'Klienta un piegādes informācija' : 'Customer & Delivery Information' }}
+            {{ __('email.invoice.customer_delivery') }}
         </div>
         <div class="info-grid">
             <div class="info-col">
-                <div class="info-label">{{ $isLv ? 'Klients' : 'Customer' }}</div>
+                <div class="info-label">{{ __('email.invoice.customer') }}</div>
                 <div class="info-value">
                     {{ $order->customer_name }}<br>
                     {{ $order->customer_email }}<br>
@@ -226,7 +225,7 @@
                 </div>
             </div>
             <div class="info-col" style="border-left: none;">
-                <div class="info-label">{{ $isLv ? 'Piegādes adrese' : 'Delivery Address' }}</div>
+                <div class="info-label">{{ __('email.invoice.delivery_address') }}</div>
                 <div class="info-value">
                     {{ $order->delivery_address }}<br>
                     {{ $order->delivery_city }}@if($order->delivery_postal_code), {{ $order->delivery_postal_code }}@endif<br>
@@ -239,24 +238,24 @@
     {{-- ── PRODUKTU TABULA ─────────────────────────────────────── --}}
     <div class="section">
         <div class="section-title">
-            {{ $isLv ? 'Pasūtījuma saturs' : 'Order Contents' }}
+            {{ __('email.invoice.contents') }}
         </div>
         <table>
             <thead>
             <tr>
-                <th class="text-center" style="width: 35px;">{{ $isLv ? 'Nr.' : 'No.' }}</th>
-                <th>{{ $isLv ? 'Produkts' : 'Product' }}</th>
-                <th class="text-center" style="width: 65px;">{{ $isLv ? 'Izmērs' : 'Size' }}</th>
-                <th class="text-center" style="width: 75px;">{{ $isLv ? 'Daudz.' : 'Qty' }}</th>
-                <th class="text-right" style="width: 90px;">{{ $isLv ? 'Vienības cena' : 'Unit Price' }}</th>
-                <th class="text-right" style="width: 90px;">{{ $isLv ? 'Kopā' : 'Total' }}</th>
+                <th class="text-center" style="width: 35px;">{{ __('email.invoice.no') }}</th>
+                <th>{{ __('email.invoice.product') }}</th>
+                <th class="text-center" style="width: 65px;">{{ __('email.invoice.size') }}</th>
+                <th class="text-center" style="width: 75px;">{{ __('email.invoice.qty') }}</th>
+                <th class="text-right" style="width: 90px;">{{ __('email.invoice.unit_price') }}</th>
+                <th class="text-right" style="width: 90px;">{{ __('email.invoice.total') }}</th>
             </tr>
             </thead>
             <tbody>
             @foreach($order->items as $index => $item)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item->product_name }}</td>
+                    <td>{{ App::getLocale() === 'en' && $item->product ? ($item->product->name_en ?: $item->product_name) : $item->product_name }}</td>
                     <td class="text-center">{{ $item->size ?? '—' }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
                     <td class="text-right">{{ number_format($item->price, 2) }} EUR</td>
@@ -272,26 +271,26 @@
 
         {{-- Starpsumma --}}
         <div class="totals-row">
-            <div class="totals-label">{{ $isLv ? 'Starpsumma' : 'Subtotal' }}:</div>
+            <div class="totals-label">{{ __('email.invoice.subtotal') }}:</div>
             <div class="totals-value">{{ number_format($order->subtotal, 2) }} EUR</div>
         </div>
 
         {{-- t.sk. PVN — informatīva rinda (PVN jau ir iekļauts cenās) --}}
         <div class="totals-row vat-included-row">
             <div class="totals-label">
-                {{ $isLv ? "t.sk. PVN ({$vatRate}%)" : "incl. VAT ({$vatRate}%)" }}:
+                {{ __('email.invoice.vat_incl', ['rate' => $vatRate]) }}:
             </div>
             <div class="totals-value">{{ number_format($vatAmount, 2) }} EUR</div>
         </div>
 
         {{-- Piegāde --}}
         <div class="totals-row{{ $order->shipping_cost == 0 ? ' shipping-free' : '' }}">
-            <div class="totals-label">{{ $isLv ? 'Piegāde' : 'Shipping' }}:</div>
+            <div class="totals-label">{{ __('email.invoice.shipping') }}:</div>
             <div class="totals-value">
                 @if($order->shipping_cost > 0)
                     {{ number_format($order->shipping_cost, 2) }} EUR
                 @else
-                    {{ $isLv ? 'Bezmaksas' : 'Free' }}
+                    {{ __('email.invoice.free') }}
                 @endif
             </div>
         </div>
@@ -300,7 +299,7 @@
         @if($order->discount_amount > 0)
             <div class="totals-row discount-row">
                 <div class="totals-label">
-                    {{ $isLv ? 'Atlaide' : 'Discount' }}
+                    {{ __('email.invoice.discount') }}
                     @if($order->coupon_code)
                         <span class="coupon-badge">{{ $order->coupon_code }}</span>
                     @endif:
@@ -313,7 +312,7 @@
 
         {{-- KOPĀ --}}
         <div class="totals-row total-final">
-            <div class="totals-label">{{ $isLv ? 'KOPĀ APMAKSAI' : 'TOTAL DUE' }}:</div>
+            <div class="totals-label">{{ __('email.invoice.total_due') }}:</div>
             <div class="totals-value">{{ number_format($order->total_amount, 2) }} EUR</div>
         </div>
 
@@ -323,18 +322,18 @@
     @if($order->payment)
         <div class="payment-info">
             <div style="font-size: 10pt; line-height: 1.8;">
-                <strong>{{ $isLv ? 'Maksājuma veids' : 'Payment Method' }}:</strong>
+                <strong>{{ __('email.invoice.payment_method') }}:</strong>
                 <span class="payment-method">{{ $paymentLabel }}</span>
                 @if($order->payment->payment_method === 'card' && $order->payment->card_last4)
                     (•••• {{ $order->payment->card_last4 }}
                     @if($order->payment->card_brand) — {{ $order->payment->card_brand }}@endif)
                 @endif
                 <br>
-                <strong>{{ $isLv ? 'Maksājuma statuss' : 'Payment Status' }}:</strong>
+                <strong>{{ __('email.invoice.payment_status') }}:</strong>
                 <span class="status-badge status-{{ $order->payment->status }}">{{ $paymentStatusLabel }}</span>
                 @if($order->paid_at)
                     <br>
-                    <strong>{{ $isLv ? 'Apmaksāts' : 'Paid' }}:</strong>
+                    <strong>{{ __('email.invoice.paid') }}:</strong>
                     {{ $order->paid_at->format('d.m.Y H:i') }}
                 @endif
             </div>
@@ -344,7 +343,7 @@
     {{-- ── PIEZĪMES ────────────────────────────────────────────── --}}
     @if($order->notes)
         <div class="section">
-            <div class="section-title">{{ $isLv ? 'Piezīmes' : 'Notes' }}</div>
+            <div class="section-title">{{ __('email.invoice.notes') }}</div>
             <div style="background: #fef2f2; padding: 15px; border: 1px solid #fecaca; border-radius: 4px;">
                 {{ $order->notes }}
             </div>
@@ -355,9 +354,7 @@
     <div class="footer">
         <p>
             <strong style="color: #dc2626;">
-                {{ $isLv
-                    ? "Paldies par pirkumu {$company['name']} veikalā!"
-                    : "Thank you for shopping at {$company['name']}!" }}
+                {{ __('email.invoice.thank_you', ['name' => $company['name']]) }}
             </strong><br>
             {{ $isLv ? 'Jautājumu gadījumā sazinieties ar mums' : 'For any questions, contact us' }}:
             {{ $company['email'] }} | {{ $company['phone'] }}<br>

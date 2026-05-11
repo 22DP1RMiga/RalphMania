@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Address;
+use App\Helpers\LocaleHelper;
 use Illuminate\Queue\SerializesModels;
 
 class ContactMessageReceived extends Mailable
@@ -41,6 +42,9 @@ class ContactMessageReceived extends Mailable
      */
     public function content(): Content
     {
+        // Kontakta ziņojumiem admins vienmēr saņem lv
+        LocaleHelper::set('lv');
+
         return new Content(
             view: 'emails.contact-message',
             with: [

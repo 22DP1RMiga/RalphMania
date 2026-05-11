@@ -136,6 +136,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/addresses/{id}', [ProfileController::class, 'addressDelete'])->name('profile.addresses.delete');
     });
 
+    // Profila lokālizācijas tulkošanai (domāts vairāk, lai iztulkotu "x.blade.php" failus)
+    Route::put('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
+
     // Privacy settings update (ārpus prefix grupas — URL: /profile/privacy)
     Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy'])
         ->name('profile.privacy.update');
