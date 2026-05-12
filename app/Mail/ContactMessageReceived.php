@@ -20,7 +20,8 @@ class ContactMessageReceived extends Mailable
      * Create a new message instance.
      */
     public function __construct(
-        public ContactMessage $contactMessage
+        public ContactMessage $contactMessage,
+        public string $mailLocale = 'lv',
     ) {}
 
     /**
@@ -28,12 +29,16 @@ class ContactMessageReceived extends Mailable
      */
     public function envelope(): Envelope
     {
+        LocaleHelper::set($this->mailLocale);
+
+        $prefix = $this->mailLocale === 'en' ? '[RalphMania Contact]' : '[RalphMania Kontakts]';
+
         return new Envelope(
             from: new Address($this->contactMessage->email, $this->contactMessage->name),
             replyTo: [
                 new Address($this->contactMessage->email, $this->contactMessage->name),
             ],
-            subject: '[RalphMania Kontakts] ' . $this->contactMessage->subject,
+            subject: $prefix . ' ' . $this->contactMessage->subject,
         );
     }
 
@@ -42,8 +47,7 @@ class ContactMessageReceived extends Mailable
      */
     public function content(): Content
     {
-        // Kontakta ziņojumiem admins vienmēr saņem lv
-        LocaleHelper::set('lv');
+        LocaleHelper::set($this->mailLocale);
 
         return new Content(
             view: 'emails.contact-message',

@@ -17,16 +17,16 @@ class ContactReply extends Mailable
 
     public ContactMessage $contactMessage;
     public string $replyText;
-    public string $locale;
+    public string $mailLocale;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(ContactMessage $contactMessage, string $replyText, string $locale = 'lv')
+    public function __construct(ContactMessage $contactMessage, string $replyText, string $mailLocale = 'lv')
     {
         $this->contactMessage = $contactMessage;
         $this->replyText = $replyText;
-        $this->locale = $locale;
+        $this->mailLocale = $mailLocale;
     }
 
     /**
@@ -45,7 +45,7 @@ class ContactReply extends Mailable
      */
     public function content(): Content
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Content(
             view: 'emails.contact-reply',

@@ -17,12 +17,12 @@ class NewsletterWelcome extends Mailable
     public function __construct(
         public NewsletterSubscriber $subscriber,
         public string $userName = '',
-        public string $locale = 'lv',
+        public string $mailLocale = 'lv',
     ) {}
 
     public function envelope(): Envelope
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Envelope(
             subject: __('email.newsletter.subject'),
@@ -31,7 +31,7 @@ class NewsletterWelcome extends Mailable
 
     public function content(): Content
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Content(
             view: 'emails.newsletter-welcome',

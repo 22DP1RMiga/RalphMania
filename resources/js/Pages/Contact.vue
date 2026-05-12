@@ -1,12 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
 import LoadingSpinner from '@/Components/LoadingSpinner.vue';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const page = usePage();
 
 // Get authenticated user data
@@ -54,6 +54,7 @@ const form = useForm({
     phone: '',
     subject: '',
     message: '',
+    locale: locale.value,
 });
 
 // Pre-fill form with user data on mount
@@ -93,6 +94,8 @@ const closeToast = () => {
 };
 
 // Submit form
+watch(locale, (val) => { form.locale = val; });
+
 const submit = () => {
     form.post(route('contact.store'), {
         preserveScroll: true,

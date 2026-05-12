@@ -15,16 +15,16 @@ class VerifyEmailMail extends Mailable
 
     public string $verificationUrl;
     public string $userName;
-    public string $locale;
+    public string $mailLocale;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $verificationUrl, string $userName, string $locale = 'lv')
+    public function __construct(string $verificationUrl, string $userName, string $mailLocale = 'lv')
     {
         $this->verificationUrl = $verificationUrl;
         $this->userName = $userName;
-        $this->locale = $locale;
+        $this->mailLocale = $mailLocale;
     }
 
     /**
@@ -32,7 +32,7 @@ class VerifyEmailMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Envelope(
             subject: __('email.verify.subject') . ' - RalphMania',
@@ -44,7 +44,7 @@ class VerifyEmailMail extends Mailable
      */
     public function content(): Content
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Content(
             view: 'emails.verify-email',
