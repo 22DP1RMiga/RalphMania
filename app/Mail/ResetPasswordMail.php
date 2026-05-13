@@ -15,16 +15,16 @@ class ResetPasswordMail extends Mailable
 
     public string $resetUrl;
     public string $userName;
-    public string $locale;
+    public string $mailLocale;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $resetUrl, string $userName, string $locale = 'lv')
+    public function __construct(string $resetUrl, string $userName, string $mailLocale = 'lv')
     {
         $this->resetUrl = $resetUrl;
         $this->userName = $userName;
-        $this->locale = $locale;
+        $this->mailLocale = $mailLocale;
     }
 
     /**
@@ -32,7 +32,7 @@ class ResetPasswordMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Envelope(
             subject: __('email.reset.subject') . ' - RalphMania',
@@ -44,7 +44,7 @@ class ResetPasswordMail extends Mailable
      */
     public function content(): Content
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Content(
             view: 'emails.reset-password',

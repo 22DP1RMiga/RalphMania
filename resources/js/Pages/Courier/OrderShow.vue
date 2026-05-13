@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -24,7 +24,8 @@ const updating = ref(false);
 // ─── REPORT PROBLEM ───────────────────────────────────────────────────────────
 const showReportModal  = ref(false);
 const isSendingReport  = ref(false);
-const reportForm = ref({ problem_type: '', order_id: props.order.id, description: '' });
+const reportForm = ref({ problem_type: '', order_id: props.order.id, description: '', locale: locale.value });
+watch(locale, (val) => { reportForm.value.locale = val; });
 
 const sendReport = async () => {
     isSendingReport.value = true;
@@ -32,7 +33,7 @@ const sendReport = async () => {
         const { data } = await axios.post('/courier/report', reportForm.value);
         showToast(data.message || 'Ziņojums nosūtīts!', 'success');
         showReportModal.value = false;
-        reportForm.value = { problem_type: '', order_id: props.order.id, description: '' };
+        reportForm.value = { problem_type: '', order_id: props.order.id, description: '', locale: locale.value };
     } catch (err) {
         const errors = err.response?.data?.errors;
         const msg = errors ? Object.values(errors)[0][0] : (err.response?.data?.message || 'Kļūda.');

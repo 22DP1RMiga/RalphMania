@@ -361,17 +361,13 @@ class CourierController extends Controller
             'problem_type' => 'required|string|in:address,customer,vehicle,package,other',
             'order_id'     => 'nullable|integer|exists:orders,id',
             'description'  => 'required|string|min:10|max:1000',
+            'locale'       => 'nullable|string|in:lv,en',
         ]);
 
-        $typeLabels = [
-            'address'  => 'Nepareiza adrese',
-            'customer' => 'Klients nesasniegts',
-            'vehicle'  => 'Transportlīdzekļa problēma',
-            'package'  => 'Bojāts iepakojums',
-            'other'    => 'Cita problēma',
-        ];
+        $locale = $validated['locale'] ?? 'lv';
 
-        $typeLabel = $typeLabels[$validated['problem_type']];
+        \App\Helpers\LocaleHelper::set($locale);
+        $typeLabel = __('email.courier.types.' . $validated['problem_type']);
         $orderRef  = '';
 
         if ($validated['order_id']) {
@@ -379,34 +375,37 @@ class CourierController extends Controller
             $orderRef = $order ? " — Pas. #{$order->order_number}" : '';
         }
 
+        $subjectPrefix = __('email.courier.subject_prefix');
+
         ContactMessage::create([
             'user_id' => $courier->user_id,
             'name'    => $courier->full_name,
             'email'   => $courier->user?->email ?? 'kurjers@ralphmania.lv',
             'phone'   => $courier->phone,
-            'subject' => "[🚨 Kurjers] {$typeLabel}{$orderRef}",
+            'subject' => "{$subjectPrefix} {$typeLabel}{$orderRef}",
             'message' => $validated['description'],
             'is_read' => false,
+            'locale'  => $locale,
         ]);
 
         $adminEmail = config('mail.admin_email', env('ADMIN_EMAIL', 'ralphmania.roltonslv@gmail.com'));
 
         try {
-            Mail::send([], [], function ($mail) use ($courier, $typeLabel, $orderRef, $validated, $adminEmail) {
+            Mail::send([], [], function ($mail) use ($courier, $typeLabel, $orderRef, $validated, $adminEmail, $subjectPrefix, $locale) {
                 $mail->to($adminEmail)
-                    ->subject("[🚨 Kurjers] {$typeLabel}{$orderRef}")
+                    ->subject("{$subjectPrefix} {$typeLabel}{$orderRef}")
                     ->html(
                         "<div style='font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px'>" .
                         "<div style='background:#fee2e2;border:2px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px'>" .
-                        "<h2 style='color:#991b1b;margin:0 0 4px 0'>🚨 Kurjera problēmas ziņojums</h2>" .
+                        "<h2 style='color:#991b1b;margin:0 0 4px 0'>🚨 " . __('email.courier.report_title') . "</h2>" .
                         "<p style='color:#dc2626;margin:0;font-size:14px'>{$typeLabel}{$orderRef}</p>" .
                         "</div>" .
                         "<table style='width:100%;border-collapse:collapse;margin-bottom:20px'>" .
-                        "<tr><td style='padding:8px 0;color:#6b7280;font-size:13px;width:140px'>Kurjers:</td><td style='padding:8px 0;font-weight:600'>{$courier->full_name}</td></tr>" .
-                        "<tr><td style='padding:8px 0;color:#6b7280;font-size:13px'>Tālrunis:</td><td style='padding:8px 0'>{$courier->phone}</td></tr>" .
+                        "<tr><td style='padding:8px 0;color:#6b7280;font-size:13px;width:140px'>" . __('email.courier.courier_label') . "</td><td style='padding:8px 0;font-weight:600'>{$courier->full_name}</td></tr>" .
+                        "<tr><td style='padding:8px 0;color:#6b7280;font-size:13px'>" . __('email.courier.phone_label') . "</td><td style='padding:8px 0'>{$courier->phone}</td></tr>" .
                         "</table>" .
                         "<div style='background:#f9fafb;border-radius:8px;padding:16px;border:1px solid #e5e7eb'>" .
-                        "<p style='color:#6b7280;font-size:12px;margin:0 0 8px 0;text-transform:uppercase'>Apraksts</p>" .
+                        "<p style='color:#6b7280;font-size:12px;margin:0 0 8px 0;text-transform:uppercase'>" . __('email.courier.desc_label') . "</p>" .
                         "<p style='color:#111827;line-height:1.7;margin:0'>" . nl2br(htmlspecialchars($validated['description'])) . "</p>" .
                         "</div></div>"
                     );
@@ -415,6 +414,6 @@ class CourierController extends Controller
             \Log::warning('Courier report email failed: ' . $e->getMessage());
         }
 
-        return response()->json(['success' => true, 'message' => 'Ziņojums nosūtīts administratoram!']);
+        return response()->json(['success' => true, 'message' => __('email.courier.success')]);
     }
 }

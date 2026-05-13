@@ -21,7 +21,7 @@ class OrderConfirmation extends Mailable
      */
     public function __construct(
         public Order $order,
-        public string $locale = 'lv',
+        public string $mailLocale = 'lv',
     ) {}
 
     /**
@@ -29,7 +29,7 @@ class OrderConfirmation extends Mailable
      */
     public function envelope(): Envelope
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Envelope(
             subject: __('email.order.subject') . ' - ' . $this->order->order_number,
@@ -41,7 +41,7 @@ class OrderConfirmation extends Mailable
      */
     public function content(): Content
     {
-        LocaleHelper::set($this->locale);
+        LocaleHelper::set($this->mailLocale);
 
         return new Content(
             view: 'emails.order-confirmation',

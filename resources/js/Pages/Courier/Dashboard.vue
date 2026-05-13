@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -111,7 +111,8 @@ const saveProfile = async () => {
 // ─── REPORT PROBLEM ───────────────────────────────────────────────────────────
 const showReportModal  = ref(false);
 const isSendingReport  = ref(false);
-const reportForm = ref({ problem_type: '', order_id: null, description: '' });
+const reportForm = ref({ problem_type: '', order_id: null, description: '', locale: locale.value });
+watch(locale, (val) => { reportForm.value.locale = val; });
 
 const sendReport = async () => {
     isSendingReport.value = true;
@@ -119,7 +120,7 @@ const sendReport = async () => {
         const { data } = await axios.post('/courier/report', reportForm.value);
         showToast(data.message || 'Ziņojums nosūtīts!', 'success');
         showReportModal.value = false;
-        reportForm.value = { problem_type: '', order_id: null, description: '' };
+        reportForm.value = { problem_type: '', order_id: null, description: '', locale: locale.value };
         // Refresh inbox after new report
         loadInbox();
     } catch (err) {

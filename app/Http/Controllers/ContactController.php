@@ -23,6 +23,7 @@ class ContactController extends Controller
             'phone'        => 'required|string|max:20',
             'subject'      => 'required|string|max:200',
             'message'      => 'required|string|max:1000',
+            'locale'       => 'nullable|string|in:lv,en',
         ], [
             'name.required'         => 'Vārds ir obligāts.',
             'email.required'        => 'E-pasts ir obligāts.',
@@ -34,12 +35,12 @@ class ContactController extends Controller
             'message.max'           => 'Ziņojums nedrīkst pārsniegt 1000 rakstzīmes.',
         ]);
 
-        // user_id neobligāts — viesi var arī rakstīt
-        $userId = $request->user()?->id;
+        // Get authenticated user
+        $user = $request->user();
 
         // Create contact message
         $contactMessage = ContactMessage::create([
-            'user_id'      => $userId,
+            'user_id'      => $user->id,
             'name'         => $validated['name'],
             'email'        => $validated['email'],
             'country_code' => $validated['country_code'],
@@ -48,12 +49,13 @@ class ContactController extends Controller
             'message'      => $validated['message'],
             'is_read'      => false,
             'is_replied'   => false,
+            'locale'       => $validated['locale'] ?? 'lv',
         ]);
 
         // Send email notification to admin
         try {
             Mail::to('ralphmania.roltonslv@gmail.com')
-                ->send(new ContactMessageReceived($contactMessage));
+                ->send(new ContactMessageReceived($contactMessage, $validated['locale'] ?? 'lv'));
 
             Log::info('Contact message email sent successfully', [
                 'contact_message_id' => $contactMessage->id,

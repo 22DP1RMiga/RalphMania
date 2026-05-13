@@ -61,6 +61,7 @@ class AdminContactController extends Controller
                 'is_read' => $message->is_read,
                 'is_replied' => $message->is_replied,
                 'replied_at' => $message->replied_at,
+                'locale' => $message->locale,
                 'created_at' => $message->created_at,
                 'user' => $message->user ? [
                     'id' => $message->user->id,
@@ -111,6 +112,7 @@ class AdminContactController extends Controller
                 'is_replied' => $message->is_replied,
                 'reply_text' => $message->reply_text,
                 'replied_at' => $message->replied_at,
+                'locale' => $message->locale,
                 'created_at' => $message->created_at,
                 'updated_at' => $message->updated_at,
                 'user' => $message->user ? [
@@ -163,7 +165,7 @@ class AdminContactController extends Controller
         // Try to send email
         $emailSent = false;
         try {
-            Mail::to($message->email)->send(new ContactReply($message, $validated['reply_text']));
+            Mail::to($message->email)->send(new ContactReply($message, $validated['reply_text'], $message->locale ?? 'lv'));
             $emailSent = true;
 
             Log::info('Contact reply email sent', [

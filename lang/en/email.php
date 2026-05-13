@@ -150,4 +150,20 @@ return [
         'footer_text'   => 'If you have any more questions, feel free to write back to us!',
     ],
 
+    'courier' => [
+        'report_title'   => 'Courier Problem Report',
+        'courier_label'  => 'Courier:',
+        'phone_label'    => 'Phone:',
+        'desc_label'     => 'Description',
+        'subject_prefix' => '[🚨 Courier]',
+        'types' => [
+            'address'  => 'Incorrect address',
+            'customer' => 'Customer unreachable',
+            'vehicle'  => 'Vehicle problem',
+            'package'  => 'Damaged package',
+            'other'    => 'Other problem',
+        ],
+        'success' => 'Message sent to administrator!',
+    ],
+
 ];
