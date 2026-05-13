@@ -62,7 +62,7 @@ const submitReply = () => {
         return;
     }
     isSubmitting.value = true;
-    router.put(`/admin/contacts/${props.message.id}/reply`, { reply_text: replyText.value }, {
+    router.put(`/admin/contacts/${props.message.id}/reply`, { reply_text: replyText.value, locale: props.message.locale ?? 'lv' }, {
         preserveScroll: true,
         onSuccess: () => { showReplyForm.value = false; replyText.value = ''; },
         onFinish: () => { isSubmitting.value = false; },
@@ -1203,4 +1203,17 @@ const copyToClipboard = (text, type) => {
         padding: 1rem;
     }
 }
+.locale-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.locale-lv { background: #dbeafe; color: #1e40af; }
+.locale-en { background: #d1fae5; color: #065f46; }
 </style>

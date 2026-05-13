@@ -1,12 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
 import { useI18n } from 'vue-i18n';
 
 const page = usePage();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 // Get authenticated user data
 const user = computed(() => page.props.auth?.user);
@@ -64,6 +64,7 @@ const form = useForm({
     subject: '',
     order_number: '',
     message: '',
+    locale: locale.value,
 });
 
 // Aizpilda formu ar lietotāja datiem (ja pieteicies)
@@ -96,6 +97,8 @@ const closeToast = () => {
 };
 
 // Submit form
+watch(locale, (val) => { form.locale = val; });
+
 const submit = () => {
     form.post('/shop/contact', {
         preserveScroll: true,

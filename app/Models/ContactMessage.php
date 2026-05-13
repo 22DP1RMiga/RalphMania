@@ -31,6 +31,7 @@ class ContactMessage extends Model
         'reply_text',
         'replied_at',
         'replied_by',
+        'locale',
     ];
 
     /**

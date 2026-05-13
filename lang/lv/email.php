@@ -150,4 +150,20 @@ return [
         'footer_text'   => 'Ja jums ir vēl kādi jautājumi, droši rakstiet mums atpakaļ!',
     ],
 
+    'courier' => [
+        'report_title'   => 'Kurjera problēmas ziņojums',
+        'courier_label'  => 'Kurjers:',
+        'phone_label'    => 'Tālrunis:',
+        'desc_label'     => 'Apraksts',
+        'subject_prefix' => '[🚨 Kurjers]',
+        'types' => [
+            'address'  => 'Nepareiza adrese',
+            'customer' => 'Klients nesasniegts',
+            'vehicle'  => 'Transportlīdzekļa problēma',
+            'package'  => 'Bojāts iepakojums',
+            'other'    => 'Cita problēma',
+        ],
+        'success' => 'Ziņojums nosūtīts administratoram!',
+    ],
+
 ];
