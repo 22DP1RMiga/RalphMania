@@ -26,7 +26,7 @@ class Product extends Model
         'low_stock_threshold',
         'is_active',
         'is_featured',
-        'has_sizes',   // ← JAUNS: vai produktam ir XS–XXL izmēru izvēlne
+        'has_sizes',
     ];
 
     protected $casts = [
@@ -47,7 +47,7 @@ class Product extends Model
         'description',
     ];
 
-    // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ───────────────────────────────────────────────────────
 
     public function category()
     {
@@ -69,7 +69,7 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    // ─── HELPERS ─────────────────────────────────────────────────────────────
+    // ─── PALĪGI ─────────────────────────────────────────────────────────────
 
     public function isInStock(): bool
     {
@@ -87,10 +87,10 @@ class Product extends Model
         return round((1 - $this->price / $this->compare_price) * 100);
     }
 
-    // ─── ACCESSORS ───────────────────────────────────────────────────────────
+    // ─── AKSESUĀRI ───────────────────────────────────────────────────────────
 
     /**
-     * Atgriež nosaukumu aktīvajā valodā.
+     * Atgriež nosaukumu aktīvajā valodā
      */
     public function getNameAttribute(): string
     {
@@ -99,7 +99,7 @@ class Product extends Model
     }
 
     /**
-     * Atgriež aprakstu aktīvajā valodā.
+     * Atgriež aprakstu aktīvajā valodā
      */
     public function getDescriptionAttribute(): ?string
     {
@@ -113,8 +113,9 @@ class Product extends Model
     }
 
     /**
-     * VAT rate — reads from settings table, defaults to 21%.
-     * Caches in static so only one DB query per request.
+     * PVN likme - nolasa no iestatījumu tabulas, noklusējuma vērtība ir 21%
+     * Kešatmiņa tiek saglabāta statiskā formātā, tāpēc katram
+     * pieprasījumam tiek izmantots tikai viens datubāzes vaicājums
      */
     public static function vatRate(): float
     {
@@ -126,9 +127,9 @@ class Product extends Model
     }
 
     /**
-     * Price WITHOUT VAT (neto cena).
-     * Cena DB ir ar PVN iekļautu (bruto) — t.i., 8.99 € ir tas, ko klients maksā.
-     * Neto = bruto / 1.21
+     * Cena bez PVN (NETO cena).
+     * Cena DB ir ar PVN iekļautu (BRUTO) — t.i., 8.99 € ir tas, ko klients maksā.
+     * NETO = BRUTO / 1.21
      * Piemērs: 15.00 / 1.21 = 12.3967... → 12.40
      */
     public function getPriceExVatAttribute(): float
@@ -137,8 +138,8 @@ class Product extends Model
     }
 
     /**
-     * VAT amount contained in the price.
-     * PVN = bruto - neto
+     * Cenā ietvertā PVN summa
+     * PVN = BRUTO - NETO
      * Piemērs: 15.00 - 12.40 = 2.60 (vai precīzāk: 15.00 - 12.3967 = 2.6033 → 2.61)
      */
     public function getVatAmountAttribute(): float
@@ -147,7 +148,7 @@ class Product extends Model
     }
 
     /**
-     * Same for compare_price (vecā cena).
+     * Tas pats compare_price atribūtam (vecā cena).
      */
     public function getComparePriceExVatAttribute(): ?float
     {

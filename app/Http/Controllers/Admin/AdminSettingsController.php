@@ -14,11 +14,11 @@ use Inertia\Inertia;
 class AdminSettingsController extends Controller
 {
     /**
-     * Display settings page.
+     * Parāda iestatījumu lapu
      */
     public function index()
     {
-        // Get all settings as key-value pairs
+        // Iegūst visus iestatījumus kā atslēgu-vērtību pārus
         $settings = Setting::pluck('value', 'key')->toArray();
 
         return Inertia::render('Admin/Settings/Index', [
@@ -27,12 +27,12 @@ class AdminSettingsController extends Controller
     }
 
     /**
-     * Update settings.
+     * Atjaunina iestatījumus
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // General
+            // Vispār
             'site_name' => 'nullable|string|max:255',
             'site_description_lv' => 'nullable|string|max:1000',
             'site_description_en' => 'nullable|string|max:1000',
@@ -40,7 +40,7 @@ class AdminSettingsController extends Controller
             'timezone' => 'nullable|string|max:100',
             'date_format' => 'nullable|string|max:50',
 
-            // Shop
+            // Veikalam
             'currency' => 'nullable|string|max:10',
             'currency_symbol' => 'nullable|string|max:5',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
@@ -48,7 +48,7 @@ class AdminSettingsController extends Controller
             'low_stock_threshold' => 'nullable|integer|min:0',
             'items_per_page' => 'nullable|integer|min:5|max:100',
 
-            // Email
+            // E-pastam
             'mail_from_name' => 'nullable|string|max:255',
             'mail_from_address' => 'nullable|email|max:255',
             'smtp_host' => 'nullable|string|max:255',
@@ -56,14 +56,14 @@ class AdminSettingsController extends Controller
             'smtp_username' => 'nullable|string|max:255',
             'smtp_password' => 'nullable|string|max:255',
 
-            // Social
+            // Sociālajiem medijiem
             'facebook_url' => 'nullable|url|max:500',
             'instagram_url' => 'nullable|url|max:500',
             'twitter_url' => 'nullable|url|max:500',
             'youtube_url' => 'nullable|url|max:500',
             'tiktok_url' => 'nullable|url|max:500',
 
-            // SEO
+            // Meklētājprogrammu optimizācijai jeb SEO
             'meta_title_lv' => 'nullable|string|max:255',
             'meta_title_en' => 'nullable|string|max:255',
             'meta_description_lv' => 'nullable|string|max:500',
@@ -79,17 +79,17 @@ class AdminSettingsController extends Controller
             );
         }
 
-        // Clear settings cache
+        // Notīra iestatījumu kešatmiņu
         Cache::forget('settings');
 
-        // Log activity
+        // Žurnāla darbībai
         ActivityLog::log('settings_updated', 'Iestatījumi atjaunināti');
 
         return back()->with('success', 'Iestatījumi veiksmīgi saglabāti!');
     }
 
     /**
-     * Send test email.
+     * Nosūta testa e-pastu
      */
     public function testEmail(Request $request)
     {
@@ -102,7 +102,7 @@ class AdminSettingsController extends Controller
                     ->subject('Testa e-pasts - RalphMania Admin');
             });
 
-            // Log activity
+            // Žurnāla darbībai
             ActivityLog::log('test_email_sent', 'Testa e-pasts nosūtīts uz ' . $adminEmail);
 
             return back()->with('success', 'Testa e-pasts veiksmīgi nosūtīts!');
@@ -112,7 +112,7 @@ class AdminSettingsController extends Controller
     }
 
     /**
-     * Clear application cache.
+     * Notīra lietojumprogrammas kešatmiņu
      */
     public function clearCache()
     {
@@ -122,7 +122,7 @@ class AdminSettingsController extends Controller
             Artisan::call('view:clear');
             Artisan::call('route:clear');
 
-            // Log activity
+            // Žurnāla darbībai
             ActivityLog::log('cache_cleared', 'Kešatmiņa notīrīta');
 
             return back()->with('success', 'Kešatmiņa veiksmīgi notīrīta!');

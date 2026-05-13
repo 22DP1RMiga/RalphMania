@@ -25,14 +25,14 @@ class Coupon extends Model
         'expires_at'         => 'datetime',
     ];
 
-    // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ───────────────────────────────────────────────────────
 
     public function usages(): HasMany
     {
         return $this->hasMany(CouponUsage::class);
     }
 
-    // ─── SCOPES ──────────────────────────────────────────────────────────────
+    // ─── TVĒRUMI ──────────────────────────────────────────────────────────────
 
     public function scopeActive($query)
     {
@@ -46,20 +46,20 @@ class Coupon extends Model
             });
     }
 
-    // ─── VALIDATION ──────────────────────────────────────────────────────────
+    // ─── VALIDĀCIJA ──────────────────────────────────────────────────────────
 
     /**
-     * Validate coupon for a given user + order amount.
-     * Returns ['valid' => true, 'discount' => 5.00] or ['valid' => false, 'message' => '...']
+     * Validē kuponu dotajam lietotājam + pasūtījuma summu
+     * Atgriež ['valid' => true, 'discount' => 5.00] vai ['valid' => false, 'message' => '...']
      */
     public function validate(int $userId, float $orderAmount, string $locale = 'lv'): array
     {
-        // Active check
+        // Aktīvā pārbaude
         if (!$this->is_active) {
             return $this->invalid($locale === 'lv' ? 'Kupons nav aktīvs.' : 'Coupon is not active.');
         }
 
-        // Date range
+        // Datumu diapazons
         if ($this->starts_at && $this->starts_at->isFuture()) {
             return $this->invalid($locale === 'lv' ? 'Kupons vēl nav derīgs.' : 'Coupon is not yet valid.');
         }
@@ -67,12 +67,12 @@ class Coupon extends Model
             return $this->invalid($locale === 'lv' ? 'Kupona derīguma termiņš ir beidzies.' : 'Coupon has expired.');
         }
 
-        // Global usage limit
+        // Globālais lietošanas ierobežojums
         if ($this->max_uses !== null && $this->used_count >= $this->max_uses) {
             return $this->invalid($locale === 'lv' ? 'Kupons ir pilnībā nolietots.' : 'Coupon has reached its usage limit.');
         }
 
-        // Min order
+        // Minimālais pasūtījums
         if ($orderAmount < $this->min_order_amount) {
             return $this->invalid(
                 $locale === 'lv'
@@ -81,14 +81,14 @@ class Coupon extends Model
             );
         }
 
-        // Per-user usage + cooldown check
+        // Lietotāja lietojums + atdzišanas perioda pārbaude
         $lastUsage = $this->usages()
             ->where('user_id', $userId)
             ->latest('used_at')
             ->first();
 
         if ($lastUsage) {
-            // Check if within cooldown period
+            // Pārbauda, vai ir iekļauts atdzišanas periods
             if ($lastUsage->reusable_at && $lastUsage->reusable_at->isFuture()) {
                 $daysLeft = (int) now()->diffInDays($lastUsage->reusable_at, false);
                 $daysLeft = max(1, $daysLeft);
@@ -100,7 +100,7 @@ class Coupon extends Model
             }
         }
 
-        // Subscribers only
+        // Tikai abonenti
         if ($this->subscribers_only) {
             $isSubscribed = NewsletterSubscriber::where('user_id', $userId)
                 ->where('is_active', true)
@@ -119,7 +119,7 @@ class Coupon extends Model
             }
         }
 
-        // Calculate discount
+        // Aprēķina atlaidi
         $discount = $this->calculateDiscount($orderAmount);
 
         return [
@@ -132,18 +132,18 @@ class Coupon extends Model
     }
 
     /**
-     * Calculate the actual discount amount.
+     * Aprēķina faktisko atlaides summu
      */
     public function calculateDiscount(float $orderAmount): float
     {
         if ($this->type === 'percentage') {
             $discount = round($orderAmount * ($this->value / 100), 2);
         } else {
-            // Fixed
+            // piefiksēta atlaide
             $discount = min((float) $this->value, $orderAmount);
         }
 
-        // Apply max discount cap
+        // Piemēro maksimālo atlaides ierobežojumu
         if ($this->max_discount_amount !== null) {
             $discount = min($discount, (float) $this->max_discount_amount);
         }
@@ -152,7 +152,7 @@ class Coupon extends Model
     }
 
     /**
-     * Mark coupon as used by user. Call this when order is confirmed.
+     * Atzīmē kuponu kā lietotāja izmantotu un izsauc to, kad pasūtījums ir apstiprināts
      */
     public function markUsed(int $userId, int $orderId, float $discountAmount): CouponUsage
     {
@@ -167,7 +167,7 @@ class Coupon extends Model
         ]);
     }
 
-    // ─── HELPERS ─────────────────────────────────────────────────────────────
+    // ─── PALĪGI ─────────────────────────────────────────────────────────────
 
     public function getFormattedValue(): string
     {

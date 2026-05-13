@@ -13,7 +13,7 @@ use Inertia\Inertia;
 class AdminAdministratorController extends Controller
 {
     /**
-     * Check if current user is super admin
+     * Pārbauda, ​​vai pašreizējais lietotājs ir galvenais administrators jeb "super admins"
      */
     private function checkSuperAdmin()
     {
@@ -23,7 +23,7 @@ class AdminAdministratorController extends Controller
     }
 
     /**
-     * Display a listing of administrators.
+     * Parāda administratoru sarakstu
      */
     public function index(Request $request)
     {
@@ -31,7 +31,7 @@ class AdminAdministratorController extends Controller
 
         $query = Administrator::with('user');
 
-        // Search
+        // Meklētājam
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -43,7 +43,7 @@ class AdminAdministratorController extends Controller
             });
         }
 
-        // Filter by type
+        // Filtrē pēc tipa
         if ($request->filled('type')) {
             if ($request->type === 'super') {
                 $query->where('is_super_admin', true);
@@ -52,11 +52,11 @@ class AdminAdministratorController extends Controller
             }
         }
 
-        // Sort
+        // Kārtošanai
         $query->orderBy('is_super_admin', 'desc')
             ->orderBy('created_at', 'desc');
 
-        // Get administrators
+        // Iegūst administratorus
         $administrators = $query->paginate(15)->through(function ($admin) {
             return [
                 'id' => $admin->id,
@@ -76,18 +76,18 @@ class AdminAdministratorController extends Controller
             ];
         });
 
-        // Get stats
+        // Iegūst statusus
         $stats = [
             'total' => Administrator::count(),
             'super_admins' => Administrator::where('is_super_admin', true)->count(),
             'regular_admins' => Administrator::where('is_super_admin', false)->count(),
         ];
 
-        // Get available permissions for the modal
+        // Iegūst pieejamās atļaujas modālajam logam
         $availablePermissions = Administrator::getAvailablePermissions();
         $permissionGroups = Administrator::getPermissionGroups();
 
-        // Get users who are not yet administrators (for adding new admins)
+        // Iegūst lietotājus, kuri vēl nav administratori (jaunu administratoru pievienošanai)
         $availableUsers = User::whereDoesntHave('administrator')
             ->where('is_active', true)
             ->orderBy('username')
@@ -104,7 +104,7 @@ class AdminAdministratorController extends Controller
     }
 
     /**
-     * Store a new administrator.
+     * Saglabā jaunu administratoru
      */
     public function store(Request $request)
     {
@@ -117,18 +117,18 @@ class AdminAdministratorController extends Controller
             'permissions.*' => 'string',
         ]);
 
-        // Get admin role
+        // Iegūst administratora lomu
         $adminRole = Role::where('name', 'administrator')->first();
 
         if (!$adminRole) {
             return back()->with('error', 'Administratora loma nav atrasta!');
         }
 
-        // Update user role
+        // Atjaunina lietotāja lomu
         $user = User::findOrFail($validated['user_id']);
         $user->update(['role_id' => $adminRole->id]);
 
-        // Create administrator record
+        // Izveido administratora ierakstu
         Administrator::create([
             'user_id' => $validated['user_id'],
             'full_name' => $validated['full_name'],
@@ -140,7 +140,7 @@ class AdminAdministratorController extends Controller
     }
 
     /**
-     * Update administrator permissions.
+     * Atjaunina administratora atļaujas
      */
     public function updatePermissions(Request $request, $id)
     {
@@ -148,7 +148,7 @@ class AdminAdministratorController extends Controller
 
         $admin = Administrator::findOrFail($id);
 
-        // Cannot modify super admin permissions
+        // Nevar mainīt "super admina" atļaujas
         if ($admin->is_super_admin) {
             return back()->with('error', 'Nevar modificēt Super Admin atļaujas!');
         }
@@ -166,7 +166,7 @@ class AdminAdministratorController extends Controller
     }
 
     /**
-     * Remove administrator.
+     * Noņem administratoru
      */
     public function destroy($id)
     {
@@ -174,25 +174,25 @@ class AdminAdministratorController extends Controller
 
         $admin = Administrator::findOrFail($id);
 
-        // Cannot delete super admin
+        // Nevar izdzēst galveno administratoru
         if ($admin->is_super_admin) {
             return back()->with('error', 'Nevar dzēst Super Admin!');
         }
 
-        // Cannot delete yourself
+        // Nevar izdzēst sevi
         if ($admin->user_id === auth()->id()) {
             return back()->with('error', 'Nevar dzēst savu administratora kontu!');
         }
 
-        // Get user role (demote from admin back to regular user)
+        // Iegūst lietotāja lomu (pazemina no administratora atpakaļ uz parasto lietotāju)
         $userRole = Role::whereIn('name', ['user', 'customer'])->first();
 
         if ($userRole && $admin->user) {
-            // Demote to regular user
+            // Pazemina līdz parastajam lietotājam
             $admin->user->update(['role_id' => $userRole->id]);
         }
 
-        // Delete administrator record
+        // Dzēš administratora ierakstu
         $admin->delete();
 
         return back()->with('success', 'Administrators veiksmīgi noņemts!');

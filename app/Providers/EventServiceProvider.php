@@ -12,7 +12,7 @@ use App\Listeners\MergeGuestCartOnLogin;
 class EventServiceProvider extends ServiceProvider
 {
     /**
-     * The event to listener mappings for the application.
+     * Notikuma un klausītāja kartējumi lietojumprogrammai
      *
      * @var array<class-string, array<int, class-string>>
      */
@@ -21,14 +21,14 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
 
-        // Merge guest cart when user logs in
+        // Apvieno viesu grozu, kad lietotājs piesakās
         Login::class => [
             MergeGuestCartOnLogin::class,
         ],
     ];
 
     /**
-     * Register any events for your application.
+     * Reģistrē visus notikumus jūsu lietojumprogrammai
      */
     public function boot(): void
     {
@@ -36,7 +36,7 @@ class EventServiceProvider extends ServiceProvider
     }
 
     /**
-     * Determine if events and listeners should be automatically discovered.
+     * Nosaka, vai notikumi un klausītāji ir jāatklāj automātiski
      */
     public function shouldDiscoverEvents(): bool
     {

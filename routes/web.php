@@ -34,48 +34,48 @@ use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Tīmekļa maršruti
 |--------------------------------------------------------------------------
 */
 
-// ========== PUBLIC ROUTES ==========
+// ========== PUBLISKIE MARŠRUTI ==========
 
-// Home Page
+// Sākumlapa
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// About Page
+// "Par mums" lapa
 Route::get('/about', function () {
     return Inertia::render('About');
 })->name('about');
 
-// Contact Page - publiski pieejams
+// Kontaktlapa - publiski pieejams
 Route::get('/contact', function () {
     return Inertia::render('Contact');
 })->name('contact');
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-// Newsletter subscription (public - can be guest)
+// Informatīvā biļetena abonēšana (publiska - var būt viesis)
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
-// Shop Pages
+// Veikala lapas
 Route::prefix('shop')->group(function () {
-    // Shop Home
+    // Veikala sākumlapa
     Route::get('/', [ProductController::class, 'shopIndex'])->name('shop.index');
 
-    // Product Detail
+    // Produkta informācija
     Route::get('/product/{slug}', [ProductController::class, 'show'])->name('shop.product.show');
 
-    // Category Products
+    // Kategorijas produkti
     Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('shop.category.show');
 
-    // Shop Contact — PRASA AUTORIZĀCIJU (lai novērstu anonīmus troļļus)
+    // Veikala kontaktlapa
     Route::get('/contact', function () {
         return Inertia::render('Shop/Contact');
     })->name('shop.contact');
 
-    // Shop Contact Form Submission
+    // Veikala saziņas veidlapas iesniegšana
     Route::post('/contact', [ContactController::class, 'store'])->name('shop.contact.store');
 
     // FAQ, Shipping, Returns — publiski
@@ -84,50 +84,50 @@ Route::prefix('shop')->group(function () {
     Route::get('/returns',  fn() => Inertia::render('Shop/Returns'))->name('shop.returns');
 });
 
-// Content Pages
+// Satura lapas
 Route::prefix('content')->group(function () {
-    // Content Home
+    // Satura sākumlapa
     Route::get('/', [ContentController::class, 'index'])->name('content.index');
 
-    // Komentāri ar mood — web route lai sesijas auth strādā (my_mood_score)
+    // Komentāri ar noskaņojumiem - web maršruts, lai sesijas autentifikācija strādā (my_mood_score)
     Route::get('/{contentId}/comments', [CommentController::class, 'byContent'])->name('comments.byContent');
 
-    // Content Detail
+    // Satura detaļas
     Route::get('/{slug}', [ContentController::class, 'show'])->name('content.show');
 
-    // Content by Type
+    // Saturs pēc veida
     Route::get('/type/{type}', [ContentController::class, 'byType'])->name('content.type');
 });
 
-// ========== AUTHENTICATED ROUTES ==========
+// ========== AUTENTIFICĒTI MARŠRUTI ==========
 
 Route::middleware('auth')->group(function () {
 
-    // Dashboard
+    // Informācijas panelis
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Newsletter preferences (for logged-in users)
+    // Informatīvā biļetena preferences (lietotājiem, kas ir pieteikušies)
     Route::prefix('newsletter')->name('newsletter.')->group(function () {
         Route::get('/status', [NewsletterController::class, 'status'])->name('status');
         Route::put('/preferences', [NewsletterController::class, 'updatePreferences'])->name('preferences');
         Route::get('/offers', [NewsletterController::class, 'getOffers'])->name('offers');
     });
 
-    // Profile Management
+    // Profila pārvaldība
     Route::prefix('profile')->group(function () {
         Route::get('/edit', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-        // Password Change
+        // Paroles maiņa
         Route::get('/password', [ProfileController::class, 'passwordEdit'])->name('profile.password.edit');
         Route::put('/password', [ProfileController::class, 'passwordUpdate'])->name('profile.password.update');
 
-        // Avatar Upload
+        // Profila bildes augšupielāde
         Route::post('/avatar', [ProfileController::class, 'avatarUpdate'])->name('profile.avatar.update');
         Route::delete('/avatar', [ProfileController::class, 'avatarDelete'])->name('profile.avatar.delete');
 
-        // Addresses
+        // Adreses
         Route::get('/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
         Route::get('/addresses/create', [ProfileController::class, 'addressCreate'])->name('profile.addresses.create');
         Route::post('/addresses', [ProfileController::class, 'addressStore'])->name('profile.addresses.store');
@@ -139,7 +139,7 @@ Route::middleware('auth')->group(function () {
     // Profila lokālizācijas tulkošanai (domāts vairāk, lai iztulkotu "x.blade.php" failus)
     Route::put('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
 
-    // Privacy settings update (ārpus prefix grupas — URL: /profile/privacy)
+    // Privātuma iestatījumu atjauninājums (ārpus prefix grupas — URL: /profile/privacy)
     Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy'])
         ->name('profile.privacy.update');
 
@@ -157,7 +157,7 @@ Route::middleware('auth')->group(function () {
     // Kuponi
     Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
 
-    // Checkout
+    // Apmaksa
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 
     // Pasūtījumi
@@ -184,14 +184,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/comments/{id}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::patch('/comments/{id}/mood', [CommentController::class, 'updateMood'])->name('comments.mood');
 
-    // Like content (WEB route for session auth)
+    // Patīk saturs (WEB maršruts sesijas autentifikācijai)
     Route::post('/content/{id}/like', [ContentController::class, 'toggleLike'])->name('content.like');
 });
 
-// ========== COURIER ROUTES ==========
+// ========== KURJERU MARŠRUTI ==========
 Route::middleware(['auth', 'courier'])->prefix('courier')->name('courier.')->group(function () {
 
-    // Dashboard
+    // Informācijas panelis
     Route::get('/dashboard', [CourierController::class, 'dashboard'])->name('dashboard');
 
     // Pasūtījumu saraksts ar filtriem
@@ -200,7 +200,7 @@ Route::middleware(['auth', 'courier'])->prefix('courier')->name('courier.')->gro
     // Pasūtījuma detaļas
     Route::get('/orders/{orderId}', [CourierController::class, 'showOrder'])->name('orders.show');
 
-    // Statusa maiņa (packed→shipped→in_transit→delivered)
+    // Statusa maiņa (packed → shipped → in_transit → delivered)
     Route::put('/orders/{orderId}/status', [CourierController::class, 'updateStatus'])->name('orders.status');
 
     // Piezīmju saglabāšana
@@ -219,13 +219,13 @@ Route::middleware(['auth', 'courier'])->prefix('courier')->name('courier.')->gro
     Route::get('/inbox', [CourierController::class, 'inbox'])->name('inbox');
 });
 
-// ========== ADMIN ROUTES ==========
+// ========== ADMINISTRĀCIJAS MARŠRUTI ==========
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Dashboard
+    // Informācijas panelis
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    // Administrator Management (Super Admin only)
+    // Administratora pārvaldība (tikai galvenais administrators)
     Route::prefix('administrators')->name('administrators.')->group(function () {
         Route::get('/', [AdminAdministratorController::class, 'index'])->name('index');
         Route::post('/', [AdminAdministratorController::class, 'store'])->name('store');
@@ -233,7 +233,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminAdministratorController::class, 'destroy'])->name('destroy');
     });
 
-    // Products
+    // Produkti
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('/', [AdminProductController::class, 'index'])->name('index');
         Route::get('/create', [AdminProductController::class, 'create'])->name('create');
@@ -244,7 +244,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminProductController::class, 'destroy'])->name('destroy');
     });
 
-    // Categories
+    // Kategorijas
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', [AdminCategoryController::class, 'index'])->name('index');
         Route::post('/', [AdminCategoryController::class, 'store'])->name('store');
@@ -252,7 +252,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminCategoryController::class, 'destroy'])->name('destroy');
     });
 
-    // Orders
+    // Pasūtījumi
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [AdminOrderController::class, 'index'])->name('index');
         Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
@@ -261,7 +261,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{order}/invoice/print', [AdminOrderController::class, 'printInvoice'])->name('invoice.print');
     });
 
-    // Content
+    // Saturs
     Route::prefix('content')->name('content.')->group(function () {
         Route::get('/', [AdminContentController::class, 'index'])->name('index');
         Route::get('/create', [AdminContentController::class, 'create'])->name('create');
@@ -272,21 +272,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminContentController::class, 'destroy'])->name('destroy');
     });
 
-    // Reviews
+    // Atsauksmes
     Route::prefix('reviews')->name('reviews.')->group(function () {
         Route::get('/', [AdminReviewController::class, 'index'])->name('index');
         Route::put('/{id}/approve', [AdminReviewController::class, 'approve'])->name('approve');
         Route::put('/{id}/reject', [AdminReviewController::class, 'reject'])->name('reject');
     });
 
-    // Comments
+    // Komentāri
     Route::prefix('comments')->name('comments.')->group(function () {
         Route::get('/', [AdminCommentController::class, 'index'])->name('index');
         Route::put('/{id}/approve', [AdminCommentController::class, 'approve'])->name('approve');
         Route::put('/{id}/reject', [AdminCommentController::class, 'reject'])->name('reject');
     });
 
-    // Contact Messages
+    // Kontaktziņojumi
     Route::prefix('contacts')->name('contacts.')->group(function () {
         Route::get('/', [AdminContactController::class, 'index'])->name('index');
         Route::get('/{id}', [AdminContactController::class, 'show'])->name('show');
@@ -295,7 +295,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminContactController::class, 'destroy'])->name('destroy');
     });
 
-    // Users
+    // Lietotāji
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->name('index');
         Route::get('/{id}', [AdminUserController::class, 'show'])->name('show');
@@ -307,7 +307,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
 
-    // Settings (requires settings.view permission or super admin)
+    // Iestatījumi (nepieciešama settings.view atļauja vai galvenā administratora tiesības)
     Route::middleware(['can:settings.view'])->group(function () {
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
         Route::post('/settings', [AdminSettingsController::class, 'store'])->name('settings.store')->middleware('can:settings.edit');
@@ -315,7 +315,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/settings/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('settings.clear-cache')->middleware('can:settings.edit');
     });
 
-    // Activity Logs (requires logs.view permission or super admin)
+    // Aktivitāšu žurnāli (nepieciešama logs.view atļauja vai galvenā administratora tiesības)
     Route::middleware(['can:logs.view'])->group(function () {
         Route::get('/logs', [AdminActivityLogController::class, 'index'])->name('logs.index');
         Route::get('/logs/export', [AdminActivityLogController::class, 'export'])->name('logs.export');
@@ -335,15 +335,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 });
 
-// Privacy Policy Page
+// Privātuma politikas lapa
 Route::get('/privacy', function () {
     return Inertia::render('Privacy');
 })->name('privacy');
 
-// Terms of Use Page
+// Lietošanas noteikumu lapa
 Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
 
-// ========== AUTH AND ADMIN ROUTES (BREEZE) ==========
+// ========== AUTORIZĀCIJAS UN ADMINISTRĀCIJAS MARŠRUTI (BREEZE) ==========
 require __DIR__.'/auth.php';

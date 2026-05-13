@@ -18,7 +18,7 @@ class ResetPasswordMail extends Mailable
     public string $mailLocale;
 
     /**
-     * Create a new message instance.
+     * Izveido jaunu ziņojuma piemēru
      */
     public function __construct(string $resetUrl, string $userName, string $mailLocale = 'lv')
     {
@@ -28,7 +28,7 @@ class ResetPasswordMail extends Mailable
     }
 
     /**
-     * Get the message envelope.
+     * Iegūst ziņojuma aploksni
      */
     public function envelope(): Envelope
     {
@@ -40,7 +40,7 @@ class ResetPasswordMail extends Mailable
     }
 
     /**
-     * Get the message content definition.
+     * Iegūst ziņojuma satura definīciju
      */
     public function content(): Content
     {

@@ -16,7 +16,7 @@ class CartItem extends Model
         'session_id',
         'product_id',
         'quantity',
-        'size',    // ← PIEVIENOTS: izmērs (XS/S/M/L/XL/XXL vai NULL)
+        'size',
         'price',
     ];
 
@@ -27,7 +27,7 @@ class CartItem extends Model
 
     protected $appends = ['total'];
 
-    // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ───────────────────────────────────────────────────────
 
     public function cart(): BelongsTo
     {
@@ -44,7 +44,7 @@ class CartItem extends Model
         return $this->belongsTo(User::class);
     }
 
-    // ─── ACCESSORS ───────────────────────────────────────────────────────────
+    // ─── AKSESUĀRI ───────────────────────────────────────────────────────────
 
     public function getTotalAttribute(): float
     {
@@ -54,7 +54,7 @@ class CartItem extends Model
     // ─── BOOT ────────────────────────────────────────────────────────────────
 
     /**
-     * Auto-aizpilda cenu no produkta ja nav norādīta.
+     * Automātiski aizpilda cenu no produkta, ja nav norādīta.
      */
     protected static function boot()
     {

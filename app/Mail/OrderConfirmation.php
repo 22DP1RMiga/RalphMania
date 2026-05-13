@@ -17,7 +17,7 @@ class OrderConfirmation extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * Create a new message instance.
+     * Izveido jaunu ziņojuma piemēru
      */
     public function __construct(
         public Order $order,
@@ -25,7 +25,7 @@ class OrderConfirmation extends Mailable
     ) {}
 
     /**
-     * Get the message envelope.
+     * Iegūst ziņojuma aploksni
      */
     public function envelope(): Envelope
     {
@@ -37,7 +37,7 @@ class OrderConfirmation extends Mailable
     }
 
     /**
-     * Get the message content definition.
+     * Iegūst ziņojuma satura definīciju
      */
     public function content(): Content
     {
@@ -52,13 +52,13 @@ class OrderConfirmation extends Mailable
     }
 
     /**
-     * Get the attachments for the message.
+     * Iegūst ziņojuma pielikumus
      *
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array
     {
-        // Generate PDF invoice and attach it
+        // Ģenerē PDF rēķinu un pievieno to
         $pdf = $this->generateInvoicePdf();
 
         return [
@@ -68,7 +68,7 @@ class OrderConfirmation extends Mailable
     }
 
     /**
-     * Generate invoice PDF
+     * Ģenerē rēķinu PDF formātā
      */
     private function generateInvoicePdf()
     {

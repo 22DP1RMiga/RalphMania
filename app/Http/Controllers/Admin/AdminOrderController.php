@@ -82,7 +82,7 @@ class AdminOrderController extends Controller
 
         $order->status = $request->status;
 
-        // Atjaunināt papildus datumus
+        // Atjauninā papildus datumus
         if ($request->status === 'delivered') {
             $order->delivered_at = now();
         } elseif ($request->status === 'shipped') {

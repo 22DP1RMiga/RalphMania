@@ -24,8 +24,8 @@ class Order extends Model
         'delivery_postal_code',
         'subtotal',
         'shipping_cost',
-        'discount_amount',   // ← JAUNS: kupona atlaide
-        'coupon_code',       // ← JAUNS: izmantotais kods
+        'discount_amount',
+        'coupon_code',
         'total_amount',
         'status',
         'notes',
@@ -50,7 +50,7 @@ class Order extends Model
         'can_be_cancelled',
     ];
 
-    // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ───────────────────────────────────────────────────────
 
     public function user(): BelongsTo
     {
@@ -72,7 +72,7 @@ class Order extends Model
         return $this->hasMany(CourierAssignment::class);
     }
 
-    // ─── ACCESSORS ───────────────────────────────────────────────────────────
+    // ─── AKSESUĀRI ───────────────────────────────────────────────────────────
 
     public function getStatusColorAttribute(): string
     {

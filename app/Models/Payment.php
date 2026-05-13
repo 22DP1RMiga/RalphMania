@@ -11,7 +11,7 @@ class Payment extends Model
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
+     * Atribūti, kurus var piešķirt masveidā
      */
     protected $fillable = [
         'order_id',
@@ -30,7 +30,7 @@ class Payment extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Atribūti, kas jāpielieto
      */
     protected $casts = [
         'amount' => 'decimal:2',
@@ -40,7 +40,7 @@ class Payment extends Model
     ];
 
     /**
-     * Get the order this payment belongs to
+     * Iegūst pasūtījumu, kuram pieder šis maksājums
      */
     public function order(): BelongsTo
     {
@@ -48,7 +48,7 @@ class Payment extends Model
     }
 
     /**
-     * Mark payment as completed
+     * Atzīmē maksājumu kā pabeigtu
      *
      * @param string|null $transactionId Payment gateway transaction ID
      * @param array|null $gatewayResponse Full gateway response data
@@ -62,7 +62,7 @@ class Payment extends Model
             'paid_at' => now(),
         ]);
 
-        // Update order status to confirmed
+        // Atjaunina pasūtījuma statusu uz apstiprinātu
         $this->order->update([
             'status' => 'confirmed',
             'paid_at' => now(),
@@ -70,7 +70,7 @@ class Payment extends Model
     }
 
     /**
-     * Mark payment as failed
+     * Atzīmē maksājumu kā neizdevušos
      *
      * @param array|null $gatewayResponse Error response from gateway
      */
@@ -83,7 +83,7 @@ class Payment extends Model
     }
 
     /**
-     * Process refund
+     * Apstrādāt atmaksu
      */
     public function processRefund(): void
     {
@@ -92,14 +92,14 @@ class Payment extends Model
             'refunded_at' => now(),
         ]);
 
-        // Update order status
+        // Atjaunina pasūtījuma statusu
         $this->order->update([
             'status' => 'refunded',
         ]);
     }
 
     /**
-     * Get payment method label
+     * Iegūst maksājuma metodes etiķeti
      */
     public function getPaymentMethodLabelAttribute(): string
     {
@@ -113,7 +113,7 @@ class Payment extends Model
     }
 
     /**
-     * Get status badge color
+     * Iegūst statusa nozīmītes krāsu
      */
     public function getStatusColorAttribute(): string
     {

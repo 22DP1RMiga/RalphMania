@@ -11,12 +11,12 @@ class ContactMessage extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
+     * Ar modeli saistītā tabula
      */
     protected $table = 'contact_messages';
 
     /**
-     * The attributes that are mass assignable.
+     * Atribūti, kurus var piešķirt masveidā
      */
     protected $fillable = [
         'user_id',
@@ -35,7 +35,7 @@ class ContactMessage extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Atribūti, kas jāpielieto
      */
     protected $casts = [
         'is_read' => 'boolean',
@@ -46,7 +46,7 @@ class ContactMessage extends Model
     ];
 
     /**
-     * Get the user that sent the message.
+     * Iegūst lietotāju, kurš nosūtīja ziņojumu
      */
     public function user(): BelongsTo
     {
@@ -54,7 +54,7 @@ class ContactMessage extends Model
     }
 
     /**
-     * Get the administrator who replied to the message.
+     * Iegūst administratoru, kurš atbildēja uz ziņojumu
      */
     public function repliedBy(): BelongsTo
     {
@@ -62,7 +62,7 @@ class ContactMessage extends Model
     }
 
     /**
-     * Get full phone number with country code.
+     * Iegūst pilnu tālruņa numuru ar valsts kodu
      */
     public function getFullPhoneAttribute(): ?string
     {
@@ -73,7 +73,7 @@ class ContactMessage extends Model
     }
 
     /**
-     * Scope for unread messages.
+     * Tvērums nelasītiem ziņojumiem.
      */
     public function scopeUnread($query)
     {
@@ -81,7 +81,7 @@ class ContactMessage extends Model
     }
 
     /**
-     * Scope for read but not replied messages.
+     * Aptver izlasītus, bet neatbildētus ziņojumus
      */
     public function scopeReadNotReplied($query)
     {
@@ -89,7 +89,7 @@ class ContactMessage extends Model
     }
 
     /**
-     * Scope for replied messages.
+     * Aptver atbildētos ziņojumus
      */
     public function scopeReplied($query)
     {
@@ -97,7 +97,7 @@ class ContactMessage extends Model
     }
 
     /**
-     * Scope for unreplied messages.
+     * Tvērums neatbildētajiem ziņojumiem
      */
     public function scopeUnreplied($query)
     {

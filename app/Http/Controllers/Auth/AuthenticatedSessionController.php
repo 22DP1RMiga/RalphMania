@@ -14,7 +14,7 @@ use Inertia\Response;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Parāda pieteikšanās skatu
      */
     public function create(): Response
     {
@@ -25,7 +25,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Apstrādā ienākošo autentifikācijas pieprasījumu
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -33,14 +33,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Update last login timestamp
+        // Atjaunina pēdējās pieteikšanās laika zīmogu
         $user = Auth::user();
         if ($user && method_exists($user, 'updateLastLogin')) {
             try {
                 $user->updateLastLogin();
             } catch (\Exception $e) {
-                // Silently fail if column doesn't exist yet
-                // This prevents errors during migration process
+                // Pa kluso kļūda, ja kolonna vēl nepastāv
+                // Tas novērš kļūdas migrācijas procesa laikā
             }
         }
 
@@ -48,7 +48,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Destroy an authenticated session.
+     * Iznīcina autentificētu sesiju
      */
     public function destroy(Request $request): RedirectResponse
     {

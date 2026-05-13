@@ -23,7 +23,7 @@ class Courier extends Model
         'hired_at'  => 'date',
     ];
 
-    // ─── RELATIONSHIPS ────────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ────────────────────────────────────────────────────────
 
     public function user(): BelongsTo
     {
@@ -47,17 +47,17 @@ class Courier extends Model
             ->whereNotNull('completed_at');
     }
 
-    // ─── SCOPES ───────────────────────────────────────────────────────────────
+    // ─── TVĒRUMI ───────────────────────────────────────────────────────────────
 
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    // ─── ACCESSORS ────────────────────────────────────────────────────────────
+    // ─── AKSESUĀRI ────────────────────────────────────────────────────────────
 
     /**
-     * Count of active (undelivered) orders assigned to this courier.
+     * Šim kurjeram piešķirto aktīvo (nepiegādāto) pasūtījumu skaits
      */
     public function getActiveOrdersCountAttribute(): int
     {
@@ -65,7 +65,7 @@ class Courier extends Model
     }
 
     /**
-     * Count of total completed deliveries.
+     * Kopējais pabeigto piegāžu skaits
      */
     public function getCompletedOrdersCountAttribute(): int
     {

@@ -25,7 +25,7 @@ class Category extends Model
         'sort_order' => 'integer',
     ];
 
-    // Relationships
+    // Attiecības
     public function products()
     {
         return $this->hasMany(Product::class);
@@ -42,7 +42,7 @@ class Category extends Model
             ->orderBy('sort_order');
     }
 
-    // Scopes
+    // Tvērumi
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

@@ -49,7 +49,7 @@ class Content extends Model
     ];
 
     /**
-     * Content type constants
+     * Satura tipa konstantes
      */
     const TYPE_VIDEO = 'video';
     const TYPE_BLOG = 'blog';
@@ -57,7 +57,7 @@ class Content extends Model
     const TYPE_ANNOUNCEMENT = 'announcement';
 
     /**
-     * Get all valid content types
+     * Iegūst visus derīgos satura tipus
      */
     public static function getTypes(): array
     {
@@ -70,7 +70,7 @@ class Content extends Model
     }
 
     /**
-     * Get type labels (bilingual)
+     * Iegūst tipa etiķetes (divvalodu)
      */
     public static function getTypeLabels(): array
     {
@@ -83,7 +83,7 @@ class Content extends Model
     }
 
     /**
-     * Get the user that created this content.
+     * Iegūst lietotāju, kurš izveidoja šo saturu
      */
     public function creator(): BelongsTo
     {
@@ -91,7 +91,7 @@ class Content extends Model
     }
 
     /**
-     * Get all likes for the content (polymorphic)
+     * Iegūst visas “patīk” atzīmes saturam (polimorfs)
      */
     public function likes(): MorphMany
     {
@@ -99,7 +99,7 @@ class Content extends Model
     }
 
     /**
-     * Get the comments for the content.
+     * Iegūst komentārus par saturu
      */
     public function comments(): HasMany
     {
@@ -109,7 +109,7 @@ class Content extends Model
     }
 
     /**
-     * Get the reviews for the content.
+     * Iegūst atsauksmes par saturu
      */
     public function reviews(): HasMany
     {
@@ -119,7 +119,7 @@ class Content extends Model
     }
 
     // =====================================================
-    // IMAGE URL HELPERS
+    // ATTĒLU URL PALĪGI
     // =====================================================
 
     /**
@@ -136,7 +136,7 @@ class Content extends Model
     }
 
     /**
-     * Thumbnail URL — video: /img/thumbnails/, citi: /storage/blogs/ vai /img/Blogs/
+     * Sīktēlu URL — video: /img/thumbnails/, citi: /storage/blogs/ vai /img/Blogs/
      */
     public function getThumbnailUrlAttribute(): string
     {
@@ -154,7 +154,7 @@ class Content extends Model
     }
 
     /**
-     * Featured image URL — blog, post, announcement
+     * Piedāvātā attēla URL — blog, post, announcement
      */
     public function getFeaturedImageUrlAttribute(): string
     {
@@ -184,7 +184,7 @@ class Content extends Model
     }
 
     /**
-     * Get the display image URL (auto-selects based on type)
+     * Iegūst redzamā attēla URL (automātiska atlase, pamatojoties uz veidu)
      */
     public function getDisplayImageUrlAttribute(): string
     {
@@ -196,11 +196,11 @@ class Content extends Model
     }
 
     // =====================================================
-    // TYPE CHECKING HELPERS
+    // TIPA PĀRBAUDES PALĪGI
     // =====================================================
 
     /**
-     * Check if content is a video
+     * Pārbauda, vai saturs ir video
      */
     public function isVideo(): bool
     {
@@ -208,7 +208,7 @@ class Content extends Model
     }
 
     /**
-     * Check if content is a blog post
+     * Pārbauda, vai saturs ir emuāra ieraksts
      */
     public function isBlog(): bool
     {
@@ -216,7 +216,7 @@ class Content extends Model
     }
 
     /**
-     * Check if content is news
+     * Pārbauda, vai saturs ir ziņas (post)
      */
     public function isNews(): bool
     {
@@ -224,7 +224,7 @@ class Content extends Model
     }
 
     /**
-     * Check if content is an announcement
+     * Pārbauda, vai saturs ir paziņojums
      */
     public function isAnnouncement(): bool
     {
@@ -232,7 +232,7 @@ class Content extends Model
     }
 
     /**
-     * Check if content has body text (blogs, news, announcements)
+     * Pārbauda, vai saturam ir pamatteksts (emuāri, ziņas, paziņojumi)
      */
     public function hasBodyContent(): bool
     {
@@ -240,11 +240,11 @@ class Content extends Model
     }
 
     // =====================================================
-    // QUERY SCOPES
+    // VAICĀJUMA TVĒRUMI
     // =====================================================
 
     /**
-     * Scope: only published content
+     * Tvērums: tikai publicēts saturs
      */
     public function scopePublished($query)
     {
@@ -253,7 +253,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: only featured content
+     * Tvērums: tikai piedāvātais saturs
      */
     public function scopeFeatured($query)
     {
@@ -261,7 +261,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: filter by type
+     * Tvērums: filtrē pēc tipa
      */
     public function scopeOfType($query, $type)
     {
@@ -269,7 +269,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: only videos
+     * Tvērums: tikai video
      */
     public function scopeVideos($query)
     {
@@ -277,7 +277,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: only blogs
+     * Tvērums: tikai emuāri
      */
     public function scopeBlogs($query)
     {
@@ -285,7 +285,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: only news
+     * Tvērums: tikai ziņas
      */
     public function scopeNews($query)
     {
@@ -293,7 +293,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: only announcements
+     * Tvērums: tikai paziņojumi
      */
     public function scopeAnnouncements($query)
     {
@@ -301,7 +301,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: filter by category
+     * Tvērums: filtrē pēc kategorijas
      */
     public function scopeInCategory($query, $category)
     {
@@ -309,7 +309,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: latest first
+     * Tvērums: jaunākais pirmais
      */
     public function scopeLatest($query)
     {
@@ -317,7 +317,7 @@ class Content extends Model
     }
 
     /**
-     * Scope: most popular (by views)
+     * Tvērums: populārākais (pēc skatījumiem)
      */
     public function scopePopular($query)
     {
@@ -325,11 +325,11 @@ class Content extends Model
     }
 
     // =====================================================
-    // ROUTE MODEL BINDING
+    // MARŠRUTA MODEĻA SAISTĪŠANA
     // =====================================================
 
     /**
-     * Get the route key for the model.
+     * Iegūst modeļa maršruta atslēgu
      */
     public function getRouteKeyName(): string
     {

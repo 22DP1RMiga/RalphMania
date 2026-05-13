@@ -11,12 +11,12 @@ class Administrator extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
+     * Ar modeli saistītā tabula
      */
     protected $table = 'administrators';
 
     /**
-     * The attributes that are mass assignable.
+     * Atribūti, kurus var piešķirt masveidā
      */
     protected $fillable = [
         'user_id',
@@ -27,7 +27,7 @@ class Administrator extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Atribūti, kas jāpielieto
      */
     protected $casts = [
         'permissions' => 'array',
@@ -36,8 +36,8 @@ class Administrator extends Model
     ];
 
     /**
-     * Available permissions in the system.
-     * Super admin has ALL permissions automatically.
+     * Sistēmā pieejamās atļaujas
+     * Galvenajam administratoram automātiski ir visas atļaujas
      */
     public const PERMISSIONS = [
         // Produktu pārvaldība
@@ -96,7 +96,7 @@ class Administrator extends Model
         'settings.view' => 'Skatīt iestatījumus',
         'settings.edit' => 'Rediģēt iestatījumus',
 
-        // Administratoru pārvaldība (tikai super admin)
+        // Administratoru pārvaldība (tikai galvenais adminstrators)
         'admins.view' => 'Skatīt administratorus',
         'admins.create' => 'Izveidot administratorus',
         'admins.edit' => 'Rediģēt administratorus',
@@ -108,7 +108,7 @@ class Administrator extends Model
     ];
 
     /**
-     * Permission groups for UI organization.
+     * Atļauju grupas lietotāja interfeisa organizēšanai
      */
     public const PERMISSION_GROUPS = [
         'Produkti'       => ['products.view', 'products.create', 'products.edit', 'products.delete'],
@@ -126,12 +126,12 @@ class Administrator extends Model
     ];
 
     /**
-     * Super admin email (only one allowed).
+     * Galvenā adminstratora e-pasts (tikai vienīgais atļauts).
      */
     public const SUPER_ADMIN_EMAIL = 'ralphmania.roltonslv@gmail.com';
 
     /**
-     * Get the user that owns this administrator record.
+     * Iegūst lietotāju, kuram pieder šis administratora ieraksts
      */
     public function user(): BelongsTo
     {
@@ -139,7 +139,7 @@ class Administrator extends Model
     }
 
     /**
-     * Check if administrator has a specific permission.
+     * Pārbauda, vai administratoram ir īpašas atļaujas
      */
     public function hasPermission(string $permission): bool
     {
@@ -153,7 +153,7 @@ class Administrator extends Model
     }
 
     /**
-     * Check if administrator has any of the given permissions.
+     * Pārbauda, vai administratoram ir kāda no piešķirtajām atļaujām
      */
     public function hasAnyPermission(array $permissions): bool
     {
@@ -170,7 +170,7 @@ class Administrator extends Model
     }
 
     /**
-     * Check if administrator has all of the given permissions.
+     * Pārbauda, vai administratoram ir visas nepieciešamās atļaujas
      */
     public function hasAllPermissions(array $permissions): bool
     {
@@ -187,7 +187,7 @@ class Administrator extends Model
     }
 
     /**
-     * Grant permissions to administrator.
+     * Piešķir atļaujas administratoram
      */
     public function grantPermissions(array $permissions): void
     {
@@ -197,7 +197,7 @@ class Administrator extends Model
     }
 
     /**
-     * Revoke permissions from administrator.
+     * Atsauc administratora atļaujas
      */
     public function revokePermissions(array $permissions): void
     {
@@ -207,7 +207,7 @@ class Administrator extends Model
     }
 
     /**
-     * Set all permissions at once.
+     * Iestata visas atļaujas vienlaikus
      */
     public function setPermissions(array $permissions): void
     {
@@ -216,7 +216,7 @@ class Administrator extends Model
     }
 
     /**
-     * Get all available permissions.
+     * Iegūst visas pieejamās atļaujas
      */
     public static function getAvailablePermissions(): array
     {
@@ -224,7 +224,7 @@ class Administrator extends Model
     }
 
     /**
-     * Get permissions grouped for UI.
+     * Iegūst lietotāja interfeisam grupētas atļaujas
      */
     public static function getPermissionGroups(): array
     {
@@ -232,7 +232,7 @@ class Administrator extends Model
     }
 
     /**
-     * Update last login timestamp.
+     * Atjaunina pēdējās pieteikšanās laika zīmogu
      */
     public function updateLastLogin(): void
     {
@@ -240,7 +240,7 @@ class Administrator extends Model
     }
 
     /**
-     * Check if this is the super admin.
+     * Pārbauda, vai šis ir galvenais administrators
      */
     public function isSuperAdmin(): bool
     {
@@ -248,7 +248,7 @@ class Administrator extends Model
     }
 
     /**
-     * Scope for super admins only.
+     * Tvērums tikai galveniem adminstratoriem (pagaidām tikai vienam)
      */
     public function scopeSuperAdmins($query)
     {
@@ -256,7 +256,7 @@ class Administrator extends Model
     }
 
     /**
-     * Scope for regular admins (not super).
+     * Tvērums parastiem administratoriem (nevis galveniem).
      */
     public function scopeRegularAdmins($query)
     {

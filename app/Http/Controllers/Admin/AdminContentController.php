@@ -13,7 +13,7 @@ use Inertia\Inertia;
 class AdminContentController extends Controller
 {
     /**
-     * Display a listing of content for admin.
+     * Parāda administratoram paredzēto satura sarakstu
      */
     public function index(Request $request)
     {
@@ -78,7 +78,7 @@ class AdminContentController extends Controller
     }
 
     /**
-     * Show the form for creating new content.
+     * Parāda veidlapu jauna satura izveidei
      */
     public function create()
     {
@@ -86,7 +86,7 @@ class AdminContentController extends Controller
     }
 
     /**
-     * Store newly created content.
+     * Saglabā jaunizveidotu saturu
      */
     public function store(Request $request)
     {
@@ -164,7 +164,7 @@ class AdminContentController extends Controller
     }
 
     /**
-     * Show the form for editing content.
+     * Parāda satura rediģēšanas veidlapu
      */
     public function edit($id)
     {
@@ -176,7 +176,7 @@ class AdminContentController extends Controller
     }
 
     /**
-     * Update the specified content.
+     * Atjaunina norādīto saturu
      */
     public function update(Request $request, $id)
     {
@@ -356,14 +356,14 @@ class AdminContentController extends Controller
     }
 
     /**
-     * Remove the specified content.
+     * Noņem norādīto saturu
      */
     public function destroy($id)
     {
         $content = Content::findOrFail($id);
 
         $this->deleteStorageFile($content->thumbnail);
-        // featured_image var sakrist ar thumbnail — dzēš tikai ja atšķiras
+        // featured_image var sakrist ar sīktēlu (thumbnail) - dzēš tikai, ja atšķiras
         if ($content->featured_image && $content->featured_image !== $content->thumbnail) {
             $this->deleteStorageFile($content->featured_image);
         }

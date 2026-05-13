@@ -19,7 +19,7 @@ class AdminCourierController extends Controller
     // ─── INDEX ────────────────────────────────────────────────────────────────
 
     /**
-     * List all couriers.
+     * Uzskaita visus kurjerus
      * GET /admin/couriers
      */
     public function index(Request $request): Response
@@ -53,14 +53,14 @@ class AdminCourierController extends Controller
             'total_active_deliveries' => CourierAssignment::whereNull('completed_at')->count(),
         ];
 
-        // Users who can be made couriers (no courier record yet, role = user)
+        // Lietotāji, kurus var iecelt par kurjeriem (vēl nav kurjera ieraksta, role = user)
         $availableUsers = User::whereDoesntHave('courier')
             ->where('is_active', true)
             ->whereHas('role', fn($q) => $q->whereIn('name', ['user', 'courier']))
             ->orderBy('username')
             ->get(['id', 'username', 'email', 'profile_picture']);
 
-        // Orders ready to be assigned (status = packed, no active courier assignment)
+        // Pasūtījumi ir gatavi piešķiršanai (statuss = iepakots, nav aktīva kurjera piešķīruma)
         $assignableOrders = Order::whereIn('status', ['packed', 'shipped', 'in_transit'])
             ->whereDoesntHave('courierAssignments', fn($q) => $q->whereNull('completed_at'))
             ->orderBy('created_at', 'asc')
@@ -75,7 +75,7 @@ class AdminCourierController extends Controller
         ]);
     }
 
-    // ─── STORE (CREATE COURIER) ───────────────────────────────────────────────
+    // ─── STORE (IZVEIDO KURJERU) ───────────────────────────────────────────────
 
     /**
      * POST /admin/couriers
@@ -95,7 +95,7 @@ class AdminCourierController extends Controller
 
         DB::beginTransaction();
         try {
-            // Assign courier role to user
+            // Piešķir lietotājam kurjera lomu
             User::findOrFail($validated['user_id'])
                 ->update(['role_id' => $courierRole->id]);
 
@@ -110,7 +110,7 @@ class AdminCourierController extends Controller
         return back()->with('success', 'Kurjers veiksmīgi pievienots!');
     }
 
-    // ─── UPDATE ───────────────────────────────────────────────────────────────
+    // ─── ATJAUNINĀŠANAI ───────────────────────────────────────────────────────────────
 
     /**
      * PUT /admin/couriers/{id}
@@ -151,7 +151,7 @@ class AdminCourierController extends Controller
         return response()->json(['success' => true, 'message' => 'Kurjers atjaunināts!']);
     }
 
-    // ─── TOGGLE ACTIVE ────────────────────────────────────────────────────────
+    // ─── IESLĒGT (TOGGLE) AKTĪVU ────────────────────────────────────────────────────────
 
     /**
      * PUT /admin/couriers/{id}/toggle-active
@@ -163,14 +163,14 @@ class AdminCourierController extends Controller
         $newActive = !$courier->is_active;
         $courier->update(['is_active' => $newActive]);
 
-        // Also activate/deactivate the user account accordingly
+        // Attiecīgi arī aktivizē/deaktivizē lietotāja kontu
         $courier->user?->update(['is_active' => $newActive]);
 
         $status = $newActive ? 'aktivizēts' : 'deaktivizēts';
         return response()->json(['success' => true, 'message' => "Kurjers {$status}!", 'is_active' => $newActive]);
     }
 
-    // ─── DESTROY ─────────────────────────────────────────────────────────────
+    // ─── DZĒŠANAI ─────────────────────────────────────────────────────────────
 
     /**
      * DELETE /admin/couriers/{id}
@@ -179,14 +179,14 @@ class AdminCourierController extends Controller
     {
         $courier = Courier::with('user')->findOrFail($id);
 
-        // Check no active deliveries
+        // Pārbauda, vai nav aktīvu piegāžu
         if ($courier->activeAssignments()->count() > 0) {
             return back()->with('error', 'Nevar dzēst kurjeru ar aktīviem piegādes uzdevumiem!');
         }
 
         DB::beginTransaction();
         try {
-            // Demote user back to regular user role
+            // Pazemina lietotāju atpakaļ uz parasta lietotāja lomu
             $userRole = Role::where('name', 'user')->first();
             $courier->user?->update(['role_id' => $userRole?->id ?? 2]);
 
@@ -200,10 +200,10 @@ class AdminCourierController extends Controller
         return back()->with('success', 'Kurjers noņemts!');
     }
 
-    // ─── ASSIGN ORDER ─────────────────────────────────────────────────────────
+    // ─── PIEŠĶIR PASŪTĪJUMU ─────────────────────────────────────────────────────────
 
     /**
-     * Assign an order to a courier.
+     * Piešķir pasūtījumu kurjeram
      * POST /admin/couriers/assign
      */
     public function assignOrder(Request $request): JsonResponse
@@ -217,7 +217,7 @@ class AdminCourierController extends Controller
         $courier = Courier::findOrFail($validated['courier_id']);
         $order   = Order::findOrFail($validated['order_id']);
 
-        // Check if order already has active assignment
+        // Pārbauda, vai pasūtījumam jau ir aktīva piešķire
         $existingActive = CourierAssignment::where('order_id', $order->id)
             ->whereNull('completed_at')
             ->first();
@@ -238,7 +238,7 @@ class AdminCourierController extends Controller
                 'notes'       => $validated['notes'] ?? null,
             ]);
 
-            // Auto-advance status from 'packed' to 'shipped' when assigned
+            // Piešķiršanas gadījumā automātiski maina statusu no “iepakots” uz “nosūtīts”
             if ($order->status === 'packed') {
                 $order->update(['status' => 'shipped', 'shipped_at' => now()]);
             }
@@ -255,10 +255,10 @@ class AdminCourierController extends Controller
         ]);
     }
 
-    // ─── UNASSIGN ORDER ───────────────────────────────────────────────────────
+    // ─── ATCEĻ PASŪTĪJUMA PIEŠĶIRŠANU ───────────────────────────────────────────────────────
 
     /**
-     * Remove order assignment (e.g. reassign to different courier).
+     * Noņem pasūtījuma piešķiršanu (piemēram, pārdalīšana citam kurjeram).
      * DELETE /admin/couriers/assignments/{assignmentId}
      */
     public function unassignOrder(int $assignmentId): JsonResponse
@@ -278,7 +278,7 @@ class AdminCourierController extends Controller
         ]);
     }
 
-    // ─── COURIER SHOW (ADMIN VIEW) ────────────────────────────────────────────
+    // ─── KURJERU IZRĀDE JEB "SHOW" (ADMINISTRĀCIJAS SKATS) ────────────────────────────────────────────
 
     /**
      * GET /admin/couriers/{id}
@@ -315,7 +315,7 @@ class AdminCourierController extends Controller
         ]);
     }
 
-    // ─── PRIVATE HELPERS ─────────────────────────────────────────────────────
+    // ─── PRIVĀTIE PALĪGI ─────────────────────────────────────────────────────
 
     private function formatCourier(Courier $courier): array
     {

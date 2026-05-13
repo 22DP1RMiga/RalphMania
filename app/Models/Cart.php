@@ -22,7 +22,7 @@ class Cart extends Model
     ];
 
     /**
-     * Get the user that owns the cart
+     * Iegūst lietotāju, kuram pieder grozs
      */
     public function user(): BelongsTo
     {
@@ -30,7 +30,7 @@ class Cart extends Model
     }
 
     /**
-     * Get all cart items
+     * Iegūst visas groza preces
      */
     public function items(): HasMany
     {
@@ -38,22 +38,22 @@ class Cart extends Model
     }
 
     /**
-     * Get or create cart for current user/session
+     * Iegūst vai izveido grozu pašreizējam lietotājam/sesijai
      *
-     * CRITICAL METHOD - This is called by CartController
+     * KRITISKĀ METODE - to izsauc CartController
      */
     public static function getCurrentCart(): self
     {
         if (auth()->check()) {
-            // Logged in user - use user_id
+            // Pieteicies lietotājs - izmanto user_id
             return self::firstOrCreate([
                 'user_id' => auth()->id(),
             ]);
         } else {
-            // Guest - use session_id
+            // Viesis - izmanto session_id
             $sessionId = session()->getId();
 
-            // Start session if not started
+            // Sāk sesiju, ja tā vēl nav sākta
             if (!$sessionId) {
                 session()->start();
                 $sessionId = session()->getId();
@@ -66,7 +66,7 @@ class Cart extends Model
     }
 
     /**
-     * Merge guest cart with user cart after login
+     * Pēc pieteikšanās apvieno viesa grozu ar lietotāja grozu
      */
     public static function mergeGuestCart(string $sessionId, int $userId): void
     {
@@ -78,27 +78,27 @@ class Cart extends Model
 
         $userCart = self::firstOrCreate(['user_id' => $userId]);
 
-        // Move items from guest cart to user cart
+        // Pārvieto preces no viesa groza uz lietotāja grozu
         foreach ($guestCart->items as $guestItem) {
             $existingItem = $userCart->items()
                 ->where('product_id', $guestItem->product_id)
                 ->first();
 
             if ($existingItem) {
-                // Increase quantity if item already exists
+                // Palielina daudzumu, ja prece jau pastāv
                 $existingItem->increment('quantity', $guestItem->quantity);
             } else {
-                // Move item to user cart
+                // Pārvieto preci uz lietotāja grozu
                 $guestItem->update(['cart_id' => $userCart->id]);
             }
         }
 
-        // Delete guest cart
+        // Dzēš viesu grozu
         $guestCart->delete();
     }
 
     /**
-     * Get total items count
+     * Iegūst kopējo vienumu skaitu
      */
     public function getTotalItemsAttribute(): int
     {
@@ -106,7 +106,7 @@ class Cart extends Model
     }
 
     /**
-     * Get total cart amount
+     * Iegūst kopējo groza summu
      */
     public function getTotalAmountAttribute(): float
     {
@@ -116,7 +116,7 @@ class Cart extends Model
     }
 
     /**
-     * Clear all items from cart
+     * Notīra visas preces no groza
      */
     public function clearCart(): void
     {

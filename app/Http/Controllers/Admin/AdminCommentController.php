@@ -11,13 +11,13 @@ use Inertia\Inertia;
 class AdminCommentController extends Controller
 {
     /**
-     * Display a listing of comments for admin.
+     * Parāda administratora komentāru sarakstu
      */
     public function index(Request $request)
     {
         $query = Comment::with(['user', 'content', 'parent.user']);
 
-        // Search
+        // Meklēšanai
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -32,7 +32,7 @@ class AdminCommentController extends Controller
             });
         }
 
-        // Filter by status
+        // Filtrē pēc statusiem
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
                 $query->where('is_approved', false);
