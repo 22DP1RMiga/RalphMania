@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\LocaleHelper;
 use App\Models\User;
 use App\Mail\VerifyEmailMail;
 use Illuminate\Auth\Events\Registered;
@@ -20,7 +21,7 @@ use Inertia\Response;
 class RegisteredUserController extends Controller
 {
     /**
-     * Pieļaujamie e-pasta domēni — regulārā izteiksme.
+     * Pieļaujamie e-pasta domēni - regulārā izteiksme.
      * Pieļauj: gmail, outlook, hotmail, live, yahoo, icloud, me, mac,
      * proton, protonmail, zoho, tutanota, gmx, inbox, aol, yandex,
      * plus Latvijas: inbox.lv, apollo.lv, tvnet.lv, one.lv, e-apollo.lv
@@ -48,7 +49,7 @@ class RegisteredUserController extends Controller
         ')$/i';
 
     /**
-     * Display the registration view.
+     * Parāda reģistrācijas skatu
      */
     public function create(): Response
     {
@@ -56,20 +57,21 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
+     * Apstrādā ienākošo reģistrācijas pieprasījumu
      *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
-        $locale = app()->getLocale();
-        $isLv   = $locale === 'lv';
+        $locale = $request->input('locale', 'lv');
+        LocaleHelper::set($locale);
+        $isLv = $locale === 'lv';
 
         $request->validate([
             'first_name' => 'required|string|max:50',
             'last_name'  => 'required|string|max:50',
             'username'   => 'required|string|max:30|unique:' . User::class,
-
+            'locale'     => 'nullable|string|in:lv,en',
             // ── E-pasts ────────────────────────────────────────────────────────
             // 1. Standarta e-pasta formāts
             // 2. Jābūt mazo burtu formātā (lowercase)
@@ -98,7 +100,7 @@ class RegisteredUserController extends Controller
                     ->uncompromised(),
             ],
         ], [
-            // ── Kļūdu ziņojumi latviešu valodā ────────────────────────────────
+            // ── Kļūdu ziņojumi latviešu/angļu valodā ────────────────────────────────
             'email.regex' => $isLv
                 ? 'Lūdzu izmantojiet atpazīstamu e-pasta pakalpojumu (piemēram, Gmail, Outlook, iCloud u.c.).'
                 : 'Please use a recognised email provider (e.g. Gmail, Outlook, iCloud, etc.).',
@@ -134,37 +136,36 @@ class RegisteredUserController extends Controller
             'username'   => $request->username,
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
+            'locale'     => $locale,
             'role_id'    => 2, // Noklusētā loma: Lietotājs
         ]);
 
         event(new Registered($user));
-
         Auth::login($user);
-
-        $this->sendVerificationEmail($user);
+        $this->sendVerificationEmail($user, $locale);
 
         return redirect(route('dashboard', absolute: false));
     }
 
     /**
-     * Nosūta custom verifikācijas e-pastu ar verify-email.blade.php veidni.
+     * Nosūta pielāgotu (custom) verifikācijas e-pastu ar verify-email.blade.php veidni.
      */
-    protected function sendVerificationEmail(User $user): void
+    protected function sendVerificationEmail(User $user, string $locale = 'lv'): void
     {
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             Carbon::now()->addMinutes(60),
-            [
-                'id'   => $user->getKey(),
-                'hash' => sha1($user->getEmailForVerification()),
-            ]
+            ['id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification())]
         );
 
         try {
             Mail::to($user->email)->send(
-                new VerifyEmailMail($verificationUrl, $user->first_name ?? 'Lietotāj')
+                new VerifyEmailMail(
+                    $verificationUrl,
+                    $user->first_name ?? ($locale === 'en' ? 'User' : 'Lietotāj'),
+                    $locale
+                )
             );
-
             \Log::info('Verification email sent', ['email' => $user->email]);
         } catch (\Exception $e) {
             \Log::error('Failed to send verification email', ['error' => $e->getMessage()]);

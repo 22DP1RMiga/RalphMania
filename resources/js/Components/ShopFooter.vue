@@ -4,7 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const currentYear = new Date().getFullYear();
 const page = usePage();
 
@@ -64,7 +64,8 @@ const subscribe = async () => {
     isLoading.value = true;
     try {
         const response = await axios.post('/newsletter/subscribe', {
-            email: email.value
+            email: email.value,
+            locale: locale.value,
         });
 
         if (response.data.success) {

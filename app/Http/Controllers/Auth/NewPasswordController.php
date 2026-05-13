@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\LocaleHelper;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Inertia\Response;
 class NewPasswordController extends Controller
 {
     /**
-     * Display the password reset view.
+     * Parāda paroles atiestatīšanas skatu
      */
     public function create(Request $request): Response
     {
@@ -28,7 +29,7 @@ class NewPasswordController extends Controller
     }
 
     /**
-     * Handle an incoming new password request.
+     * Apstrādā ienākošo jaunas paroles pieprasījumu
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -38,26 +39,32 @@ class NewPasswordController extends Controller
             'token' => 'required',
             'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'locale'   => 'nullable|string|in:lv,en',
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
+        // Nodrošina lokalizāciju
+        $locale = $request->input('locale', 'lv');
+        LocaleHelper::set($locale);
+
+        // Šeit mēģina atiestatīt lietotāja paroli. Ja tas būs veiksmīgi, tad
+        // atjauninās paroli faktiskā lietotāja modelī un saglabās to datubāzē.
+        // Pretējā gadījumā parsēs kļūdu un atgriezīs atbildi.
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user) use ($request) {
+            function ($user) use ($request, $locale) {
                 $user->forceFill([
-                    'password' => Hash::make($request->password),
+                    'password'       => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'locale'         => $locale,
                 ])->save();
 
                 event(new PasswordReset($user));
             }
         );
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
+        // Ja parole tika veiksmīgi atiestatīta, tad novirzīs lietotāju atpakaļ uz
+        // lietojumprogrammas sākumlapas autentificēto skatu. Ja rodas kļūda, tad var viņu
+        // novirzīt atpakaļ uz vietu, no kuras lietotājs ieradās ar kļūdas ziņojumu.
         if ($status == Password::PASSWORD_RESET) {
             return redirect()->route('login')->with('status', __($status));
         }

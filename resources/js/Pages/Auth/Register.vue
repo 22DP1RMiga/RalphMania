@@ -28,6 +28,7 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
+    locale: currentLocale.value,
 });
 
 // ── Paroles prasību pārbaude reāllaikā ───────────────────────────

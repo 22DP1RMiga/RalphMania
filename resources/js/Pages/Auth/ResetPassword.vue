@@ -27,6 +27,7 @@ const form = useForm({
     email: props.email,
     password: '',
     password_confirmation: '',
+    locale: currentLocale.value,
 });
 
 // ── Paroles prasību pārbaude ──────────────────────────────────────
