@@ -15,7 +15,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Atribūti, kurus var piešķirt masveidā
      *
      * @var array<int, string>
      */
@@ -40,7 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Atribūti, kas serializācijas laikā ir jāslēpj
      *
      * @var array<int, string>
      */
@@ -50,7 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Iegūst atribūtus, kas jāraida
      *
      * @return array<string, string>
      */
@@ -67,16 +67,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * The accessors to append to the model's array form.
+     * Piekļuves elementi, kas jāpievieno modeļa masīva formai
      */
     protected $appends = ['is_administrator', 'is_super_admin', 'is_courier'];
 
     /**
-     * RELATIONSHIPS
+     * ATTIECĪBAS
      */
 
     /**
-     * Get the role of the user
+     * Iegūst lietotāja lomu
      */
     public function role()
     {
@@ -84,7 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get administrator record if exists
+     * Iegūst administratora ierakstu, ja tāds ir
      */
     public function administrator()
     {
@@ -92,19 +92,19 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's addresses - returns empty collection since addresses are in users table
-     * This is for backwards compatibility
+     * Iegūst lietotāja adreses - atgriež tukšu kolekciju, jo adreses ir lietotāju tabulā
+     * Tas ir paredzēts atpakaļsaderībai
      */
     public function addresses()
     {
-        // Return empty collection - user address is stored directly in users table
-        // If you create user_addresses table later, change this to:
+        // Atgriezt tukšu kolekciju - lietotāja adrese tiek glabāta tieši lietotāju tabulā
+        // Piezīme: ja vēlāk izveidošu user_addresses tabulu, tad mainīšu to uz:
         // return $this->hasMany(UserAddress::class);
         return collect([]);
     }
 
     /**
-     * Get user's primary address as object
+     * Iegūst lietotāja primāro adresi kā objektu
      */
     public function getPrimaryAddressAttribute()
     {
@@ -121,7 +121,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's cart
+     * Iegūst lietotāja grozu
      */
     public function cart()
     {
@@ -129,7 +129,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's cart items
+     * Iegūst lietotāja groza preces
      */
     public function cartItems()
     {
@@ -137,7 +137,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's orders
+     * Iegūst lietotāja pasūtījumus
      */
     public function orders()
     {
@@ -145,7 +145,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's reviews
+     * Iegūst lietotāju atsauksmes
      */
     public function reviews()
     {
@@ -153,7 +153,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's comments
+     * Iegūst lietotāju komentārus
      */
     public function comments()
     {
@@ -161,7 +161,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's created content
+     * Iegūst lietotāja izveidoto saturu
      */
     public function content()
     {
@@ -169,11 +169,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * HELPER METHODS
+     * PALĪDZĪBAS METODES
      */
 
     /**
-     * Check if user is admin (has administrator role)
+     * Pārbauda, vai lietotājs ir administrators (ar administratora lomu)
      */
     public function isAdmin(): bool
     {
@@ -181,7 +181,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user is an administrator (has administrator record)
+     * Pārbauda, vai lietotājs ir administrators (ir administratora ieraksts)
      */
     public function isAdministrator(): bool
     {
@@ -189,7 +189,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Accessor for is_administrator attribute (for frontend)
+     * Piekļuves rīks is_administrator atribūtam (lietotāja pusei jeb "frontend")
      */
     public function getIsAdministratorAttribute(): bool
     {
@@ -197,7 +197,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user is super admin
+     * Pārbauda, vai lietotājs ir galvenais administrators
      */
     public function isSuperAdmin(): bool
     {
@@ -205,7 +205,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Accessor for is_super_admin attribute (for frontend)
+     * Piekļuves rīks is_super_admin atribūtam (lietotāja pusei jeb "frontend")
      */
     public function getIsSuperAdminAttribute(): bool
     {
@@ -213,7 +213,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Accessor for is_courier attribute (for frontend)
+     * Piekļuves rīks is_courier atribūtam (lietotāja pusei jeb "frontend")
      */
     public function getIsCourierAttribute(): bool
     {
@@ -221,7 +221,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user has a specific admin permission
+     * Pārbauda, vai lietotājam ir īpašas administratora atļaujas
      */
     public function hasAdminPermission(string $permission): bool
     {
@@ -232,7 +232,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user has any of the given admin permissions
+     * Pārbauda, vai lietotājam ir kāda no piešķirtajām administratora atļaujām
      */
     public function hasAnyAdminPermission(array $permissions): bool
     {
@@ -248,20 +248,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user is a courier
+     * Pārbauda, vai lietotājs ir kurjers
      */
     public function isCourier(): bool
     {
         $this->loadMissing('role');
         return $this->role?->name === 'courier';
     }
-//    public function isCourier(): bool
-//    {
-//        return $this->role && $this->role->name === 'courier';
-//    }
 
     /**
-     * Check if user is customer
+     * Pārbauda, vai lietotājs ir klients
      */
     public function isCustomer(): bool
     {
@@ -269,7 +265,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's full name
+     * Iegūst lietotāja pilnu vārdu
      */
     public function getFullNameAttribute(): string
     {
@@ -283,7 +279,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get user's display name (for UI)
+     * Iegūst lietotāja parādāmo vārdu (lietotāja saskarnei)
      */
     public function getDisplayNameAttribute(): string
     {
@@ -291,16 +287,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Update last login timestamp
+     * Atjaunina pēdējās pieteikšanās laika zīmogu
      */
     public function updateLastLogin(): void
     {
-        // Only update if column exists
+        // Atjaunina tikai tad, ja kolonna pastāv
         if (Schema::hasColumn('users', 'last_login_at')) {
             $this->update(['last_login_at' => now()]);
         }
 
-        // Also update administrator last login if applicable
+        // Atjaunina arī administratora pēdējo pieteikšanās reizi, ja piemērojams
         if ($this->administrator) {
             $this->administrator->updateLastLogin();
         }

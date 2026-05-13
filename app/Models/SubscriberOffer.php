@@ -33,7 +33,7 @@ class SubscriberOffer extends Model
     ];
 
     /**
-     * Scope for active offers.
+     * Tvērums aktīvajiem piedāvājumiem
      */
     public function scopeActive($query)
     {
@@ -50,7 +50,7 @@ class SubscriberOffer extends Model
     }
 
     /**
-     * Scope for subscriber-only offers.
+     * Tvērums tikai abonentiem paredzētiem piedāvājumiem
      */
     public function scopeForSubscribers($query)
     {
@@ -58,7 +58,7 @@ class SubscriberOffer extends Model
     }
 
     /**
-     * Get title by locale.
+     * Iegūst nosaukumu pēc lokalizācijas
      */
     public function getTitle(string $locale = 'lv'): string
     {
@@ -66,7 +66,7 @@ class SubscriberOffer extends Model
     }
 
     /**
-     * Get description by locale.
+     * Iegūst aprakstu pēc lokalizācijas
      */
     public function getDescription(string $locale = 'lv'): ?string
     {
@@ -74,7 +74,7 @@ class SubscriberOffer extends Model
     }
 
     /**
-     * Get formatted discount.
+     * Iegūst formatētu atlaidi
      */
     public function getFormattedDiscount(): string
     {
@@ -85,7 +85,7 @@ class SubscriberOffer extends Model
     }
 
     /**
-     * Check if offer is valid.
+     * Pārbauda, vai piedāvājums ir derīgs
      */
     public function isValid(): bool
     {
@@ -98,7 +98,7 @@ class SubscriberOffer extends Model
     }
 
     /**
-     * Increment usage count.
+     * Palielina lietošanas skaitu
      */
     public function incrementUsage(): void
     {

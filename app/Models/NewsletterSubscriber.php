@@ -20,7 +20,7 @@ class NewsletterSubscriber extends Model
         'receive_news',
         'receive_promotions',
         'receive_announcements',
-        'subscription_expires_at', // NEW: abonēšanas termiņš
+        'subscription_expires_at',
     ];
 
     protected $casts = [
@@ -43,17 +43,17 @@ class NewsletterSubscriber extends Model
         });
     }
 
-    // ─── RELATIONSHIPS ───────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ───────────────────────────────────────────────────────
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // ─── SCOPES ──────────────────────────────────────────────────────────────
+    // ─── TVĒRUMI ──────────────────────────────────────────────────────────────
 
     /**
-     * Active AND not expired subscribers.
+     * Aktīvi un nebeidzies abonements
      */
     public function scopeActive($query)
     {
@@ -66,10 +66,10 @@ class NewsletterSubscriber extends Model
             });
     }
 
-    // ─── STATIC HELPERS ──────────────────────────────────────────────────────
+    // ─── STATISKIE PALĪGI ──────────────────────────────────────────────────────
 
     /**
-     * Subscribe email. If user is logged in, auto-verify.
+     * Abonē e-pastu. Ja lietotājs ir pieteicies, tas tiek automātiski pārbaudīts
      * $durationDays: null = forever, integer = days until expiry.
      */
     public static function subscribe(
@@ -106,7 +106,7 @@ class NewsletterSubscriber extends Model
     }
 
     /**
-     * Check if email is subscribed AND not expired.
+     * Pārbauda, vai e-pasts ir abonēts UN vai tā derīguma termiņš nav beidzies
      */
     public static function isSubscribed(string $email): bool
     {
@@ -119,10 +119,10 @@ class NewsletterSubscriber extends Model
             ->exists();
     }
 
-    // ─── ACCESSORS ───────────────────────────────────────────────────────────
+    // ─── AKSESUĀRI ───────────────────────────────────────────────────────────
 
     /**
-     * Days remaining until expiry (null if no expiry).
+     * Atlikušās dienas līdz derīguma termiņa beigām (null, ja nav derīguma termiņa beigām)
      */
     public function getDaysRemainingAttribute(): ?int
     {
@@ -132,7 +132,7 @@ class NewsletterSubscriber extends Model
     }
 
     /**
-     * True if subscription has expired.
+     * Patiesi, ja abonements ir beidzies
      */
     public function getIsExpiredAttribute(): bool
     {

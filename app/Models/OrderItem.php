@@ -11,16 +11,12 @@ class OrderItem extends Model
     use HasFactory;
 
     /**
-     * No timestamps for order items (only created_at in DB)
+     * Nav laika zīmogu pasūtījuma vienībām (datubāzē tikai created_at)
      */
     public $timestamps = false;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * ✅ FIXED: Matches database schema exactly
-     * - Has product_name (required)
-     * - No subtotal (DB has auto-calculated 'total' instead)
+     * Atribūti, kurus var piešķirt masveidā
      */
     protected $fillable = [
         'order_id',
@@ -28,11 +24,11 @@ class OrderItem extends Model
         'product_name',
         'quantity',
         'price',
-        // Note: 'total' is GENERATED column in DB (quantity * price)
+        // Piezīme: “total” ir ĢENERĒTA kolonna datubāzē (daudzums * cena)
     ];
 
     /**
-     * The attributes that should be cast.
+     * Atribūti, kas jāpielieto
      */
     protected $casts = [
         'quantity' => 'integer',
@@ -40,14 +36,14 @@ class OrderItem extends Model
     ];
 
     /**
-     * The accessors to append to the model's array form.
+     * Piekļuves elementi, kas jāpievieno modeļa masīva formai
      */
     protected $appends = [
         'total',
     ];
 
     /**
-     * Get the order this item belongs to
+     * Iegūst secību, kurai pieder šis vienums
      */
     public function order(): BelongsTo
     {
@@ -55,7 +51,7 @@ class OrderItem extends Model
     }
 
     /**
-     * Get the product (original product reference)
+     * Iegūst produktu (oriģinālo produkta atsauci)
      */
     public function product(): BelongsTo
     {
@@ -63,18 +59,18 @@ class OrderItem extends Model
     }
 
     /**
-     * Calculate total (quantity × price)
+     * Aprēķina kopsummu (quantity × price)
      *
-     * This matches the DB's GENERATED column
+     * Tas atbilst datubāzes ĢENERĒTAI kolonnai
      */
     public function getTotalAttribute(): float
     {
-        // If 'total' exists in attributes (from DB), use it
+        // Ja 'total' eksistē atribūtos (no DB), izmanto to
         if (isset($this->attributes['total'])) {
             return (float) $this->attributes['total'];
         }
 
-        // Otherwise calculate it
+        // Citādi aprēķina
         return (float) ($this->quantity * $this->price);
     }
 }

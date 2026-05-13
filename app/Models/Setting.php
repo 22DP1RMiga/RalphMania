@@ -14,7 +14,7 @@ class Setting extends Model
     ];
 
     /**
-     * Get a setting value by key.
+     * Iegūst iestatījuma vērtību pēc atslēgas
      */
     public static function get(string $key, $default = null)
     {
@@ -26,7 +26,7 @@ class Setting extends Model
     }
 
     /**
-     * Set a setting value.
+     * Iestata iestatījuma vērtību
      */
     public static function set(string $key, $value, ?string $group = null): void
     {
@@ -39,7 +39,7 @@ class Setting extends Model
     }
 
     /**
-     * Get all settings grouped.
+     * Apkopo visus iestatījumus grupās
      */
     public static function getGrouped(): array
     {

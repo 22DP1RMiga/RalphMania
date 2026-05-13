@@ -29,7 +29,7 @@ class Review extends Model
     ];
 
     /**
-     * Get the user who wrote the review
+     * Iegūst lietotāju, kurš uzrakstīja atsauksmi
      */
     public function user(): BelongsTo
     {
@@ -37,7 +37,7 @@ class Review extends Model
     }
 
     /**
-     * Get the reviewable model (Content or Product)
+     * Iegūst pārskatāmo modeli (saturu vai produktu)
      */
     public function reviewable(): MorphTo
     {
@@ -45,7 +45,7 @@ class Review extends Model
     }
 
     /**
-     * Scope: Only approved reviews
+     * Tvērums: tikai apstiprinātas atsauksmes
      */
     public function scopeApproved($query)
     {
@@ -53,7 +53,7 @@ class Review extends Model
     }
 
     /**
-     * Scope: Only pending reviews
+     * Tvērums: tikai gaida atsauksmes
      */
     public function scopePending($query)
     {
@@ -61,7 +61,7 @@ class Review extends Model
     }
 
     /**
-     * Scope: By rating
+     * Tvērums: pēc reitinga
      */
     public function scopeByRating($query, int $rating)
     {

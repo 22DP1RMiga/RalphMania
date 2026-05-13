@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CourierAssignment extends Model
 {
     /**
-     * courier_assignments tabula neietver created_at/updated_at kolonnas.
-     * Bez šī iestatījuma Eloquent mēģina ierakstīt šos laukus un 500 kļūda rodas.
+     * courier_assignments tabula neietver created_at/updated_at kolonnas
+     * Bez šī iestatījuma Eloquent mēģina ierakstīt šos laukus un 500 kļūda rodas
      */
     public $timestamps = false;
 
@@ -26,7 +26,7 @@ class CourierAssignment extends Model
         'completed_at' => 'datetime',
     ];
 
-    // ─── RELATIONSHIPS ────────────────────────────────────────────────────────
+    // ─── ATTIECĪBAS ────────────────────────────────────────────────────────
 
     public function courier(): BelongsTo
     {
@@ -38,7 +38,7 @@ class CourierAssignment extends Model
         return $this->belongsTo(Order::class);
     }
 
-    // ─── ACCESSORS ────────────────────────────────────────────────────────────
+    // ─── AKSESUĀRI ────────────────────────────────────────────────────────────
 
     public function getIsCompletedAttribute(): bool
     {

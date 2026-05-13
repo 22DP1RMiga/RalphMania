@@ -27,7 +27,7 @@ class Comment extends Model
     ];
 
     /**
-     * Get the user who wrote the comment
+     * Iegūst lietotāju, kurš uzrakstīja komentāru
      */
     public function user(): BelongsTo
     {
@@ -35,7 +35,7 @@ class Comment extends Model
     }
 
     /**
-     * Get the content that was commented on
+     * Iegūst saturu, kuram tika pievienots komentārs
      */
     public function content(): BelongsTo
     {
@@ -43,7 +43,7 @@ class Comment extends Model
     }
 
     /**
-     * Get parent comment (for threads)
+     * Iegūst vecāku komentāru (pavedieniem jeb "threads")
      */
     public function parent(): BelongsTo
     {
@@ -51,7 +51,7 @@ class Comment extends Model
     }
 
     /**
-     * Get child comments (replies)
+     * Saņem bērnu komentārus (atbildes)
      */
     public function replies()
     {
@@ -59,7 +59,7 @@ class Comment extends Model
     }
 
     /**
-     * Scope: Only approved comments
+     * Tvērums: Tikai apstiprinātie komentāri
      */
     public function scopeApproved($query)
     {
@@ -67,7 +67,7 @@ class Comment extends Model
     }
 
     /**
-     * Scope: Only root comments (not replies)
+     * Tvērums: Tikai "root" komentāri (nevis atbildes)
      */
     public function scopeRootOnly($query)
     {

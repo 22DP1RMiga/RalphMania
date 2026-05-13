@@ -25,7 +25,7 @@ class ActivityLog extends Model
     ];
 
     /**
-     * Get the user that performed the action.
+     * Iegūst lietotāju, kurš veica darbību
      */
     public function user(): BelongsTo
     {
@@ -33,9 +33,9 @@ class ActivityLog extends Model
     }
 
     /**
-     * Log an activity.
+     * Reģistrē aktivitāti
      *
-     * Tava tabulas struktūra:
+     * Tabulas struktūra:
      * - user_id
      * - activity_type (varchar 50)
      * - description (text)

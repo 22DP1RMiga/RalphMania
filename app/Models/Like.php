@@ -12,12 +12,12 @@ class Like extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
+     * Ar modeli saistītā tabula
      */
     protected $table = 'likes';
 
     /**
-     * The attributes that are mass assignable.
+     * Atribūti, kurus var piešķirt masveidā
      */
     protected $fillable = [
         'user_id',
@@ -26,7 +26,7 @@ class Like extends Model
     ];
 
     /**
-     * Get the user that owns the like.
+     * Iegūst lietotāju, kuram pieder atzīme “patīk”
      */
     public function user(): BelongsTo
     {
@@ -34,8 +34,8 @@ class Like extends Model
     }
 
     /**
-     * Get the likeable model (Content, Product, etc.)
-     * This is the polymorphic relationship
+     * Iegūst tīkamu modeli (saturs, produkts utt.)
+     * Šīs ir polimorfās attiecības
      */
     public function likeable(): MorphTo
     {
