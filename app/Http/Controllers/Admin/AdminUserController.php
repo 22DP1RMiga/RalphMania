@@ -13,13 +13,13 @@ use Inertia\Inertia;
 class AdminUserController extends Controller
 {
     /**
-     * Display a listing of users for admin.
+     * Parāda lietotāju sarakstu administratoram
      */
     public function index(Request $request)
     {
         $query = User::with('role');
 
-        // Search
+        // Meklēšanai
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -31,14 +31,14 @@ class AdminUserController extends Controller
             });
         }
 
-        // Filter by role
+        // Filtrē pēc lomām
         if ($request->filled('role')) {
             $query->whereHas('role', function($q) use ($request) {
                 $q->where('name', $request->role);
             });
         }
 
-        // Filter by status
+        // Filtrē pēc statusiem
         if ($request->filled('status')) {
             switch ($request->status) {
                 case 'active':
@@ -56,10 +56,10 @@ class AdminUserController extends Controller
             }
         }
 
-        // Sort
+        // Kārtošanai
         $query->orderBy('created_at', 'desc');
 
-        // Paginate
+        // Lappusēm (for pagination)
         $users = $query->paginate(20)->through(function ($user) {
             return [
                 'id' => $user->id,
@@ -80,10 +80,10 @@ class AdminUserController extends Controller
             ];
         });
 
-        // Get roles for filter dropdown
+        // Iegūst lomas filtra nolaižamajā izvēlnē (dropdown)
         $roles = Role::orderBy('name')->get(['id', 'name']);
 
-        // Get stats
+        // Iegūst statistiku
         $stats = [
             'total' => User::count(),
             'active' => User::where('is_active', true)->count(),
@@ -100,13 +100,13 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Display the specified user.
+     * Parāda norādīto lietotāju
      */
     public function show($id)
     {
         $user = User::with(['role', 'orders', 'reviews', 'comments'])->findOrFail($id);
 
-        // Build address from user fields (since addresses are stored in users table)
+        // Veido adresi no lietotāja laukiem (pa cik adreses tiek glabātas lietotāju tabulā)
         $address = null;
         if ($user->address || $user->city || $user->country) {
             $address = [
@@ -117,7 +117,7 @@ class AdminUserController extends Controller
             ];
         }
 
-        // Newsletter subscriber info
+        // Informācija par biļetenu abonentiem
         $subscriber = NewsletterSubscriber::where('user_id', $user->id)
             ->orWhere('email', $user->email)
             ->first();
@@ -170,7 +170,7 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Show the form for editing a user.
+     * Parāda lietotāja rediģēšanas veidlapu
      */
     public function edit($id)
     {
@@ -184,7 +184,7 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Update the specified user.
+     * Atjaunina norādīto lietotāju
      */
     public function update(Request $request, $id)
     {
@@ -207,7 +207,7 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Toggle user active status.
+     * Pārslēdz lietotāja aktīvo statusu
      */
     public function toggleActive($id)
     {
@@ -218,7 +218,7 @@ class AdminUserController extends Controller
             return back()->with('error', 'Nevar deaktivizēt Super Admin!');
         }
 
-        // Prevent self-deactivation
+        // Novērš pašdeaktivizāciju
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Nevar deaktivizēt savu kontu!');
         }
@@ -230,7 +230,7 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Reset user password.
+     * Atiestata lietotāja paroli
      */
     public function resetPassword(Request $request, $id)
     {
@@ -248,7 +248,7 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Send a specified user an email.
+     * Nosūta norādītajam lietotājam e-pastu
      */
     public function sendEmail(Request $request)
     {
@@ -270,18 +270,18 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Remove the specified user.
+     * Noņem norādīto lietotāju
      */
     public function destroy($id)
     {
         $user = User::findOrFail($id);
 
-        // Prevent deleting super admin
+        // Neļauj dzēst galveno administratoru
         if ($user->isSuperAdmin()) {
             return back()->with('error', 'Nevar dzēst Super Admin!');
         }
 
-        // Prevent self-deletion
+        // Novērš pašizdzēšanu
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Nevar dzēst savu kontu!');
         }

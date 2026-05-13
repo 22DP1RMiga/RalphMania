@@ -13,13 +13,13 @@ use Inertia\Inertia;
 class AdminContactController extends Controller
 {
     /**
-     * Display a listing of contact messages for admin.
+     * Parāda administratora kontaktinformācijas sarakstu
      */
     public function index(Request $request)
     {
         $query = ContactMessage::with('user');
 
-        // Search
+        // Meklēšanai
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -31,7 +31,7 @@ class AdminContactController extends Controller
             });
         }
 
-        // Filter by read status
+        // Filtrē pēc statusa "izlasīts"
         if ($request->filled('status')) {
             if ($request->status === 'unread') {
                 $query->where('is_read', false);
@@ -42,12 +42,12 @@ class AdminContactController extends Controller
             }
         }
 
-        // Sort - unread first, then by date
+        // Kārto vispirms pēc nelasītiem, pēc tam pēc datuma
         $query->orderBy('is_read', 'asc')
             ->orderBy('is_replied', 'asc')
             ->orderBy('created_at', 'desc');
 
-        // Paginate
+        // Lappusēm (for pagination)
         $messages = $query->paginate(15)->through(function ($message) {
             return [
                 'id' => $message->id,
@@ -71,7 +71,7 @@ class AdminContactController extends Controller
             ];
         });
 
-        // Get stats
+        // Iegūst statistiku
         $stats = [
             'total' => ContactMessage::count(),
             'unread' => ContactMessage::where('is_read', false)->count(),
@@ -87,13 +87,13 @@ class AdminContactController extends Controller
     }
 
     /**
-     * Display the specified contact message.
+     * Parāda norādīto kontaktziņojumu
      */
     public function show($id)
     {
         $message = ContactMessage::with(['user', 'repliedBy'])->findOrFail($id);
 
-        // Mark as read automatically when viewing
+        // Automātiski atzīmē kā izlasītu, kad apskata
         if (!$message->is_read) {
             $message->update(['is_read' => true]);
         }
@@ -130,7 +130,7 @@ class AdminContactController extends Controller
     }
 
     /**
-     * Mark message as read.
+     * Atzīmē ziņojumu kā izlasītu
      */
     public function markAsRead($id)
     {
@@ -141,7 +141,7 @@ class AdminContactController extends Controller
     }
 
     /**
-     * Mark message as unread.
+     * Atzīmē ziņojumu kā neizlasītu
      */
     public function markAsUnread($id)
     {
@@ -152,7 +152,7 @@ class AdminContactController extends Controller
     }
 
     /**
-     * Reply to message.
+     * Atbild uz ziņojumu
      */
     public function reply(Request $request, $id)
     {
@@ -162,7 +162,7 @@ class AdminContactController extends Controller
 
         $message = ContactMessage::findOrFail($id);
 
-        // Try to send email
+        // Mēģina nosūtīt e-pastu
         $emailSent = false;
         try {
             Mail::to($message->email)->send(new ContactReply($message, $validated['reply_text'], $message->locale ?? 'lv'));
@@ -179,7 +179,7 @@ class AdminContactController extends Controller
             ]);
         }
 
-        // Update message status
+        // Atjaunina ziņojuma statusu
         $message->update([
             'is_read' => true,
             'is_replied' => true,
@@ -196,7 +196,7 @@ class AdminContactController extends Controller
     }
 
     /**
-     * Delete a contact message.
+     * Dzēš kontaktpersonas ziņojumu
      */
     public function destroy($id)
     {

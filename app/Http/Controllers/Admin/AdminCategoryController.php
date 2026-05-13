@@ -11,7 +11,7 @@ use Inertia\Inertia;
 class AdminCategoryController extends Controller
 {
     /**
-     * Display a listing of categories for admin.
+     * Parāda administratora kategoriju sarakstu
      */
     public function index()
     {
@@ -44,7 +44,7 @@ class AdminCategoryController extends Controller
     }
 
     /**
-     * Store a newly created category.
+     * Saglabā jaunizveidotu kategoriju
      */
     public function store(Request $request)
     {
@@ -60,12 +60,12 @@ class AdminCategoryController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        // Generate slug if not provided
+        // Ģenerē URL daļu jeb "slug", ja tas nav norādīts
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name_en']);
         }
 
-        // Ensure unique slug
+        // Nodrošina unikālu URL daļu
         $originalSlug = $validated['slug'];
         $counter = 1;
         while (Category::where('slug', $validated['slug'])->exists()) {
@@ -73,7 +73,7 @@ class AdminCategoryController extends Controller
             $counter++;
         }
 
-        // Set default sort order
+        // Iestata noklusējuma kārtošanas secību
         if (!isset($validated['sort_order'])) {
             $validated['sort_order'] = Category::max('sort_order') + 1;
         }
@@ -84,7 +84,7 @@ class AdminCategoryController extends Controller
     }
 
     /**
-     * Update the specified category.
+     * Atjaunina norādīto kategoriju
      */
     public function update(Request $request, $id)
     {
@@ -102,7 +102,7 @@ class AdminCategoryController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        // Prevent setting self as parent
+        // Neļauj iestatīt sevi kā vecāku (parent)
         if ($validated['parent_id'] == $id) {
             return back()->withErrors(['parent_id' => 'Kategorija nevar būt sev pašai vecākkategorija.']);
         }
@@ -113,18 +113,18 @@ class AdminCategoryController extends Controller
     }
 
     /**
-     * Remove the specified category.
+     * Noņem norādīto kategoriju
      */
     public function destroy($id)
     {
         $category = Category::withCount('products')->findOrFail($id);
 
-        // Check if category has products
+        // Pārbauda, vai kategorijā ir produkti
         if ($category->products_count > 0) {
             return back()->withErrors(['error' => 'Nevar dzēst kategoriju ar produktiem. Vispirms pārvietojiet vai dzēsiet produktus.']);
         }
 
-        // Check if category has subcategories
+        // Pārbauda, vai kategorijai ir apakškategorijas
         if (Category::where('parent_id', $id)->exists()) {
             return back()->withErrors(['error' => 'Nevar dzēst kategoriju ar apakškategorijām.']);
         }

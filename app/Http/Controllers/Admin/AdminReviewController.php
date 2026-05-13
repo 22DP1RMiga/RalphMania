@@ -10,13 +10,13 @@ use Inertia\Inertia;
 class AdminReviewController extends Controller
 {
     /**
-     * Display a listing of reviews for admin.
+     * Parāda administratora atsauksmju sarakstu
      */
     public function index(Request $request)
     {
         $query = Review::with(['user', 'reviewable']);
 
-        // Search
+        // Meklēšanai
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -28,7 +28,7 @@ class AdminReviewController extends Controller
             });
         }
 
-        // Filter by status
+        // Filtrē pēc statusiem
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
                 $query->where('is_approved', false);
@@ -37,12 +37,12 @@ class AdminReviewController extends Controller
             }
         }
 
-        // Filter by rating
+        // Filtrē pēc reitingiem
         if ($request->filled('rating')) {
             $query->where('rating', $request->rating);
         }
 
-        // Filter by type (product or content)
+        // Filtrē pēc tipa (produkts vai saturs)
         if ($request->filled('type')) {
             if ($request->type === 'product') {
                 $query->where('reviewable_type', 'App\\Models\\Product');
@@ -51,13 +51,13 @@ class AdminReviewController extends Controller
             }
         }
 
-        // Sort - pending first, then by date
+        // Kārto vispirms gaidīšanas režīmā, pēc tam pēc datuma
         $query->orderBy('is_approved', 'asc')
             ->orderBy('created_at', 'desc');
 
-        // Paginate
+        // Lappusēm (for pagination)
         $reviews = $query->paginate(15)->through(function ($review) {
-            // Determine reviewable info based on type
+            // Nosaka pārskatāmo informāciju, pamatojoties uz veidu
             $reviewableInfo = null;
             $reviewableType = null;
 
@@ -104,7 +104,7 @@ class AdminReviewController extends Controller
             ];
         });
 
-        // Get stats
+        // Iegūst statistiku
         $stats = [
             'total' => Review::count(),
             'pending' => Review::where('is_approved', false)->count(),
@@ -122,7 +122,7 @@ class AdminReviewController extends Controller
     }
 
     /**
-     * Approve a review.
+     * Apstiprina atsauksmi
      */
     public function approve($id)
     {
@@ -133,7 +133,7 @@ class AdminReviewController extends Controller
     }
 
     /**
-     * Reject (delete) a review.
+     * Noraida (dzēš) atsauksmi
      */
     public function reject($id)
     {

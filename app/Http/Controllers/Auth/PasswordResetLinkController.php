@@ -16,7 +16,7 @@ use Inertia\Response;
 class PasswordResetLinkController extends Controller
 {
     /**
-     * Display the password reset link request view.
+     * Parāda paroles atiestatīšanas saites pieprasījuma skatu
      */
     public function create(): Response
     {
@@ -26,7 +26,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Handle an incoming password reset link request.
+     * Apstrādā ienākošo paroles atiestatīšanas saites pieprasījumu
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -41,7 +41,7 @@ class PasswordResetLinkController extends Controller
         $locale = $request->input('locale', 'lv');
         LocaleHelper::set($locale);
 
-        // Get the user
+        // Iegūst lietotāju
         $user = \App\Models\User::where('email', $request->email)->first();
 
         if ($user) {

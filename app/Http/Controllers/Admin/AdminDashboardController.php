@@ -16,14 +16,14 @@ use Inertia\Inertia;
 class AdminDashboardController extends Controller
 {
     /**
-     * Display the admin dashboard.
+     * Parāda administratora informācijas paneli
      */
     public function index(Request $request)
     {
         $user = $request->user();
         $isSuperAdmin = $user->isSuperAdmin();
 
-        // Get statistics
+        // Iegūst statistiku
         $stats = [
             'totalUsers' => User::count(),
             'totalOrders' => Order::count(),
@@ -36,7 +36,7 @@ class AdminDashboardController extends Controller
             'newUsersToday' => User::whereDate('created_at', today())->count(),
         ];
 
-        // Get recent orders
+        // Saņem jaunākos pasūtījumus
         $recentOrders = Order::with('user')
             ->latest()
             ->take(5)
@@ -56,7 +56,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Data for super admin only
+        // Dati tikai galvenajam administratoram
         $administrators = [];
         $allUsers = [];
 
@@ -82,7 +82,7 @@ class AdminDashboardController extends Controller
                     ];
                 });
 
-            // Get all users for admin creation
+            // Iegūst visus lietotājus administratora izveidei
             $allUsers = User::select('id', 'username', 'email')
                 ->orderBy('username')
                 ->get();
@@ -97,11 +97,11 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Store a new administrator (Super Admin only).
+     * Saglabā jaunu administratoru (tikai galvenais administrators)
      */
     public function storeAdministrator(Request $request)
     {
-        // Verify super admin
+        // Verificē galveno administratoru
         if (!$request->user()->isSuperAdmin()) {
             abort(403, 'Tikai Super Admin var pievienot administratorus.');
         }
@@ -115,7 +115,7 @@ class AdminDashboardController extends Controller
             'user_id.exists' => 'Izvēlētais lietotājs neeksistē.',
         ]);
 
-        // Check if user is already an administrator
+        // Pārbauda, vai lietotājs jau ir administrators
         if (Administrator::where('user_id', $validated['user_id'])->exists()) {
             return back()->withErrors(['user_id' => 'Šis lietotājs jau ir administrators.']);
         }
@@ -130,7 +130,7 @@ class AdminDashboardController extends Controller
             'is_super_admin' => false,
         ]);
 
-        // Update user role to administrator
+        // Atjaunina lietotāja lomu uz administratoru
         $adminRole = DB::table('roles')->where('name', 'administrator')->first();
         if ($adminRole) {
             $user->update(['role_id' => $adminRole->id]);
@@ -140,7 +140,7 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Update administrator permissions (Super Admin only).
+     * Atjaunina administratora atļaujas (tikai galvenais administrators)
      */
     public function updatePermissions(Request $request, $id)
     {
@@ -151,7 +151,7 @@ class AdminDashboardController extends Controller
 
         $admin = Administrator::findOrFail($id);
 
-        // Cannot edit super admin
+        // Nevar rediģēt galveno administratoru
         if ($admin->is_super_admin) {
             return back()->withErrors(['error' => 'Super Admin atļaujas nevar mainīt.']);
         }
@@ -169,7 +169,7 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Remove an administrator (Super Admin only).
+     * Noņem administratoru (tikai galvenais administrators)
      */
     public function destroyAdministrator(Request $request, $id)
     {
@@ -180,12 +180,12 @@ class AdminDashboardController extends Controller
 
         $admin = Administrator::findOrFail($id);
 
-        // Cannot remove super admin
+        // Nevar noņemt galveno administratoru
         if ($admin->is_super_admin) {
             return back()->withErrors(['error' => 'Super Admin nevar noņemt.']);
         }
 
-        // Reset user role to customer
+        // Atiestatīt lietotāja lomu uz klientu
         $customerRole = DB::table('roles')->where('name', 'customer')->first();
         if ($customerRole && $admin->user) {
             $admin->user->update(['role_id' => $customerRole->id]);

@@ -11,14 +11,14 @@ use Inertia\Inertia;
 class AdminActivityLogController extends Controller
 {
     /**
-     * Display activity logs.
+     * Parāda darbību žurnālus
      */
     public function index(Request $request)
     {
         $query = ActivityLog::with('user')
             ->orderBy('created_at', 'desc');
 
-        // Search filter
+        // Meklēšanas filtram
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -32,17 +32,17 @@ class AdminActivityLogController extends Controller
             });
         }
 
-        // Activity type filter
+        // Darbības veida filtram
         if ($request->filled('activity_type')) {
             $query->where('activity_type', $request->activity_type);
         }
 
-        // User filter
+        // Lietotāju filtrs
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
         }
 
-        // Date range filter
+        // Datumu diapazona filtrs
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -52,13 +52,13 @@ class AdminActivityLogController extends Controller
 
         $logs = $query->paginate(20)->withQueryString();
 
-        // Get unique activity types for filter
+        // Iegūst unikālus aktivitāšu veidus filtram
         $activityTypes = ActivityLog::distinct()
             ->pluck('activity_type')
             ->filter()
             ->values();
 
-        // Get users for filter
+        // Iegūst lietotājus filtram
         $users = User::select('id', 'username')
             ->whereIn('id', ActivityLog::distinct()->pluck('user_id')->filter())
             ->orderBy('username')
@@ -73,14 +73,14 @@ class AdminActivityLogController extends Controller
     }
 
     /**
-     * Export activity logs.
+     * Eksportē darbību žurnālus
      */
     public function export(Request $request)
     {
         $format = $request->get('format', 'csv');
         $filename = 'activity-logs-' . now()->format('Y-m-d-His');
 
-        // Build query with filters
+        // Veido vaicājumu ar filtriem
         $query = ActivityLog::with('user')
             ->orderBy('created_at', 'desc');
 
@@ -102,7 +102,7 @@ class AdminActivityLogController extends Controller
 
         $logs = $query->get();
 
-        // CSV export
+        // CSV eksportam
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename={$filename}.csv",
@@ -111,13 +111,13 @@ class AdminActivityLogController extends Controller
         $callback = function () use ($logs) {
             $file = fopen('php://output', 'w');
 
-            // UTF-8 BOM for Excel
+            // UTF-8 BOM programmai Excel
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            // Header row
+            // Virsraksta rinda
             fputcsv($file, ['Laiks', 'Lietotājs', 'Darbības veids', 'Apraksts', 'IP adrese']);
 
-            // Data rows
+            // Datu rindas
             foreach ($logs as $log) {
                 fputcsv($file, [
                     $log->created_at?->format('Y-m-d H:i:s') ?? '-',

@@ -13,13 +13,13 @@ use Inertia\Inertia;
 class AdminProductController extends Controller
 {
     /**
-     * Display a listing of products for admin.
+     * Parāda administratoram paredzēto produktu sarakstu
      */
     public function index(Request $request)
     {
         $query = Product::with('category');
 
-        // Search
+        // Meklēšanai
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -29,12 +29,12 @@ class AdminProductController extends Controller
             });
         }
 
-        // Filter by category
+        // Filtrē pēc kategorijas
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
-        // Filter by status
+        // Filtrēt pēc statusiem
         if ($request->filled('status')) {
             if ($request->status === 'active') {
                 $query->where('is_active', true);
@@ -43,10 +43,10 @@ class AdminProductController extends Controller
             }
         }
 
-        // Sort
+        // Kārtošanai
         $query->orderBy('created_at', 'desc');
 
-        // Paginate
+        // Lappusēm (for pagination)
         $products = $query->paginate(20)->through(function ($product) {
             return [
                 'id' => $product->id,
@@ -70,7 +70,7 @@ class AdminProductController extends Controller
             ];
         });
 
-        // Get categories for filter dropdown - include both language names
+        // Iegūst kategorijas filtra nolaižamajam sarakstam - iekļauj abu valodu nosaukumus
         $categories = Category::where('is_active', true)
             ->orderBy('name_lv')
             ->get(['id', 'name_lv', 'name_en']);
@@ -83,7 +83,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Show the form for creating a new product.
+     * Parāda veidlapu jauna produkta izveidei
      */
     public function create()
     {
@@ -97,7 +97,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Store a newly created product.
+     * Saglabā jaunizveidotu produktu
      */
     public function store(Request $request)
     {
@@ -117,10 +117,10 @@ class AdminProductController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        // Generate slug
+        // Ģenerē URL daļu jeb "slug"
         $validated['slug'] = Str::slug($validated['name_en']);
 
-        // Ensure unique slug
+        // Nodrošina unikālu URL daļu
         $originalSlug = $validated['slug'];
         $counter = 1;
         while (Product::where('slug', $validated['slug'])->exists()) {
@@ -128,7 +128,7 @@ class AdminProductController extends Controller
             $counter++;
         }
 
-        // Handle image upload
+        // Apstrādā attēlu augšupielādi
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
@@ -140,7 +140,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Show the form for editing a product.
+     * Parāda produkta rediģēšanas veidlapu
      */
     public function edit($id)
     {
@@ -157,7 +157,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Update the specified product.
+     * Atjaunina norādīto produktu
      */
     public function update(Request $request, $id)
     {
@@ -179,9 +179,9 @@ class AdminProductController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        // Handle image upload
+        // Apstrādā attēlu augšupielādi
         if ($request->hasFile('image')) {
-            // Delete old image
+            // Dzēš veco attēlu
             if ($product->image && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }
@@ -195,7 +195,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Toggle product active status.
+     * Pārslēdz produkta aktīvo statusu
      */
     public function toggleStatus($id)
     {
@@ -207,13 +207,13 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Remove the specified product.
+     * Noņem norādīto produktu
      */
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
 
-        // Delete image if exists
+        // Dzēš attēlu, ja tāds ir
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
