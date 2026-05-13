@@ -10,7 +10,7 @@ use Inertia\Inertia;
 class CategoryController extends Controller
 {
     /**
-     * WEB: Category page
+     * WEB: Kategorijas lapa
      * GET /shop/category/{slug}
      */
     public function show($slug)
@@ -21,7 +21,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * API: Get all categories with RECURSIVE product count
+     * API: Iegūst visas kategorijas ar REKURSIVISU produktu skaitu
      * GET /api/v1/categories
      *
      * Parent kategorijas (piemēram "Apģērbi") rāda KOPĒJO produktu skaitu —
@@ -75,7 +75,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * API: Get single category metadata
+     * API: Iegūst vienas kategorijas metadatus
      * GET /api/v1/categories/{slug}
      */
     public function apiShow($slug)

@@ -12,7 +12,7 @@ use Inertia\Inertia;
 class ContactController extends Controller
 {
     /**
-     * Store contact message (authenticated users only)
+     * Saglabā kontaktinformāciju (tikai autentificētiem lietotājiem)
      */
     public function store(Request $request)
     {
@@ -35,10 +35,10 @@ class ContactController extends Controller
             'message.max'           => 'Ziņojums nedrīkst pārsniegt 1000 rakstzīmes.',
         ]);
 
-        // Get authenticated user
+        // Iegūst autentificētu lietotāju
         $user = $request->user();
 
-        // Create contact message
+        // Izveido kontakta ziņojumu
         $contactMessage = ContactMessage::create([
             'user_id'      => $user->id,
             'name'         => $validated['name'],
@@ -52,7 +52,7 @@ class ContactController extends Controller
             'locale'       => $validated['locale'] ?? 'lv',
         ]);
 
-        // Send email notification to admin
+        // Nosūta administratoram e-pasta paziņojumu
         try {
             Mail::to('ralphmania.roltonslv@gmail.com')
                 ->send(new ContactMessageReceived($contactMessage, $validated['locale'] ?? 'lv'));
@@ -66,31 +66,31 @@ class ContactController extends Controller
                 'contact_message_id' => $contactMessage->id,
                 'error' => $e->getMessage(),
             ]);
-            // Don't fail the request if email fails - message is still saved
+            // Pieprasījums netiek noraidīts, ja e-pasta nosūtīšana neizdodas - ziņojums joprojām tiek saglabāts
         }
 
-        // Return Inertia response with flash message
+        // Atgriež Inertia atbildi ar zibatmiņas ziņojumu
         return back()->with('success', 'Paldies! Jūsu ziņojums ir veiksmīgi nosūtīts. Mēs ar jums sazināsimies pēc iespējas ātrāk!');
     }
 
     /**
-     * Admin: Get all contact messages
+     * Admin: Iegūst visus kontaktinformācijas ziņojumus
      */
     public function index(Request $request)
     {
         $query = ContactMessage::query()->with('user');
 
-        // Filter by read status
+        // Filtrē pēc statusa "izlasīts"
         if ($request->has('is_read')) {
             $query->where('is_read', $request->boolean('is_read'));
         }
 
-        // Filter by replied status
+        // Filtrē pēc statusa "atbildēts"
         if ($request->has('is_replied')) {
             $query->where('is_replied', $request->boolean('is_replied'));
         }
 
-        // Search
+        // Meklē
         if ($request->has('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'LIKE', "%{$request->search}%")
@@ -110,13 +110,13 @@ class ContactController extends Controller
     }
 
     /**
-     * Admin: Show single contact message
+     * Admin: Parāda viena kontakta ziņojumu
      */
     public function show($id)
     {
         $message = ContactMessage::with('user')->findOrFail($id);
 
-        // Mark as read
+        // Atzīmē kā lasītu
         if (!$message->is_read) {
             $message->update(['is_read' => true]);
         }
@@ -127,7 +127,7 @@ class ContactController extends Controller
     }
 
     /**
-     * Admin: Mark as read
+     * Admin: Atzīmē kā lasītu
      */
     public function markAsRead($id)
     {
@@ -138,7 +138,7 @@ class ContactController extends Controller
     }
 
     /**
-     * Admin: Reply to message
+     * Admin: Atbild uz ziņojumu
      */
     public function reply(Request $request, $id)
     {
@@ -148,8 +148,8 @@ class ContactController extends Controller
 
         $message = ContactMessage::findOrFail($id);
 
-        // Here you would typically send an email
-        // For now, just mark as replied
+        // Šeit parasti sūtītu e-pastu
+        // Pagaidām vienkārši atzīmē kā atbildētu
         $message->update([
             'is_replied' => true,
             'replied_at' => now(),

@@ -17,8 +17,8 @@ class CommentController extends Controller
             $comments = Comment::where('content_id', $contentId)
                 ->where('is_approved', true)
                 ->whereNull('parent_id')
-                // Paslēp komentārus no privātiem kontiem (is_public = 0),
-                // izņemot ja tas ir pašreizējā lietotāja komentārs
+                // Paslēpj komentārus no privātiem kontiem (is_public = 0),
+                // izņemot, ja tas ir pašreizējā lietotāja komentārs
                 ->whereHas('user', function ($q) use ($currentUserId) {
                     $q->where('is_public', true)
                         ->orWhere('id', $currentUserId);
@@ -73,7 +73,7 @@ class CommentController extends Controller
         $avgMood  = \App\Models\CommentMood::where('comment_id', $comment->id)->avg('score');
         $moodCount = \App\Models\CommentMood::where('comment_id', $comment->id)->count();
 
-        // Pašreizējā lietotāja vērtējums (ja pieslēdzies)
+        // Pašreizējā lietotāja vērtējums, ja pieslēdzies)
         $myMood = null;
         if (auth()->check()) {
             $myMood = \App\Models\CommentMood::where('comment_id', $comment->id)
@@ -110,7 +110,7 @@ class CommentController extends Controller
     }
 
     /**
-     * glabā jaunu komentāru
+     * Saglabā jaunu komentāru
      */
     public function store(Request $request)
     {
@@ -144,7 +144,7 @@ class CommentController extends Controller
     }
 
     /**
-     * rediģē eksistējošo komentāru
+     * Rediģē eksistējošo komentāru
      */
     public function update(Request $request, $id)
     {
@@ -170,7 +170,7 @@ class CommentController extends Controller
     }
 
     /**
-     * izdzēš komentāru
+     * Izdzēš komentāru
      */
     public function destroy($id)
     {

@@ -11,7 +11,7 @@ use Inertia\Response;
 class CheckoutController extends Controller
 {
     /**
-     * Show checkout page with cart data
+     * Rāda norēķināšanās lapu ar groza datiem
      *
      * GET /checkout
      */
@@ -23,7 +23,7 @@ class CheckoutController extends Controller
             ->with('items.product')
             ->first();
 
-        // Pass user data for pre-filling
+        // Nodod lietotāja datus iepriekšējai aizpildīšanai
         $userData = [
             'name'         => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
             'email'        => $user->email,
@@ -34,7 +34,7 @@ class CheckoutController extends Controller
             'postal_code'  => $user->postal_code ?? '',
         ];
 
-        // ── VAT INFO ──────────────────────────────────────────────────────────
+        // ── PVN INFORMĀCIJA ──────────────────────────────────────────────────────────
         $vatRate = (float) Setting::get('tax_rate', 21);
         $subtotal = $cart ? (float) $cart->total_amount : 0.0;
         $vatAmount = round($subtotal * $vatRate / (100 + $vatRate), 2);

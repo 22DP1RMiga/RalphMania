@@ -11,11 +11,11 @@ use Inertia\Response;
 class HomeController extends Controller
 {
     /**
-     * Display the home page with featured products and content
+     * Parāda sākumlapu ar piedāvātajiem produktiem un saturu
      */
     public function index(): Response
     {
-        // Get 3 featured products
+        // Iegūst 3 piedāvātos (featured) produktus
         $featuredProducts = Product::where('is_featured', true)
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
@@ -37,7 +37,7 @@ class HomeController extends Controller
                 ];
             });
 
-        // Get 3 featured content
+        // Iegūst 3 piedāvātos (featured) satura materiālus
         $featuredContent = Content::where('is_featured', true)
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'desc')

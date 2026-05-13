@@ -17,7 +17,7 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Parāda lietotāja profila veidlapu
      */
     public function edit(Request $request): Response
     {
@@ -28,7 +28,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Atjaunina lietotāja profila informāciju
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
@@ -46,7 +46,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Display the password change form.
+     * Parāda paroles maiņas veidlapu
      */
     public function passwordEdit(Request $request): Response
     {
@@ -56,7 +56,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's password.
+     * Atjaunina lietotāja paroli
      */
     public function passwordUpdate(Request $request): RedirectResponse
     {
@@ -73,22 +73,22 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's avatar.
+     * Atjaunina lietotāja profila bildi
      */
     public function avatarUpdate(Request $request): RedirectResponse
     {
         $request->validate([
-            'photo' => ['required', 'image', 'max:2048'], // 2MB max
+            'photo' => ['required', 'image', 'max:2048'], // 2MB maksimums
         ]);
 
         $user = $request->user();
 
-        // Delete old avatar if exists
+        // Dzēš veco profila bildi, ja tāds ir
         if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
             Storage::disk('public')->delete($user->profile_picture);
         }
 
-        // Store new avatar
+        // Saglabā jaunu profila bildi
         $path = $request->file('photo')->store('avatars', 'public');
 
         $user->update([
@@ -99,7 +99,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's avatar.
+     * Dzēs lietotāja profila bildi
      */
     public function avatarDelete(Request $request): RedirectResponse
     {
@@ -117,7 +117,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Display the user's addresses.
+     * Parāda lietotāja adreses
      */
     public function addresses(Request $request): Response
     {
@@ -127,7 +127,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Show the form for creating a new address.
+     * Parāda veidlapu jaunas adreses izveidei
      */
     public function addressCreate(): Response
     {
@@ -135,7 +135,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Store a newly created address.
+     * Saglabā jaunizveidotu adresi
      */
     public function addressStore(Request $request): RedirectResponse
     {
@@ -151,7 +151,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // If this is set as default, unset other defaults
+        // Ja šis ir iestatīts kā noklusējuma iestatījums, tad atceļ pārējo noklusējuma iestatījumus
         if ($validated['is_default'] ?? false) {
             $user->addresses()->update(['is_default' => false]);
         }
@@ -162,7 +162,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Show the form for editing an address.
+     * Parāda veidlapu adreses rediģēšanai
      */
     public function addressEdit($id): Response
     {
@@ -174,7 +174,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update an address.
+     * Atjaunina adresi
      */
     public function addressUpdate(Request $request, $id): RedirectResponse
     {
@@ -191,7 +191,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $address = $user->addresses()->findOrFail($id);
 
-        // If this is set as default, unset other defaults
+        // Ja šis ir iestatīts kā noklusējuma iestatījums, tad tiek atiestatīti citi noklusējuma iestatījumi
         if ($validated['is_default'] ?? false) {
             $user->addresses()->where('id', '!=', $id)->update(['is_default' => false]);
         }
@@ -202,7 +202,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete an address.
+     * Dzēš adresi
      */
     public function addressDelete($id): RedirectResponse
     {
@@ -213,7 +213,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Dzēš lietotāja kontu
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -241,7 +241,7 @@ class ProfileController extends Controller
             'is_private' => 'required|boolean'
         ]);
 
-        // Invert to save as is_public
+        // Apgriezt, lai saglabātu kā is_public
         $user->update([
             'is_public' => !$validated['is_private']
         ]);
@@ -252,7 +252,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's preferred language.
+     * Atjaunina lietotāja vēlamo valodu
      */
     public function updateLocale(Request $request): \Illuminate\Http\JsonResponse
     {

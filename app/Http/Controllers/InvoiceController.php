@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class InvoiceController extends Controller
 {
     /**
-     * Generate and download invoice PDF
+     * Ģenerē un lejupielādē rēķinu PDF formātā
      *
      * GET /orders/{id}/invoice
      */
@@ -19,10 +19,10 @@ class InvoiceController extends Controller
         // Get order with relations
         $order = Order::with(['items.product', 'payment', 'user'])
             ->where('id', $orderId)
-            ->where('user_id', auth()->id()) // Security: only own orders
+            ->where('user_id', auth()->id()) // Drošība: tikai pašu pasūtījumi
             ->firstOrFail();
 
-        // Prepare data for PDF
+        // Sagatavo datus PDF failam
         $data = [
             'order' => $order,
             'company' => [
@@ -41,15 +41,15 @@ class InvoiceController extends Controller
         // Iestata valodu pēc lietotāja preferences
         LocaleHelper::setForUser($order->user);
 
-        // Generate PDF
+        // Ģenerē PDF
         $pdf = Pdf::loadView('invoices.order', $data);
 
-        // Download with filename: Invoice-RM-20260106-ABC123.pdf
+        // Lejupielādē ar faila nosaukumu: Invoice-RM-20260106-ABC123.pdf
         return $pdf->download('Invoice-' . $order->order_number . '.pdf');
     }
 
     /**
-     * View invoice in browser (optional)
+     * Skata rēķinu pārlūkprogrammā (pēc izvēles)
      *
      * GET /orders/{id}/invoice/view
      */
@@ -79,7 +79,7 @@ class InvoiceController extends Controller
 
         $pdf = Pdf::loadView('invoices.order', $data);
 
-        // Display in browser
+        // Parādās pārlūkprogrammā
         return $pdf->stream('Invoice-' . $order->order_number . '.pdf');
     }
 }

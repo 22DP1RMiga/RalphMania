@@ -15,7 +15,7 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        // Newsletter status
+        // Jaunumu vēstules (newsletter) statuss
         $subscriber = NewsletterSubscriber::where('user_id', $user->id)->first();
         $isSubscribed = $subscriber
             && $subscriber->is_active
@@ -28,23 +28,23 @@ class DashboardController extends Controller
             'is_expired'     => $subscriber?->is_expired ?? false,
         ];
 
-        // Stats
+        // Statusi
         $stats = [
             'orders'           => Order::where('user_id', $user->id)->count(),
             'reviews'          => Review::where('user_id', $user->id)->count(),
             'comments'         => Comment::where('user_id', $user->id)->whereNull('parent_id')->count(),
-            // Manas atbildes — cik reižu ES esmu atbildējis
+            // Manas atbildes - cik reizes esmu atbildējis
             'replies_received' => Comment::where('user_id', $user->id)->whereNotNull('parent_id')->count(),
         ];
 
-        // Recent orders
+        // Jaunākie pasūtījumi
         $recentOrders = Order::where('user_id', $user->id)
             ->latest()
             ->take(5)
             ->get(['id', 'order_number', 'status', 'total_amount', 'created_at']);
 
-        // Recent reviews — eager load reviewable with needed fields,
-        // then normalize the type and name fields for the frontend
+        // Jaunākās atsauksmes - ātra ielāde, pārskatāma ar nepieciešamajiem laukiem,
+        // pēc tam normalizē tipa un nosaukuma laukus lietotāja puses versijai
         $recentReviews = Review::where('user_id', $user->id)
             ->with('reviewable')
             ->latest()
@@ -53,14 +53,14 @@ class DashboardController extends Controller
             ->map(function ($review) {
                 $reviewable = $review->reviewable;
 
-                // Normalize the morph type to a short string ('Product' or 'Content')
+                // Normalizē morfa tipu uz īsu virkni (“Produkts” vai “Saturs”).
                 $shortType = null;
                 $nameLv    = null;
                 $nameEn    = null;
                 $slug      = null;
 
                 if ($reviewable) {
-                    // reviewable_type is full class e.g. "App\Models\Product"
+                    // reviewable_type ir pilna klase, piemēram, "App\Models\Product" vai "App\Models\Content"
                     $class = class_basename($reviewable);
 
                     if ($class === 'Product') {
@@ -92,13 +92,13 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Diskusijas kurās piedalījies — galvenie komentāri, kur tu esi autors VAI esi atbildējis
+        // Diskusijas kurās piedalījies - galvenie komentāri, kur tu esi autors vai esi atbildējis
         $userId = $user->id;
 
         // 1) ID saraksts: mani galvenie komentāri
         $myTopIds = Comment::where('user_id', $userId)->whereNull('parent_id')->pluck('id');
 
-        // 2) Galvenie komentāri, uz kuriem ES esmu atbildējis (citu cilvēku pavedienu)
+        // 2) Galvenie komentāri, uz kuriem esmu atbildējis (citu cilvēku pavedienu)
         $repliedToIds = Comment::where('user_id', $userId)
             ->whereNotNull('parent_id')
             ->pluck('parent_id')

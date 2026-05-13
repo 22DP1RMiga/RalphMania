@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
-     * Register a new user
+     * Reģistrē jaunu lietotāju
      */
     public function register(Request $request)
     {
@@ -43,7 +43,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Login user
+     * Pieteikšanai (login)
      */
     public function login(Request $request)
     {
@@ -60,14 +60,14 @@ class AuthController extends Controller
             ]);
         }
 
-        // Check if user is active
+        // Pārbauda, vai lietotāja konts ir aktīvs
         if (!$user->is_active) {
             throw ValidationException::withMessages([
                 'email' => ['Konts ir deaktivizēts'],
             ]);
         }
 
-        // Update last login
+        // Atjauno pēdējās pieteikšanās datus
         $user->update(['last_login_at' => now()]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -80,7 +80,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Logout user
+     * Izslēdz lietotāju (log out)
      */
     public function logout(Request $request)
     {
@@ -92,7 +92,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Update user profile
+     * Atjauno lietotāja profila datus
      */
     public function updateProfile(Request $request)
     {
@@ -118,7 +118,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Update password
+     * Atjauno paroli
      */
     public function updatePassword(Request $request)
     {
