@@ -185,7 +185,7 @@ class AdminContactController extends Controller
             'is_replied' => true,
             'reply_text' => $validated['reply_text'],
             'replied_at' => now(),
-            'replied_by' => auth()->id(),
+            'replied_by' => auth()->user()?->administrator?->id,
         ]);
 
         if ($emailSent) {
