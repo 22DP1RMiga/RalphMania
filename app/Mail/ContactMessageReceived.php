@@ -17,7 +17,7 @@ class ContactMessageReceived extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * Create a new message instance.
+     * Izveido jaunu ziņojuma instanci
      */
     public function __construct(
         public ContactMessage $contactMessage,
@@ -25,7 +25,7 @@ class ContactMessageReceived extends Mailable
     ) {}
 
     /**
-     * Get the message envelope.
+     * Iegūst ziņojuma aploksni
      */
     public function envelope(): Envelope
     {
@@ -43,7 +43,7 @@ class ContactMessageReceived extends Mailable
     }
 
     /**
-     * Get the message content definition.
+     * Iegūst ziņojuma satura definīciju
      */
     public function content(): Content
     {
@@ -58,7 +58,7 @@ class ContactMessageReceived extends Mailable
     }
 
     /**
-     * Get the attachments for the message.
+     * Iegūst ziņojuma pielikumus
      *
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */

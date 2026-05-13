@@ -8,19 +8,19 @@ use App\Models\Cart;
 class MergeGuestCartOnLogin
 {
     /**
-     * Handle the event.
+     * Vada pasākumu
      *
-     * Merge guest cart with user cart when user logs in
+     * Apvieno viesa grozu ar lietotāja grozu, kad lietotājs piesakās
      */
     public function handle(Login $event): void
     {
-        // Get session ID before login
+        // Iegūst sesijas ID pirms pieteikšanās
         $sessionId = session()->getId();
 
-        // Get user ID
+        // Iegūst lietotāja ID
         $userId = $event->user->id;
 
-        // Merge guest cart with user cart
+        // Apvieno viesa grozu ar lietotāja grozu
         Cart::mergeGuestCart($sessionId, $userId);
     }
 }

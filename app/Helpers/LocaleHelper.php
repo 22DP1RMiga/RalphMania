@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\App;
 class LocaleHelper
 {
     /**
-     * Iestata aplikācijas lokalizāciju pirms e-pasta sūtīšanas.
-     * Izmanto lietotāja saglabāto locale vai pēc noklusējuma 'lv'.
+     * Iestata aplikācijas lokalizāciju pirms e-pasta sūtīšanas
+     * Izmanto lietotāja saglabāto locale vai pēc noklusējuma 'lv'
      */
     public static function setForUser($user): void
     {
@@ -17,7 +17,7 @@ class LocaleHelper
     }
 
     /**
-     * Iestata lokalizāciju pēc locale stringa.
+     * Iestata lokalizāciju pēc "locale stringa"
      */
     public static function set(string $locale): void
     {

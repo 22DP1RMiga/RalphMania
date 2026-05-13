@@ -20,7 +20,7 @@ class ContactReply extends Mailable
     public string $mailLocale;
 
     /**
-     * Create a new message instance.
+     * Izveido jaunu ziņojuma piemēru
      */
     public function __construct(ContactMessage $contactMessage, string $replyText, string $mailLocale = 'lv')
     {
@@ -30,7 +30,7 @@ class ContactReply extends Mailable
     }
 
     /**
-     * Get the message envelope.
+     * Iegūst ziņojuma aploksni
      */
     public function envelope(): Envelope
     {
@@ -41,7 +41,7 @@ class ContactReply extends Mailable
     }
 
     /**
-     * Get the message content definition.
+     * Iegūst ziņojuma satura definīciju
      */
     public function content(): Content
     {
@@ -57,7 +57,7 @@ class ContactReply extends Mailable
     }
 
     /**
-     * Get the attachments for the message.
+     * Iegūst ziņojuma pielikumus
      */
     public function attachments(): array
     {
