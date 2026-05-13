@@ -913,7 +913,7 @@ const messages = {
             preferences_updated: 'Preferences saglabātas!',
             invalid_email: 'Lūdzu ievadi derīgu e-pasta adresi.',
             success: 'Paldies! Tu tagad saņemsi mūsu jaunumus.',
-            error: 'Kļūda. Lūdzu mēģini vēlreiz.',
+            error: 'Kļūda. Lūdzu mēģiniet vēlreiz.',
             benefits_hint: 'Abonentiem — ekskluzīvas atlaides un piedāvājumi!',
             manage_preferences: 'Pārvaldīt preferences',
             view_offers: 'Skatīt piedāvājumus',

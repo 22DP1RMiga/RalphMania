@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\LocaleHelper;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,27 +34,35 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
+            'locale' => 'nullable|string|in:lv,en',
         ]);
+
+        // Nodrošina lokalizāciju
+        $locale = $request->input('locale', 'lv');
+        LocaleHelper::set($locale);
 
         // Get the user
         $user = \App\Models\User::where('email', $request->email)->first();
 
         if ($user) {
-            // Generate reset token
+            // Ģenerē atiestatīšanas tokenu
             $token = Password::createToken($user);
 
-            // Generate reset URL
+            // Ģenerē atiestatīšanas URL
             $resetUrl = url(route('password.reset', [
                 'token' => $token,
                 'email' => $user->email,
             ], false));
 
-            // Send custom email
+            // Nosūta pielāgotu (custom) e-pastu
             try {
                 Mail::to($user->email)->send(
-                    new ResetPasswordMail($resetUrl, $user->first_name ?? 'Lietotāj')
+                    new ResetPasswordMail(
+                        $resetUrl,
+                        $user->first_name ?? ($locale === 'en' ? 'User' : 'Lietotāj'),
+                        $locale
+                    )
                 );
-
                 \Log::info('Password reset email sent', [
                     'email' => $user->email,
                 ]);
@@ -64,7 +73,7 @@ class PasswordResetLinkController extends Controller
             }
         }
 
-        // Always return success to prevent email enumeration
+        // Vienmēr atgriež veiksmīgu rezultātu, lai novērstu e-pasta uzskaitīšanu.
         return back()->with('status', __('passwords.sent'));
     }
 }

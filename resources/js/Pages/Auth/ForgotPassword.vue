@@ -19,7 +19,8 @@ const toggleLocale = () => {
 
 defineProps({ status: String });
 
-const form = useForm({ email: '' });
+const form = useForm({ email: '', locale: currentLocale.value });
+watch(currentLocale, (val) => { form.locale = val; });
 
 // Tāds pats pieļaujamo domēnu RegEx kā reģistrēšanās lapā
 const ALLOWED_EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@(gmail\.com|outlook\.com|outlook\.lv|hotmail\.com|hotmail\.lv|hotmail\.co\.uk|live\.com|live\.lv|yahoo\.com|yahoo\.co\.uk|yahoo\.lv|icloud\.com|me\.com|mac\.com|proton\.me|protonmail\.com|protonmail\.ch|zoho\.com|tutanota\.com|tuta\.io|gmx\.com|gmx\.net|gmx\.de|inbox\.com|aol\.com|yandex\.com|yandex\.ru|ya\.ru|inbox\.lv|apollo\.lv|tvnet\.lv|one\.lv|e-apollo\.lv)$/i;

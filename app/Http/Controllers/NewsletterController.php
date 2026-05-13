@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\LocaleHelper;
 use App\Mail\NewsletterWelcome;
 use App\Models\NewsletterSubscriber;
 use App\Models\SubscriberOffer;
@@ -11,25 +12,29 @@ use Illuminate\Support\Facades\Mail;
 class NewsletterController extends Controller
 {
     /**
-     * Default subscription duration in days.
-     * null  = forever (no expiry)
-     * integer = days (e.g. 365 = 1 year)
+     * Noklusējuma abonementa ilgums dienās.
+     * null  = uz visu mūžu (bez derīguma termiņa beigām)
+     * integer = dienas (piem., 365 = 1 gads)
      */
     private const SUBSCRIPTION_DURATION_DAYS = 365; // 1 gads
 
-    // ─── SUBSCRIBE ───────────────────────────────────────────────────────────
+    // ─── ABONĒŠANA ───────────────────────────────────────────────────────────
 
     public function subscribe(Request $request)
     {
         $request->validate([
             'email' => 'required|email|max:100',
+            'locale' => 'nullable|string|in:lv,en',
         ]);
 
         $email  = $request->email;
         $userId = auth()->id();
         $user   = auth()->user();
+        $locale = $request->input('locale', $user?->locale ?? 'lv');
 
-        // Already subscribed (and not expired)
+        LocaleHelper::set($locale);
+
+        // Jau abonēts (un nav beidzies derīguma termiņš)
         if (NewsletterSubscriber::isSubscribed($email)) {
             return response()->json([
                 'success'            => false,
@@ -38,14 +43,14 @@ class NewsletterController extends Controller
             ]);
         }
 
-        // Create / reactivate subscriber with expiry
+        // Izveido vai atkārtoti aktivizē abonentu ar derīguma termiņu
         $subscriber = NewsletterSubscriber::subscribe(
             $email,
             $userId,
             self::SUBSCRIPTION_DURATION_DAYS
         );
 
-        // Activity log
+        // Darbību žurnāls
         if ($userId) {
             \App\Models\ActivityLog::log(
                 'newsletter_subscribed',
@@ -53,14 +58,15 @@ class NewsletterController extends Controller
             );
         }
 
-        // Send welcome email
+        // Nosūta sveiciena e-pastu
         try {
             Mail::to($email)->send(new NewsletterWelcome(
                 subscriber: $subscriber,
                 userName:   $user?->username ?? '',
+                mailLocale:     $locale,
             ));
         } catch (\Exception $e) {
-            // Log but don't fail subscription if mail fails
+            // Žurnāls, bet abonēšana neizdodas, ja e-pasta nosūtīšana neizdodas
             \Log::error('Newsletter welcome email failed: ' . $e->getMessage());
         }
 
@@ -71,7 +77,7 @@ class NewsletterController extends Controller
         ]);
     }
 
-    // ─── UNSUBSCRIBE ─────────────────────────────────────────────────────────
+    // ─── ATTEIKŠANĀS NO ABONEMENTA ─────────────────────────────────────────────────────────
 
     public function unsubscribe(Request $request, string $token)
     {
@@ -112,7 +118,7 @@ class NewsletterController extends Controller
         ]);
     }
 
-    // ─── STATUS ──────────────────────────────────────────────────────────────
+    // ─── STATUSS ──────────────────────────────────────────────────────────────
 
     public function status(Request $request)
     {
@@ -123,11 +129,11 @@ class NewsletterController extends Controller
             && !$subscriber->is_expired;
 
         return response()->json([
-            'subscribed'  => $isActive,
-            'expires_at'  => $subscriber?->subscription_expires_at?->format('d.m.Y'),
+            'subscribed'     => $isActive,
+            'expires_at'     => $subscriber?->subscription_expires_at?->format('d.m.Y'),
             'days_remaining' => $subscriber?->days_remaining,
-            'is_expired'  => $subscriber?->is_expired ?? false,
-            'preferences' => $subscriber ? [
+            'is_expired'     => $subscriber?->is_expired ?? false,
+            'preferences'    => $subscriber ? [
                 'receive_news'          => $subscriber->receive_news,
                 'receive_promotions'    => $subscriber->receive_promotions,
                 'receive_announcements' => $subscriber->receive_announcements,
@@ -135,7 +141,7 @@ class NewsletterController extends Controller
         ]);
     }
 
-    // ─── OFFERS ──────────────────────────────────────────────────────────────
+    // ─── PIEDĀVĀJUMI ──────────────────────────────────────────────────────────────
 
     public function getOffers(Request $request)
     {
@@ -143,7 +149,7 @@ class NewsletterController extends Controller
             ->where('is_active', true)
             ->first();
 
-        // Check active and not expired
+        // Seko līdzi, vai ir aktīvs, vai termiņš nav beidzies
         if (!$subscriber || $subscriber->is_expired) {
             return response()->json([
                 'subscribed' => false,
