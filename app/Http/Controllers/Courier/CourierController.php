@@ -17,8 +17,8 @@ use Inertia\Response;
 class CourierController extends Controller
 {
     /**
-     * Get the authenticated courier's record.
-     * Aborts 403 if no courier record found.
+     * Iegūst autentificētā kurjera ierakstu
+     * Pārtrauc 403. kļūdu, ja kurjera ieraksts nav atrasts
      */
     private function getCourier(): Courier
     {
@@ -33,17 +33,17 @@ class CourierController extends Controller
         return $courier;
     }
 
-    // ─── DASHBOARD ────────────────────────────────────────────────────────────
+    // ─── KURJERA PANELIS (DASHBOARD) ────────────────────────────────────────────────────────────
 
     /**
-     * Courier dashboard with stats and active orders.
+     * Kurjera informācijas panelis ar statistiku un aktīviem pasūtījumiem
      * GET /courier/dashboard
      */
     public function dashboard(): Response
     {
         $courier = $this->getCourier();
 
-        // Active assignments (not yet delivered)
+        // Aktīvi uzdevumi (vēl nav piegādāti)
         $activeAssignments = CourierAssignment::with(['order.items.product', 'order.payment'])
             ->where('courier_id', $courier->id)
             ->whereNull('completed_at')
@@ -51,12 +51,12 @@ class CourierController extends Controller
             ->orderBy('assigned_at', 'asc')
             ->get();
 
-        // Stats
+        // Statusi
         $totalAssigned  = CourierAssignment::where('courier_id', $courier->id)->count();
         $totalCompleted = CourierAssignment::where('courier_id', $courier->id)->whereNotNull('completed_at')->count();
         $totalActive    = $activeAssignments->count();
 
-        // Recent completed (last 10)
+        // Nesen pabeigtie pasūtījumi (pēdējie 10)
         $recentCompleted = CourierAssignment::with(['order'])
             ->where('courier_id', $courier->id)
             ->whereNotNull('completed_at')
@@ -79,10 +79,10 @@ class CourierController extends Controller
         ]);
     }
 
-    // ─── ORDERS LIST ─────────────────────────────────────────────────────────
+    // ─── PASŪTĪJUMU SARAKSTS ─────────────────────────────────────────────────────────
 
     /**
-     * All orders assigned to this courier with filters.
+     * Visi šim kurjeram piešķirtie pasūtījumi ar filtriem
      * GET /courier/orders
      */
     public function orders(Request $request): Response
@@ -101,7 +101,7 @@ class CourierController extends Controller
             }
         }
 
-        // Search by order number
+        // Meklē pēc pasūtījuma numura
         if ($request->filled('search')) {
             $query->whereHas('order', function ($q) use ($request) {
                 $q->where('order_number', 'like', '%' . $request->search . '%')
@@ -118,10 +118,10 @@ class CourierController extends Controller
         ]);
     }
 
-    // ─── ORDER DETAIL ─────────────────────────────────────────────────────────
+    // ─── PASŪTĪJUMA DETAĻAS ─────────────────────────────────────────────────────────
 
     /**
-     * Single order details.
+     * Sniedz pasūtījuma detaļas
      * GET /courier/orders/{orderId}
      */
     public function showOrder(int $orderId): Response
@@ -140,16 +140,16 @@ class CourierController extends Controller
         ]);
     }
 
-    // ─── UPDATE ORDER STATUS ─────────────────────────────────────────────────
+    // ─── ATJAUNINA PASŪTĪJUMA STATUSU ─────────────────────────────────────────────────
 
     /**
-     * Courier can update order status within allowed transitions.
+     * Kurjers var atjaunināt pasūtījuma statusu atļauto pāreju ietvaros
      * PUT /courier/orders/{orderId}/status
      *
-     * Allowed transitions for couriers:
-     *   packed → shipped
-     *   shipped → in_transit
-     *   in_transit → delivered
+     * Atļautās pārejas kurjeriem:
+     *   iepakots → nosūtīts
+     *   nosūtīts → ceļā
+     *   ceļā → piegādāts
      */
     public function updateStatus(Request $request, int $orderId): JsonResponse
     {
@@ -169,7 +169,7 @@ class CourierController extends Controller
 
         $newStatus = $validated['status'];
 
-        // Validate allowed transitions
+        // Apstiprina atļautās pārejas
         $allowedTransitions = [
             'packed'     => ['shipped'],
             'shipped'    => ['in_transit'],
@@ -187,7 +187,7 @@ class CourierController extends Controller
         DB::beginTransaction();
 
         try {
-            // Update order status
+            // Atjaunina pasūtījuma statusu
             $updateData = ['status' => $newStatus];
 
             if ($newStatus === 'shipped') {
@@ -198,12 +198,12 @@ class CourierController extends Controller
 
             $order->update($updateData);
 
-            // Update assignment notes if provided
+            // Atjaunina uzdevuma piezīmes, ja tās ir sniegtas
             if (!empty($validated['notes'])) {
                 $assignment->update(['notes' => $validated['notes']]);
             }
 
-            // Mark assignment as completed when delivered
+            // Atzīmē uzdevumu kā pabeigtu, kad tas tiek piegādāts
             if ($newStatus === 'delivered') {
                 $assignment->update(['completed_at' => now()]);
             }
@@ -223,10 +223,10 @@ class CourierController extends Controller
         }
     }
 
-    // ─── ADD/UPDATE NOTES ─────────────────────────────────────────────────────
+    // ─── PIEVIENOT/ATJAUNINĀT PIEZĪMES ─────────────────────────────────────────────────────
 
     /**
-     * Save courier notes for an assignment.
+     * Saglabā kurjera piezīmes uzdevumam
      * PUT /courier/orders/{orderId}/notes
      */
     public function updateNotes(Request $request, int $orderId): JsonResponse
@@ -249,10 +249,10 @@ class CourierController extends Controller
         ]);
     }
 
-    // ─── COURIER PROFILE ─────────────────────────────────────────────────────
+    // ─── KURJERA KONTS ─────────────────────────────────────────────────────
 
     /**
-     * Courier's own profile page.
+     * Kurjera profila lapa
      * GET /courier/profile
      */
     public function profile(): Response
@@ -265,7 +265,7 @@ class CourierController extends Controller
         ]);
     }
 
-    // ─── PRIVATE HELPERS ─────────────────────────────────────────────────────
+    // ─── PRIVĀTIE PALĪGI ─────────────────────────────────────────────────────
 
     private function formatAssignment(CourierAssignment $assignment): array
     {
@@ -316,7 +316,7 @@ class CourierController extends Controller
     }
 
     /**
-     * Courier inbox — sent reports + admin replies.
+     * Kurjera iesūtne: nosūtītie ziņojumi + administratora atbildes
      * GET /courier/inbox
      */
     public function inbox(): JsonResponse
@@ -349,7 +349,7 @@ class CourierController extends Controller
     }
 
     /**
-     * Courier reports a delivery problem to admin.
+     * Kurjers ziņo administratoram par piegādes problēmu
      * POST /courier/report
      */
     public function reportProblem(Request $request): JsonResponse

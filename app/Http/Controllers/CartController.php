@@ -13,8 +13,8 @@ use Inertia\Response;
 class CartController extends Controller
 {
     /**
-     * Display the shopping cart
-     * Renders: resources/js/Pages/Cart/Index.vue
+     * Parāda iepirkumu grozu
+     * Sniedz: resources/js/Pages/Cart/Index.vue
      */
     public function index(): Response
     {
@@ -25,7 +25,7 @@ class CartController extends Controller
         $vatRate  = (float) \App\Models\Setting::get('tax_rate', 21);
         $vatAmount = round($subtotal * $vatRate / (100 + $vatRate), 2);
 
-        // Piegādes info (bez valsts — parāda abas iespējas)
+        // Piegādes informācija (bez valsts — parāda abas iespējas)
         $shippingZones = [
             'latvia'  => \App\Http\Controllers\OrderController::shippingInfo('Latvia', $subtotal),
             'baltics' => \App\Http\Controllers\OrderController::shippingInfo('Estonia', $subtotal),
@@ -73,7 +73,7 @@ class CartController extends Controller
     }
 
     /**
-     * Add item to cart
+     * Pievieno preci grozā
      */
     public function add(Request $request): JsonResponse
     {
@@ -85,7 +85,7 @@ class CartController extends Controller
 
         $product = Product::findOrFail($validated['product_id']);
 
-        // Ja produktam ir izmēri un izmērs nav norādīts — atgriež kļūdu
+        // Ja produktam ir izmēri un izmērs nav norādīts - atgriež kļūdu
         if ($product->has_sizes && empty($validated['size'])) {
             return response()->json([
                 'success' => false,
@@ -103,11 +103,10 @@ class CartController extends Controller
 
         $cart = Cart::getCurrentCart();
 
-        // Meklē esošu grozu rindu pēc product_id UN size
-        // (S un L ir DIVAS atsevišķas rindas — nevis viena)
+        // Meklē esošu grozu rindu pēc product_id un izmēru
         $cartItem = $cart->items()
             ->where('product_id', $validated['product_id'])
-            ->where('size', $validated['size'] ?? null)  // ← PIEVIENOTS: size jāatbilst
+            ->where('size', $validated['size'] ?? null)
             ->first();
 
         if ($cartItem) {
@@ -131,7 +130,7 @@ class CartController extends Controller
                 'product_id' => $validated['product_id'],
                 'price'      => $product->price,
                 'quantity'   => $validated['quantity'],
-                'size'       => $validated['size'] ?? null,  // ← PIEVIENOTS
+                'size'       => $validated['size'] ?? null,
             ]);
         }
 
@@ -148,7 +147,7 @@ class CartController extends Controller
     }
 
     /**
-     * Update cart item quantity
+     * Atjaunina groza preču daudzumu
      */
     public function updateQuantity(Request $request, CartItem $cartItem): JsonResponse
     {
@@ -191,7 +190,7 @@ class CartController extends Controller
     }
 
     /**
-     * Remove item from cart
+     * Noņem preci no groza
      */
     public function remove(CartItem $cartItem): JsonResponse
     {
@@ -218,7 +217,7 @@ class CartController extends Controller
     }
 
     /**
-     * Clear entire cart
+     * Notīra visu grozu
      */
     public function clear(): JsonResponse
     {
@@ -236,7 +235,7 @@ class CartController extends Controller
     }
 
     /**
-     * Get cart count (for header badge)
+     * Iegūst groza skaitu (galvenes nozīmītei)
      */
     public function count(): JsonResponse
     {
@@ -248,7 +247,7 @@ class CartController extends Controller
     }
 
     /**
-     * Get cart data (API endpoint)
+     * Iegūst groza datus (API galapunkts)
      */
     public function get(): JsonResponse
     {
