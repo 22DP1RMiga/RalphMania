@@ -15,7 +15,7 @@ const props = defineProps({
     },
     type: {
         type: String,
-        default: 'danger', // danger, warning, info
+        default: 'danger', // briesmas, brīdinājums, informācija
     },
 });
 

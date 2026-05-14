@@ -8,21 +8,21 @@ const { t, locale } = useI18n();
 const currentYear = new Date().getFullYear();
 const page = usePage();
 
-// Auth user
+// Autorizēt lietotāju
 const user = computed(() => page.props.auth?.user);
 
-// Newsletter state
+// Biļetena stāvoklis
 const email = ref('');
 const isLoading = ref(false);
 const isCheckingStatus = ref(false);
 
-// Subscription status (for logged-in users)
+// Abonementa statuss (lietotājiem, kas ir pieteikušies)
 const isSubscribed = ref(false);
 const subscriptionExpiresAt = ref(null);
 const daysRemaining = ref(null);
 const isExpired = ref(false);
 
-// Toast state
+// Toast stāvoklis
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastType = ref('success');
@@ -36,7 +36,7 @@ const showToastNotification = (message, type = 'success') => {
 
 const closeToast = () => { showToast.value = false; };
 
-// Check subscription status (only for logged-in users)
+// Pārbaudīt abonementa statusu (tikai lietotājiem, kas ir pieteikušies)
 const checkSubscriptionStatus = async () => {
     if (!user.value) return;
 
@@ -48,7 +48,7 @@ const checkSubscriptionStatus = async () => {
         daysRemaining.value = res.data.days_remaining;
         isExpired.value = res.data.is_expired;
     } catch (e) {
-        // Not logged in or error - just show the form normally
+        // Neesat pieteicies vai radās kļūda - vienkārši parādiet veidlapu kā parasti
     } finally {
         isCheckingStatus.value = false;
     }
@@ -71,7 +71,7 @@ const subscribe = async () => {
         if (response.data.success) {
             showToastNotification(t('newsletter.success'), 'success');
             email.value = '';
-            // Recheck status if logged in
+            // Atkārtoti pārbauda statusu, ja esat pieteicies
             if (user.value) await checkSubscriptionStatus();
         } else if (response.data.already_subscribed) {
             showToastNotification(t('newsletter.already_subscribed'), 'info');
@@ -83,7 +83,7 @@ const subscribe = async () => {
     }
 };
 
-// Expiry status label
+// Derīguma termiņa statusa etiķete
 const expiryLabel = computed(() => {
     if (!subscriptionExpiresAt.value) return null;
     if (isExpired.value) return { text: t('newsletter.subscription_expired'), type: 'danger' };
@@ -103,7 +103,7 @@ onMounted(() => {
         <div class="shop-footer-container">
             <div class="shop-footer-content">
 
-                <!-- Brand Section -->
+                <!-- Zīmolu sadaļa -->
                 <div class="shop-footer-brand">
                     <Link href="/shop" class="footer-logo-wrapper">
                         <img src="/img/RoltonsLV_Icon.png" alt="RalphMania Logo" class="footer-logo">
@@ -112,7 +112,7 @@ onMounted(() => {
                     <p class="footer-tagline">{{ t('footer.shop_tagline') }}</p>
                 </div>
 
-                <!-- Shop Links -->
+                <!-- Veikala saites -->
                 <div class="shop-footer-links">
                     <div class="footer-links-column">
                         <h4 class="footer-links-heading">{{ t('footer.shop') }}</h4>
@@ -154,23 +154,23 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Newsletter & Social -->
+                <!-- Biļetens un sociālie izdevumi -->
                 <div class="shop-footer-subscribe">
                     <h4 class="footer-links-heading">{{ t('footer.follow_us') }}</h4>
                     <p class="subscribe-text">{{ t('footer.subscribe_description') }}</p>
 
-                    <!-- LOADING CHECK -->
+                    <!-- IEKRAUŠANAS PĀRBAUDE -->
                     <div v-if="isCheckingStatus" class="newsletter-checking">
                         <i class="fas fa-spinner fa-spin"></i>
                     </div>
 
-                    <!-- SUBSCRIBED STATE (logged-in user who is active) -->
+                    <!-- ABONĒTA STĀVOKLIS (pieteicies lietotājs, kurš ir aktīvs) -->
                     <div v-else-if="user && isSubscribed" class="newsletter-subscribed-state">
                         <div class="subscribed-badge">
                             <i class="fas fa-check-circle"></i>
                             <span>{{ t('newsletter.subscribed') }}</span>
                         </div>
-                        <!-- Expiry info -->
+                        <!-- Informācija par derīguma termiņu -->
                         <div v-if="expiryLabel" :class="['expiry-info', `expiry-${expiryLabel.type}`]">
                             <i class="fas fa-clock"></i>
                             <span>{{ expiryLabel.text }}</span>
@@ -181,13 +181,13 @@ onMounted(() => {
                         </Link>
                     </div>
 
-                    <!-- EXPIRED STATE (was subscribed but expired) -->
+                    <!-- BEIDZIES DERĪGUMS (abonēts, bet beidzies) -->
                     <div v-else-if="user && isExpired" class="newsletter-expired-state">
                         <div class="expired-badge">
                             <i class="fas fa-exclamation-circle"></i>
                             <span>{{ t('newsletter.subscription_expired') }}</span>
                         </div>
-                        <!-- Show form again so they can re-subscribe -->
+                        <!-- Vēlreiz parāda veidlapu, lai viņi varētu atkārtoti abonēt -->
                         <form class="newsletter-form" @submit.prevent="subscribe">
                             <input
                                 v-model="email"
@@ -204,7 +204,7 @@ onMounted(() => {
                         </form>
                     </div>
 
-                    <!-- DEFAULT FORM (guest or not subscribed) -->
+                    <!-- NOKLUSĒJUMA FORMA (viesis vai nav abonents) -->
                     <template v-else>
                         <form class="newsletter-form" @submit.prevent="subscribe">
                             <input
@@ -226,7 +226,7 @@ onMounted(() => {
                         </div>
                     </template>
 
-                    <!-- Social Links -->
+                    <!-- Sociālās saites -->
                     <div class="shop-footer-social">
                         <a href="https://www.youtube.com/@RoltonsLV" target="_blank" class="shop-social-link shop-social-youtube">
                             <i class="fab fa-youtube"></i>
@@ -247,7 +247,7 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Payment Methods -->
+            <!-- Maksājuma veidi -->
             <div class="shop-footer-payment">
                 <p class="payment-label">{{ t('footer.payment_methods') }}</p>
                 <div class="payment-icons">
@@ -258,13 +258,13 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Footer Bottom -->
+            <!-- Kājenes apakšdaļa -->
             <div class="shop-footer-bottom">
                 <p class="shop-copyright">{{ t('footer.copyright', { year: currentYear }) }}</p>
             </div>
         </div>
 
-        <!-- Toast Notification -->
+        <!-- Toast notifikācijas -->
         <Transition name="toast">
             <div v-if="showToast" :class="['toast-notification', `toast-${toastType}`]" @click="closeToast">
                 <div class="toast-icon">
@@ -282,7 +282,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ========== SHOP FOOTER ========== */
+/* ========== VEIKALA KĀJENĒ ========== */
 .shop-footer {
     background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     color: #e5e7eb;
@@ -304,7 +304,7 @@ onMounted(() => {
 .footer-brand-name { height: 2rem; object-fit: contain; }
 .footer-tagline { color: #9ca3af; line-height: 1.6; font-size: 0.95rem; }
 
-/* Links */
+/* Saites */
 .shop-footer-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
 .footer-links-column { display: flex; flex-direction: column; }
 .footer-links-heading { font-size: 1.125rem; font-weight: 700; color: white; margin-bottom: 1rem; }
@@ -312,11 +312,11 @@ onMounted(() => {
 .footer-nav-link { color: #9ca3af; transition: all 0.2s; text-decoration: none; font-size: 0.95rem; }
 .footer-nav-link:hover { color: #dc2626; padding-left: 0.375rem; }
 
-/* Subscribe section */
+/* Abonēšanas sadaļa */
 .shop-footer-subscribe { display: flex; flex-direction: column; }
 .subscribe-text { color: #9ca3af; font-size: 0.95rem; margin-bottom: 1.25rem; line-height: 1.5; }
 
-/* Newsletter checking */
+/* Biļetena pārbaude */
 .newsletter-checking {
     padding: 1rem;
     color: #9ca3af;
@@ -324,7 +324,7 @@ onMounted(() => {
     margin-bottom: 1rem;
 }
 
-/* Subscribed state */
+/* Abonēta lietotāja stāvoklis */
 .newsletter-subscribed-state {
     display: flex;
     flex-direction: column;
@@ -345,7 +345,7 @@ onMounted(() => {
 }
 .subscribed-badge i { color: #10b981; }
 
-/* Expired state */
+/* Beidzies derīguma termiņš */
 .newsletter-expired-state { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
 .expired-badge {
     display: inline-flex;
@@ -360,7 +360,7 @@ onMounted(() => {
     font-weight: 600;
 }
 
-/* Expiry info */
+/* Informācija par derīguma termiņu */
 .expiry-info {
     display: flex;
     align-items: center;
@@ -373,7 +373,7 @@ onMounted(() => {
 .expiry-warning { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
 .expiry-danger  { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
 
-/* Dashboard link */
+/* Informācijas paneļa saite */
 .newsletter-dashboard-link {
     display: inline-flex;
     align-items: center;
@@ -393,7 +393,7 @@ onMounted(() => {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
 }
 
-/* Newsletter form */
+/* Biļetena forma */
 .newsletter-form { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
 .newsletter-input {
     flex: 1; padding: 0.75rem 1rem;
@@ -412,7 +412,7 @@ onMounted(() => {
 .newsletter-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); }
 .newsletter-submit:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* Benefits */
+/* Ieguvumi */
 .subscriber-benefits {
     display: flex; align-items: center; gap: 0.5rem;
     padding: 0.5rem 0.75rem;
@@ -423,7 +423,7 @@ onMounted(() => {
 .subscriber-benefits i { color: #dc2626; font-size: 0.875rem; }
 .subscriber-benefits span { color: #fca5a5; font-size: 0.8125rem; }
 
-/* Social */
+/* Sociālie */
 .shop-footer-social { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
 .shop-social-link {
     display: flex; align-items: center; justify-content: center;
@@ -442,7 +442,7 @@ onMounted(() => {
 .shop-social-facebook { background: #1877F2; }
 .shop-social-facebook:hover { box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4); }
 
-/* Payment */
+/* Maksājums */
 .shop-footer-payment {
     display: flex; align-items: center; justify-content: space-between;
     padding: 1.5rem 0; border-top: 1px solid #374151; border-bottom: 1px solid #374151; margin-bottom: 1.5rem;
@@ -452,7 +452,7 @@ onMounted(() => {
 .payment-icon { font-size: 2rem; color: #9ca3af; transition: color 0.2s; }
 .payment-icon:hover { color: white; }
 
-/* Bottom */
+/* Apakša */
 .shop-footer-bottom { text-align: center; }
 .shop-copyright { color: #9ca3af; font-size: 0.95rem; }
 
@@ -477,7 +477,7 @@ onMounted(() => {
 .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(100px); }
 
-/* Responsive */
+/* Responsivitāte */
 @media (max-width: 1200px) {
     .shop-footer-content { grid-template-columns: 1fr; gap: 2.5rem; }
     .shop-footer-links { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }

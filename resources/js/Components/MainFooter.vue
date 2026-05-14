@@ -9,9 +9,9 @@ const currentYear = new Date().getFullYear();
 <template>
     <footer class="main-footer">
         <div class="footer-container">
-            <!-- Footer Top -->
+            <!-- Kājenes augšdaļa -->
             <div class="footer-top">
-                <!-- About Column -->
+                <!-- Kolonna "Par mums" -->
                 <div class="footer-column">
                     <h3 class="footer-heading">{{ t('footer.about_title') }}</h3>
                     <p class="footer-description">
@@ -36,7 +36,7 @@ const currentYear = new Date().getFullYear();
                     </div>
                 </div>
 
-                <!-- Quick Links Column -->
+                <!-- Ātro saišu sleja -->
                 <div class="footer-column">
                     <h3 class="footer-heading">{{ t('footer.quick_links') }}</h3>
                     <nav class="footer-links">
@@ -48,7 +48,7 @@ const currentYear = new Date().getFullYear();
                     </nav>
                 </div>
 
-                <!-- Content Column (UPDATED) -->
+                <!-- Satura kolonna -->
                 <div class="footer-column">
                     <h3 class="footer-heading">{{ t('footer.content') }}</h3>
                     <nav class="footer-links">
@@ -71,7 +71,7 @@ const currentYear = new Date().getFullYear();
                     </nav>
                 </div>
 
-                <!-- Contact Column -->
+                <!-- Kontaktpersonu kolonna -->
                 <div class="footer-column">
                     <h3 class="footer-heading">{{ t('footer.contact_info') }}</h3>
                     <div class="footer-contact">
@@ -91,7 +91,7 @@ const currentYear = new Date().getFullYear();
                 </div>
             </div>
 
-            <!-- Footer Bottom -->
+            <!-- Kājenes apakšdaļa -->
             <div class="footer-bottom">
                 <div class="footer-copyright">
                     <p>{{ t('footer.copyright', { year: currentYear }) }}</p>
@@ -107,7 +107,7 @@ const currentYear = new Date().getFullYear();
 </template>
 
 <style scoped>
-/* ========== MAIN FOOTER ========== */
+/* ========== GALVENĀ KĀNENE ========== */
 .main-footer {
     background-color: #1f2937;
     color: #e5e7eb;
@@ -119,7 +119,7 @@ const currentYear = new Date().getFullYear();
     margin: 0 auto;
 }
 
-/* Footer Top */
+/* Kājenes augšdaļa */
 .footer-top {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -145,7 +145,7 @@ const currentYear = new Date().getFullYear();
     margin-bottom: 1.5rem;
 }
 
-/* Social Links */
+/* Sociālās saites */
 .footer-social {
     display: flex;
     gap: 0.75rem;

@@ -53,10 +53,10 @@ export const useCartStore = defineStore('cart', () => {
     };
 
     const syncCart = async () => {
-        // Save to localStorage
+        // Saglabā lokālajā krātuvē (localStorage)
         localStorage.setItem('cart', JSON.stringify(items.value));
 
-        // Sync with server if authenticated
+        // Sinhronizējas ar serveri, ja ir autentificēts
         try {
             await axios.post('/api/cart/sync', { items: items.value });
         } catch (error) {

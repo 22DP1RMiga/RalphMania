@@ -8,13 +8,13 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const isAuthenticated = computed(() => !!user.value);
 
-// Check if user is administrator
+// Pārbauda, vai lietotājs ir administrators
 const isAdministrator = computed(() => user.value?.is_administrator || false);
 
-// Check if user is courier
+// Pārbauda, vai lietotājs ir kurjers
 const isCourier = computed(() => user.value?.is_courier || false);
 
-// Get user avatar with correct path
+// Iegūst lietotāja avatāru ar pareizo ceļu
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
         return '/img/default-avatar.png';
@@ -25,20 +25,20 @@ const userAvatar = computed(() => {
     return `/storage/${user.value.profile_picture}`;
 });
 
-// i18n setup
+// i18n uzstādījums
 const { locale } = useI18n({ useScope: 'global' });
 const currentLocale = ref(localStorage.getItem('lang') || 'lv');
 
-// Sync Vue i18n locale with stored value on mount
+// Sinhronizē Vue i18n lokalizāciju ar saglabāto vērtību piestiprināšanas brīdī
 locale.value = currentLocale.value;
 
-// Reactively change locale when button clicked
+// Reaktīvi maina lokalizāciju, noklikšķinot uz pogas
 watch(currentLocale, (newLang) => {
     locale.value = newLang;
     localStorage.setItem('lang', newLang);
 });
 
-// Toggle locale function
+// Pārslēdz lokalizācijas funkciju
 const toast = ref({ show: false, message: '', type: 'success' });
 
 const toggleLocale = () => {
@@ -56,10 +56,10 @@ const toggleLocale = () => {
     }
 };
 
-// Mobile menu
+// Mobilā izvēlne
 const isMenuActive = ref(false);
 
-// User dropdown state
+// Lietotāja nolaižamās izvēlnes stāvoklis
 const isUserDropdownOpen = ref(false);
 
 const toggleNav = () => {
@@ -78,7 +78,7 @@ const closeUserDropdown = () => {
     isUserDropdownOpen.value = false;
 };
 
-// Close dropdown when clicking outside
+// Noklikšķinot ārpusē, aizveras nolaižamais saraksts
 const handleClickOutside = (event) => {
     const dropdown = document.querySelector('.user-dropdown-container');
     if (dropdown && !dropdown.contains(event.target)) {
@@ -86,12 +86,12 @@ const handleClickOutside = (event) => {
     }
 };
 
-// Add click listener
+// Pievieno klikšķu uztvērēju
 if (typeof window !== 'undefined') {
     document.addEventListener('click', handleClickOutside);
 }
 
-// Logout function
+// Atteikšanās funkcija
 const logout = () => {
     closeUserDropdown();
     router.post('/logout', {}, {
@@ -129,7 +129,7 @@ const goToCourierDashboard = () => {
     />
     <nav class="main-navbar">
         <div class="navbar-container">
-            <!-- Left: Logo & Name -->
+            <!-- Kreisajā pusē: Logo un nosaukums -->
             <div class="navbar-left">
                 <Link href="/" class="navbar-brand" @click="closeMenu">
                     <img src="/img/RoltonsLV_Icon.png" alt="RalphMania Logo" class="navbar-logo">
@@ -137,7 +137,7 @@ const goToCourierDashboard = () => {
                 </Link>
             </div>
 
-            <!-- Center: Navigation Links (Desktop) -->
+            <!-- Centrs: Navigācijas saites (darbvirsma) -->
             <ul class="navbar-center">
                 <li>
                     <Link
@@ -186,7 +186,7 @@ const goToCourierDashboard = () => {
                 </li>
             </ul>
 
-            <!-- Right: User & Locale (Desktop) -->
+            <!-- Labajā pusē: Lietotājs un lokalizācija (darbvirsma) -->
             <div class="navbar-right">
                 <!-- Authenticated User with Dropdown -->
                 <div v-if="isAuthenticated" class="user-dropdown-container">
@@ -200,31 +200,31 @@ const goToCourierDashboard = () => {
                         <i class="fas fa-chevron-down dropdown-arrow" :class="{ 'rotated': isUserDropdownOpen }"></i>
                     </button>
 
-                    <!-- Dropdown Menu -->
+                    <!-- Nolaižamā izvēlne (Dropdown Menu) -->
                     <Transition name="dropdown">
                         <div v-if="isUserDropdownOpen" class="user-dropdown">
-                            <!-- Admin Panel Link (if administrator) -->
+                            <!-- Administratora paneļa saite (ja administrators) -->
                             <button v-if="isAdministrator" @click="goToAdminPanel" class="dropdown-item dropdown-item-admin">
                                 <i class="fas fa-shield-alt"></i>
                                 <span>{{ $t('dashboard.sections.profile.admin_title') }}</span>
                             </button>
 
-                            <!-- Courier Dashboard Link (if courier) -->
+                            <!-- Kurjera informācijas paneļa saite (ja kurjers) -->
                             <button v-if="isCourier" @click="goToCourierDashboard" class="dropdown-item dropdown-item-courier">
                                 <i class="fas fa-truck"></i>
                                 <span>{{ currentLocale === 'lv' ? 'Kurjera panelis' : 'Courier Dashboard' }}</span>
                             </button>
 
-                            <!-- Dashboard Link -->
+                            <!-- Informācijas paneļa saite -->
                             <button @click="goToDashboard" class="dropdown-item">
                                 <i class="fas fa-user"></i>
                                 <span>{{ $t('dashboard.sections.profile.title') }}</span>
                             </button>
 
-                            <!-- Divider -->
+                            <!-- Dalītājs -->
                             <div class="dropdown-divider"></div>
 
-                            <!-- Logout -->
+                            <!-- Atteikties -->
                             <button @click="logout" class="dropdown-item dropdown-item-logout">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span>{{ $t('auth.logout') }}</span>
@@ -233,7 +233,7 @@ const goToCourierDashboard = () => {
                     </Transition>
                 </div>
 
-                <!-- Guest Buttons -->
+                <!-- Viesu pogas -->
                 <div v-else class="navbar-guest">
                     <Link href="/login" class="guest-btn guest-btn-login">
                         {{ $t('auth.login') }}
@@ -243,7 +243,7 @@ const goToCourierDashboard = () => {
                     </Link>
                 </div>
 
-                <!-- Locale Switcher (Toggle Button) -->
+                <!-- Lokalizācijas pārslēdzējs (pārslēgšanas poga) -->
                 <button @click="toggleLocale" class="locale-switcher">
                     <span class="locale-current">{{ currentLocale.toUpperCase() }}</span>
                     <span class="locale-divider">/</span>
@@ -251,7 +251,7 @@ const goToCourierDashboard = () => {
                 </button>
             </div>
 
-            <!-- Hamburger Menu (Mobile) -->
+            <!-- Hamburgera izvēlne (mobilā versija) -->
             <button
                 class="hamburger"
                 :class="{ 'hamburger-active': isMenuActive }"
@@ -264,10 +264,10 @@ const goToCourierDashboard = () => {
         </div>
     </nav>
 
-    <!-- Mobile Menu -->
+    <!-- Mobilā izvēlne -->
     <div class="menubar" :class="{ active: isMenuActive }">
         <ul class="menubar-list">
-            <!-- Mobile Navigation Links -->
+            <!-- Mobilās navigācijas saites -->
             <li>
                 <Link href="/" class="menubar-link" @click="closeMenu">
                     {{ $t('nav.home') }}
@@ -294,15 +294,15 @@ const goToCourierDashboard = () => {
                 </Link>
             </li>
 
-            <!-- Mobile User Section -->
+            <!-- Mobilo lietotāju sadaļa -->
             <li v-if="isAuthenticated" class="menubar-user-section">
-                <!-- Admin Panel (if administrator) -->
+                <!-- Administratora panelis (ja esat administrators) -->
                 <button v-if="isAdministrator" @click="goToAdminPanel" class="menubar-admin-btn">
                     <i class="fas fa-shield-alt"></i>
                     <span>{{ $t('dashboard.sections.profile.admin_title') }}</span>
                 </button>
 
-                <!-- Courier Dashboard (if courier) -->
+                <!-- Kurjera vadības panelis (ja kurjers) -->
                 <button v-if="isCourier" @click="goToCourierDashboard" class="menubar-courier-btn">
                     <i class="fas fa-truck"></i>
                     <span>{{ currentLocale === 'lv' ? 'Kurjera panelis' : 'Courier Dashboard' }}</span>
@@ -318,7 +318,7 @@ const goToCourierDashboard = () => {
                 </button>
             </li>
 
-            <!-- Mobile Guest Buttons -->
+            <!-- Mobilās viesu pogas -->
             <li v-else class="menubar-guest-section">
                 <Link href="/login" class="menubar-guest-btn" @click="closeMenu">
                     {{ $t('auth.login') }}
@@ -328,7 +328,7 @@ const goToCourierDashboard = () => {
                 </Link>
             </li>
 
-            <!-- Mobile Locale Switcher (Toggle Button) -->
+            <!-- Mobilo lokalizācijas pārslēdzējs (pārslēgšanas poga) -->
             <li class="menubar-locale">
                 <button @click="toggleLocale" class="menubar-locale-toggle">
                     <span :class="{ 'locale-active': currentLocale === 'lv' }">🇱🇻 LV</span>
@@ -339,7 +339,7 @@ const goToCourierDashboard = () => {
         </ul>
     </div>
 
-    <!-- Overlay when mobile menu is open -->
+    <!-- Pārklājums, kad ir atvērta mobilā izvēlne -->
     <Transition name="fade">
         <div
             v-if="isMenuActive"
@@ -350,7 +350,7 @@ const goToCourierDashboard = () => {
 </template>
 
 <style scoped>
-/* ========== MAIN NAVBAR ========== */
+/* ========== GALVENĀ NAVIGĀCIJAS JOSLA ========== */
 .main-navbar {
     background-color: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -370,7 +370,7 @@ const goToCourierDashboard = () => {
     height: 55px;
 }
 
-/* ========== LEFT SECTION ========== */
+/* ========== KREISĀ SADAĻA ========== */
 .navbar-left {
     flex-shrink: 0;
 }
@@ -397,7 +397,7 @@ const goToCourierDashboard = () => {
     }
 }
 
-/* ========== CENTER SECTION (Desktop) ========== */
+/* ========== CENTRĀLĀ SADAĻA (Darbvirsma) ========== */
 .navbar-center {
     display: none;
     list-style: none;
@@ -443,7 +443,7 @@ const goToCourierDashboard = () => {
     background-color: #dc2626;
 }
 
-/* ========== RIGHT SECTION (Desktop) ========== */
+/* ========== LABĀ SADAĻA (Darbvirsma) ========== */
 .navbar-right {
     display: none;
     align-items: center;
@@ -457,7 +457,7 @@ const goToCourierDashboard = () => {
     }
 }
 
-/* ========== USER DROPDOWN ========== */
+/* ========== LIETOTĀJA NOLIEKAMĀ IZVĒLNE ========== */
 .user-dropdown-container {
     position: relative;
 }
@@ -505,7 +505,7 @@ const goToCourierDashboard = () => {
     transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
+/* Nolaižamā izvēlne */
 .user-dropdown {
     position: absolute;
     top: calc(100% + 0.5rem);
@@ -551,7 +551,7 @@ const goToCourierDashboard = () => {
     color: #374151;
 }
 
-/* Admin item styling */
+/* Administratora vienumu stils */
 .dropdown-item-admin {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     color: #92400e;
@@ -565,7 +565,7 @@ const goToCourierDashboard = () => {
     color: #d97706;
 }
 
-/* Courier item styling */
+/* Kurjera preču stils */
 .dropdown-item-courier {
     background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
     color: #1e3a5f;
@@ -579,7 +579,7 @@ const goToCourierDashboard = () => {
     color: #2563eb;
 }
 
-/* Logout item styling */
+/* Atteikšanās vienumu stils */
 .dropdown-item-logout {
     color: #dc2626;
 }
@@ -598,7 +598,7 @@ const goToCourierDashboard = () => {
     margin: 0.25rem 0;
 }
 
-/* Dropdown animation */
+/* Nolaižamā animācija */
 .dropdown-enter-active,
 .dropdown-leave-active {
     transition: all 0.2s ease;
@@ -610,7 +610,7 @@ const goToCourierDashboard = () => {
     transform: translateY(-10px);
 }
 
-/* Guest Buttons */
+/* Viesu pogas */
 .navbar-guest {
     display: flex;
     gap: 0.5rem;
@@ -643,7 +643,7 @@ const goToCourierDashboard = () => {
     background-color: #b91c1c;
 }
 
-/* Locale Switcher (Toggle Button Style) */
+/* Lokalizācijas pārslēdzējs (pārslēgšanas pogas stils) */
 .locale-switcher {
     display: flex;
     align-items: center;
@@ -675,7 +675,7 @@ const goToCourierDashboard = () => {
     color: #9ca3af;
 }
 
-/* ========== HAMBURGER MENU (Mobile) ========== */
+/* ========== HAMBURGERA IZVĒLNE (Mobilā telefona režīmā) ========== */
 .hamburger {
     display: none;
     flex-direction: column;
@@ -712,7 +712,7 @@ const goToCourierDashboard = () => {
     transform: translateY(-10px) rotate(-45deg);
 }
 
-/* ========== MOBILE MENU ========== */
+/* ========== MOBILĀ IZVĒLNE ========== */
 .menubar {
     position: fixed;
     top: 0;
@@ -755,7 +755,7 @@ const goToCourierDashboard = () => {
     color: #dc2626;
 }
 
-/* Mobile User Section */
+/* Mobilo lietotāju sadaļa */
 .menubar-user-section {
     display: flex;
     flex-direction: column;
@@ -788,7 +788,7 @@ const goToCourierDashboard = () => {
     color: #d97706;
 }
 
-/* Courier button (mobile) */
+/* Kurjera poga (mobilajā ierīcē) */
 .menubar-courier-btn {
     display: flex;
     align-items: center;
@@ -844,7 +844,7 @@ const goToCourierDashboard = () => {
     font-size: 1.2rem;
 }
 
-/* Mobile Guest Section */
+/* Mobilo viesu sadaļa */
 .menubar-guest-section {
     display: flex;
     flex-direction: column;
@@ -878,7 +878,7 @@ const goToCourierDashboard = () => {
     background-color: #b91c1c;
 }
 
-/* Mobile Locale (Toggle Button Style) */
+/* Mobilā lokalizācija (pārslēgšanas pogas stils) */
 .menubar-locale {
     padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
@@ -918,7 +918,7 @@ const goToCourierDashboard = () => {
     color: #d1d5db;
 }
 
-/* ========== OVERLAY ========== */
+/* ========== PĀRKLĀJUMS ========== */
 .menubar-overlay {
     position: fixed;
     inset: 0;
