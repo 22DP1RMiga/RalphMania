@@ -9,10 +9,10 @@ import { useI18n } from 'vue-i18n';
 const { t, locale } = useI18n();
 const page = usePage();
 
-// Get authenticated user data
+// Iegūst autentificētus lietotāja datus
 const user = computed(() => page.props.auth?.user);
 
-// Country codes list
+// Valstu kodu saraksts
 const countryCodes = [
     { code: '+371', country: 'LV', flag: '🇱🇻', name: 'Latvija' },
     { code: '+370', country: 'LT', flag: '🇱🇹', name: 'Lietuva' },

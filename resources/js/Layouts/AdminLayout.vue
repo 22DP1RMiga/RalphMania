@@ -4,7 +4,7 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import ToastNotification from '@/Components/ToastNotification.vue';
 
-// Click outside directive
+// Klikšķina ārpus direktīvas
 const vClickOutside = {
     beforeMount(el, binding) {
         el.clickOutsideEvent = (event) => {
@@ -23,8 +23,8 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const isSuperAdmin = computed(() => user.value?.is_super_admin || false);
 
-// ─── ADMIN BADGES ─────────────────────────────────────────────────────────────
-// Shared via HandleInertiaRequests — { contacts, orders, users, products, couriers }
+// ADMINISTRĀCIJAS ATZĪMES
+// Kopīgots, izmantojot HandleInertiaRequests - { contacts, orders, users, products, couriers }
 const badges = computed(() => page.props.adminBadges || {});
 
 const getBadge = (key) => {
@@ -32,7 +32,7 @@ const getBadge = (key) => {
     return (val && val > 0) ? (val > 99 ? '99+' : String(val)) : null;
 };
 
-// Total for the header bell icon
+// Kopsumma galvenes zvana ikonai
 const totalAlerts = computed(() => {
     const b = badges.value;
     if (!b) return null;
@@ -40,7 +40,7 @@ const totalAlerts = computed(() => {
     return sum > 0 ? (sum > 99 ? '99+' : String(sum)) : null;
 });
 
-// Get user avatar with correct path
+// Iegūst lietotāja avatāru ar pareizo ceļu
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
         return '/img/default-avatar.png';
@@ -51,7 +51,7 @@ const userAvatar = computed(() => {
     return `/storage/${user.value.profile_picture}`;
 });
 
-// i18n setup
+// i18n uzstādīšana
 const { t, locale } = useI18n({ useScope: 'global' });
 const currentLocale = ref(localStorage.getItem('lang') || 'lv');
 locale.value = currentLocale.value;
@@ -78,7 +78,7 @@ const toggleLocale = () => {
     }
 };
 
-// Sidebar state
+// Sānjoslas stāvoklis
 const isSidebarOpen = ref(true);
 const isMobileSidebarOpen = ref(false);
 
@@ -94,7 +94,7 @@ const closeMobileSidebar = () => {
     isMobileSidebarOpen.value = false;
 };
 
-// User dropdown
+// Lietotāja nolaižamā izvēlne (dropdown)
 const isUserDropdownOpen = ref(false);
 
 const toggleUserDropdown = () => {
@@ -109,7 +109,7 @@ const logout = () => {
     router.post(route('logout'));
 };
 
-// Navigation items with translation keys
+// Navigācijas vienumi ar tulkošanas taustiņiem
 const navItems = computed(() => {
     const items = [
         {
@@ -201,7 +201,7 @@ const navItems = computed(() => {
         },
     ];
 
-    // Add admin management for super admins only
+    // Pievienot administratora pārvaldību tikai galveniem administratoriem (pagaidām tikai vienam)
     if (isSuperAdmin.value) {
         items.push({
             nameKey: 'admin.nav.administrators',
@@ -215,7 +215,7 @@ const navItems = computed(() => {
     return items;
 });
 
-// Check if current route is active
+// Pārbauda, vai pašreizējais maršruts ir aktīvs
 const isActiveRoute = (url) => {
     return page.url.startsWith(url);
 };
@@ -229,9 +229,9 @@ const isActiveRoute = (url) => {
         @close="toast.show = false"
     />
     <div class="admin-layout" :class="{ 'sidebar-collapsed': !isSidebarOpen }">
-        <!-- Sidebar -->
+        <!-- Sānjosla -->
         <aside class="admin-sidebar" :class="{ 'mobile-open': isMobileSidebarOpen }">
-            <!-- Sidebar Header -->
+            <!-- Sānjoslas galvene -->
             <div class="sidebar-header">
                 <Link href="/admin/dashboard" class="sidebar-brand">
                     <img src="/img/RoltonsLV_Icon.png" alt="RalphMania" class="sidebar-logo">
@@ -245,7 +245,7 @@ const isActiveRoute = (url) => {
                 </button>
             </div>
 
-            <!-- Navigation -->
+            <!-- Navigācija -->
             <nav class="sidebar-nav">
                 <Link
                     v-for="item in navItems"
@@ -259,19 +259,19 @@ const isActiveRoute = (url) => {
                     :title="!isSidebarOpen ? t(item.nameKey) : undefined"
                     @click="closeMobileSidebar"
                 >
-                    <!-- Icon wrapper — holds the dot badge when collapsed -->
+                    <!-- Ikonas apvalks - sakļautā veidā satur punkta emblēmu -->
                     <span class="nav-icon-wrap">
                         <i :class="item.icon"></i>
-                        <!-- Dot when sidebar is collapsed -->
+                        <!-- Punkts, kad sānjosla ir sakļauta -->
                         <span
                             v-if="!isSidebarOpen && item.badgeKey && getBadge(item.badgeKey)"
                             class="nav-dot"
                             :class="item.badgeColor"
                         ></span>
                     </span>
-                    <!-- Label -->
+                    <!-- Etiķete -->
                     <span v-if="isSidebarOpen" class="nav-label">{{ t(item.nameKey) }}</span>
-                    <!-- Pill badge when expanded -->
+                    <!-- "Tabletes nozīmīte", kad tā ir izvērsta -->
                     <span
                         v-if="isSidebarOpen && item.badgeKey && getBadge(item.badgeKey)"
                         class="nav-badge"
@@ -281,7 +281,7 @@ const isActiveRoute = (url) => {
                 </Link>
             </nav>
 
-            <!-- Sidebar Footer -->
+            <!-- Sānjoslas kājene -->
             <div class="sidebar-footer">
                 <Link href="/" class="sidebar-nav-item sidebar-back">
                     <i class="fas fa-arrow-left"></i>
@@ -290,7 +290,7 @@ const isActiveRoute = (url) => {
             </div>
         </aside>
 
-        <!-- Mobile Overlay -->
+        <!-- Mobilais pārklājums -->
         <Transition name="fade">
             <div
                 v-if="isMobileSidebarOpen"
@@ -299,9 +299,9 @@ const isActiveRoute = (url) => {
             ></div>
         </Transition>
 
-        <!-- Main Content Area -->
+        <!-- Galvenais satura apgabals -->
         <div class="admin-main">
-            <!-- Top Header -->
+            <!-- Augšējā galvene -->
             <header class="admin-header">
                 <div class="admin-header-left">
                     <button @click="toggleMobileSidebar" class="mobile-menu-btn mobile-only">
@@ -313,13 +313,13 @@ const isActiveRoute = (url) => {
                 </div>
 
                 <div class="admin-header-right">
-                    <!-- Super Admin Badge -->
+                    <!-- Galvenā administratora emblēma -->
                     <div v-if="isSuperAdmin" class="super-admin-badge">
                         <i class="fas fa-crown"></i>
                         <span>Super Admin</span>
                     </div>
 
-                    <!-- Notification Bell — only shows when there are unread alerts -->
+                    <!-- Paziņojumu zvans - tiek rādīts tikai tad, ja ir nelasīti brīdinājumi -->
                     <Link
                         v-if="totalAlerts"
                         href="/admin/contacts"
@@ -330,7 +330,7 @@ const isActiveRoute = (url) => {
                         <span class="bell-count">{{ totalAlerts }}</span>
                     </Link>
 
-                    <!-- User Dropdown -->
+                    <!-- Lietotāja nolaižamā izvēlne (dropdown) -->
                     <div class="admin-user-dropdown" v-click-outside="closeUserDropdown">
                         <button @click="toggleUserDropdown" class="admin-user-btn">
                             <img :src="userAvatar" :alt="user.username" class="admin-user-avatar">
@@ -352,7 +352,7 @@ const isActiveRoute = (url) => {
                         </Transition>
                     </div>
 
-                    <!-- Locale Switcher -->
+                    <!-- Lokalizācijas pārslēdzējs -->
                     <button @click="toggleLocale" class="admin-locale-switcher" :title="t('admin.switchLanguage')">
                         <span class="locale-current">{{ currentLocale.toUpperCase() }}</span>
                         <span class="locale-divider">/</span>
@@ -361,7 +361,7 @@ const isActiveRoute = (url) => {
                 </div>
             </header>
 
-            <!-- Page Content -->
+            <!-- Lapas saturs -->
             <main class="admin-content">
                 <slot />
             </main>
@@ -370,14 +370,14 @@ const isActiveRoute = (url) => {
 </template>
 
 <style scoped>
-/* Layout */
+/* Izkārtojums */
 .admin-layout {
     display: flex;
     min-height: 100vh;
     background: #f1f5f9;
 }
 
-/* Sidebar */
+/* Sānjosla */
 .admin-sidebar {
     width: 260px;
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
@@ -395,7 +395,7 @@ const isActiveRoute = (url) => {
     width: 70px;
 }
 
-/* Sidebar Header */
+/* Sānjoslas galvene */
 .sidebar-header {
     display: flex;
     align-items: center;
@@ -454,7 +454,7 @@ const isActiveRoute = (url) => {
     justify-content: center;
 }
 
-/* Sidebar Navigation */
+/* Sānjoslas navigācija */
 .sidebar-nav {
     flex: 1;
     padding: 1rem 0.75rem;
@@ -496,14 +496,14 @@ const isActiveRoute = (url) => {
     display: none;
 }
 
-/* ── COLLAPSED: icon-only mode ────────────────────────────────── */
+/* SAKĻAUTS: tikai ikonu režīms */
 .sidebar-collapsed .sidebar-nav-item {
     justify-content: center;
     padding: 0.75rem;
     position: relative;
 }
 
-/* Native tooltip is enough for simple use, but add a CSS tooltip for polish */
+/* Vienkāršai lietošanai pietiek ar iebūvēto rīka padomu, bet pulēšanai pievieno CSS rīka padomu */
 .sidebar-collapsed .sidebar-nav-item::after {
     content: attr(title);
     position: absolute;
@@ -549,7 +549,7 @@ const isActiveRoute = (url) => {
     opacity: 1;
 }
 
-/* Keep icon centered and sized correctly when collapsed */
+/* Saglabā ikonu centrētu un pareizu izmēru, kad tā sakļaujas */
 .sidebar-collapsed .nav-icon-wrap {
     width: auto;
 }
@@ -558,13 +558,13 @@ const isActiveRoute = (url) => {
     font-size: 1.1rem;
 }
 
-/* Sidebar footer back btn collapsed */
+/* Sānjoslas kājenes aizmugurējā poga sakļauta */
 .sidebar-collapsed .sidebar-back {
     justify-content: center;
     padding: 0.75rem;
 }
 
-/* ── NAV BADGE SYSTEM ─────────────────────────────────────────────── */
+/* NAV NOZĪMĪTES SISTĒMA */
 .nav-icon-wrap {
     position: relative;
     width: 1.25rem;
@@ -579,7 +579,7 @@ const isActiveRoute = (url) => {
     min-width: 0;
 }
 
-/* Pill badge — visible when sidebar is expanded */
+/* "Tabletes nozīmīte" - redzama, kad sānu josla ir izvērsta */
 .nav-badge {
     margin-left: auto;
     min-width: 1.375rem;
@@ -600,13 +600,13 @@ const isActiveRoute = (url) => {
     transform: scale(1.1);
 }
 
-/* When the nav item is active, use semi-transparent white so it stays readable */
+/* Kad navigācijas vienums ir aktīvs, tad izmanto daļēji caurspīdīgu baltu krāsu, lai to varētu lasīt */
 .nav-badge-active {
     background: rgba(255, 255, 255, 0.25) !important;
     color: white !important;
 }
 
-/* Dot badge — visible when sidebar is collapsed */
+/* Punkta nozīmīte - redzama, kad sānu josla ir sakļauta */
 .nav-dot {
     position: absolute;
     top: -4px;
@@ -618,19 +618,19 @@ const isActiveRoute = (url) => {
     flex-shrink: 0;
 }
 
-/* Badge colours */
+/* Nozīmīšu krāsas */
 .badge-red    { background: #ef4444; color: #fff; }
 .badge-blue   { background: #3b82f6; color: #fff; }
 .badge-green  { background: #10b981; color: #fff; }
 .badge-orange { background: #f97316; color: #fff; }
 
-/* Dot variants inherit same colours */
+/* Punktu varianti manto vienas un tās pašas krāsas */
 .nav-dot.badge-red    { background: #ef4444; border-color: #1e293b; }
 .nav-dot.badge-blue   { background: #3b82f6; border-color: #1e293b; }
 .nav-dot.badge-green  { background: #10b981; border-color: #1e293b; }
 .nav-dot.badge-orange { background: #f97316; border-color: #1e293b; }
 
-/* ── HEADER BELL ──────────────────────────────────────────────────── */
+/* GALVENES ZVANIŅŠ */
 .admin-bell {
     position: relative;
     display: flex;
@@ -685,7 +685,7 @@ const isActiveRoute = (url) => {
     95% { transform: rotate(6deg); }
 }
 
-/* Super Admin Item */
+/* Galvenā administratora vienums */
 .super-admin-item {
     background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
     border: 1px solid rgba(251, 191, 36, 0.3);
@@ -699,7 +699,7 @@ const isActiveRoute = (url) => {
     color: #fbbf24;
 }
 
-/* Sidebar Footer */
+/* Sānjoslas kājene */
 .sidebar-footer {
     padding: 1rem 0.75rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -714,7 +714,7 @@ const isActiveRoute = (url) => {
     color: white;
 }
 
-/* Main Content Area */
+/* Galvenais satura apgabals */
 .admin-main {
     flex: 1;
     margin-left: 260px;
@@ -728,7 +728,7 @@ const isActiveRoute = (url) => {
     margin-left: 70px;
 }
 
-/* Admin Header */
+/* Admininistratora galvene */
 .admin-header {
     background: white;
     padding: 1rem 1.5rem;
@@ -777,7 +777,7 @@ const isActiveRoute = (url) => {
     flex-shrink: 0;
 }
 
-/* Super Admin Badge */
+/* Galvenā administratora nozīmīte */
 .super-admin-badge {
     display: flex;
     align-items: center;
@@ -794,7 +794,7 @@ const isActiveRoute = (url) => {
     color: #f59e0b;
 }
 
-/* User Dropdown */
+/* Lietotāja nolaižamā izvēlne (dropdown) */
 .admin-user-dropdown {
     position: relative;
 }
@@ -838,7 +838,7 @@ const isActiveRoute = (url) => {
     transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
+/* Nolaižamā izvēlne (dropdown menu) */
 .admin-dropdown-menu {
     position: absolute;
     top: calc(100% + 0.5rem);
@@ -883,7 +883,7 @@ const isActiveRoute = (url) => {
     color: #dc2626;
 }
 
-/* Locale Switcher */
+/* Lokalizācijas pārslēdzējs */
 .admin-locale-switcher {
     display: flex;
     align-items: center;
@@ -914,13 +914,13 @@ const isActiveRoute = (url) => {
     color: #9ca3af;
 }
 
-/* Page Content */
+/* Lapas saturs */
 .admin-content {
     padding: 1.5rem;
     flex: 1;
 }
 
-/* Animations */
+/* Animācijas */
 .dropdown-enter-active,
 .dropdown-leave-active {
     transition: all 0.2s ease;
@@ -942,7 +942,7 @@ const isActiveRoute = (url) => {
     opacity: 0;
 }
 
-/* Mobile Styles */
+/* Mobilie stili */
 .mobile-only {
     display: none;
 }
@@ -958,7 +958,7 @@ const isActiveRoute = (url) => {
     z-index: 99;
 }
 
-/* Tablet - 1024px */
+/* Planšete - 1024px */
 @media (max-width: 1024px) {
     .mobile-only {
         display: flex;
@@ -1002,7 +1002,7 @@ const isActiveRoute = (url) => {
     }
 }
 
-/* Mobile - 768px */
+/* Mobilais - 768px */
 @media (max-width: 768px) {
     .admin-header {
         padding: 0.75rem 1rem;
@@ -1026,7 +1026,7 @@ const isActiveRoute = (url) => {
     }
 }
 
-/* Small Mobile - 480px */
+/* Mazs mobilais - 480px */
 @media (max-width: 480px) {
     .admin-header {
         padding: 0.5rem 0.75rem;
