@@ -21,7 +21,7 @@ export function useAdminPermission() {
 
     const user = computed(() => page.props.auth?.user);
 
-    // is_super_admin ir accessor uz User modelī — nāk tieši no user objekta
+    // is_super_admin ir aksesuārs uz User modeli - nāk tieši no user objekta
     const isSuperAdmin = computed(() => user.value?.is_super_admin === true);
 
     // Permissions masīvs no administrator relācijas

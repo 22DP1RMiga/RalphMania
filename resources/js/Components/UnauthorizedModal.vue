@@ -12,7 +12,7 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
-    // Which permission is missing — shown in the modal for transparency
+    // Kura atļauja trūkst - tiek parādīta modālajā logā caurspīdīguma labā
     requiredPermission: {
         type: String,
         default: null,
@@ -49,47 +49,47 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     <Transition name="unauth-fade">
         <div v-if="show" class="unauth-overlay" role="dialog" aria-modal="true">
 
-            <!-- Backdrop blur layer -->
+            <!-- Fona aizmiglošanas slānis -->
             <div class="unauth-backdrop" @click="emit('close')"></div>
 
-            <!-- Modal panel -->
+            <!-- Modāla panelis -->
             <div class="unauth-panel">
 
-                <!-- Top glow bar -->
+                <!-- Augšējais mirdzošais stienis -->
                 <div class="unauth-glow-bar"></div>
 
-                <!-- Branding -->
+                <!-- Brendings -->
                 <div class="unauth-brand">
                     <img src="/img/RoltonsLV_Icon.png" alt="RalphMania Icon" class="brand-icon">
                     <img src="/img/name_logo.png" alt="RalphMania" class="brand-name">
                 </div>
 
-                <!-- Lock icon -->
+                <!-- Slēdzenes ikona -->
                 <div class="lock-ring">
                     <div class="lock-inner">
                         <i class="fas fa-lock"></i>
                     </div>
                 </div>
 
-                <!-- Text content -->
+                <!-- Teksta saturs -->
                 <h1 class="unauth-title">{{ tx.title }}</h1>
                 <p class="unauth-subtitle">{{ tx.subtitle }}</p>
                 <p class="unauth-detail">{{ tx.detail }}</p>
 
-                <!-- Permission chip -->
+                <!-- Atļaujas mikroshēma -->
                 <div v-if="requiredPermission" class="perm-chip">
                     <i class="fas fa-key"></i>
                     <span class="perm-label">{{ tx.permission }}:</span>
                     <code class="perm-code">{{ requiredPermission }}</code>
                 </div>
 
-                <!-- Super admin note -->
+                <!-- Galvenā administratora piezīme -->
                 <div v-if="isSuperAdmin" class="superadmin-note">
                     <i class="fas fa-crown"></i>
                     {{ tx.superAdminNote }}
                 </div>
 
-                <!-- Actions -->
+                <!-- Darbības -->
                 <div class="unauth-actions">
                     <button @click="$router.back ? $router.back() : emit('close')" class="btn-back">
                         <i class="fas fa-arrow-left"></i>
@@ -101,7 +101,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
                     </Link>
                 </div>
 
-                <!-- Decorative corner elements -->
+                <!-- Dekoratīvie stūra elementi -->
                 <div class="corner corner-tl"></div>
                 <div class="corner corner-br"></div>
             </div>
@@ -111,7 +111,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
 </template>
 
 <style scoped>
-/* ── Overlay ── */
+/* Pārklājums */
 .unauth-overlay {
     position: fixed;
     inset: 0;
@@ -130,7 +130,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     -webkit-backdrop-filter: blur(6px);
 }
 
-/* ── Panel ── */
+/* Panelis */
 .unauth-panel {
     position: relative;
     width: 100%;
@@ -147,7 +147,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     overflow: hidden;
 }
 
-/* Glow bar at top */
+/* Mirdzošais stienis augšpusē */
 .unauth-glow-bar {
     position: absolute;
     top: 0; left: 0; right: 0;
@@ -156,7 +156,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     border-radius: 1.25rem 1.25rem 0 0;
 }
 
-/* Corner decorations */
+/* Stūra dekorācijas */
 .corner {
     position: absolute;
     width: 2rem;
@@ -167,7 +167,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
 .corner-tl { top: 1rem; left: 1rem; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
 .corner-br { bottom: 1rem; right: 1rem; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
 
-/* ── Branding ── */
+/* Brendings */
 .unauth-brand {
     display: flex;
     align-items: center;
@@ -188,11 +188,11 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     height: 1.5rem;
     width: auto;
     object-fit: contain;
-    /* name logo has black background — make it visible on dark panel */
+    /* nosaukuma logotipam ir melns fons - padariet to redzamu uz tumša paneļa */
     filter: brightness(0) invert(1) drop-shadow(0 0 4px rgba(220,38,38,0.3));
 }
 
-/* ── Lock icon ── */
+/* Slēdzenes ikona */
 .lock-ring {
     width: 5rem;
     height: 5rem;
@@ -226,7 +226,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     50%       { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
 }
 
-/* ── Text ── */
+/* Teksts */
 .unauth-title {
     font-size: 1.75rem;
     font-weight: 800;
@@ -252,7 +252,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     margin-right: auto;
 }
 
-/* ── Permission chip ── */
+/* Atļaujas mikroshēma */
 .perm-chip {
     display: inline-flex;
     align-items: center;
@@ -276,7 +276,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     border-radius: 0.25rem;
 }
 
-/* ── Super admin note ── */
+/* Galvenā administrtora piezīme */
 .superadmin-note {
     display: flex;
     align-items: center;
@@ -291,7 +291,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     margin-bottom: 1.25rem;
 }
 
-/* ── Actions ── */
+/* Darbības */
 .unauth-actions {
     display: flex;
     gap: 0.875rem;
@@ -337,7 +337,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     box-shadow: 0 6px 20px rgba(220,38,38,0.45);
 }
 
-/* ── Transition ── */
+/* Pāreja */
 .unauth-fade-enter-active,
 .unauth-fade-leave-active {
     transition: opacity 0.25s ease;
@@ -356,7 +356,7 @@ const tx = computed(() => locale.value === 'lv' ? lv : en);
     opacity: 0;
 }
 
-/* ── Responsive ── */
+/* Responsivitāte */
 @media (max-width: 600px) {
     .unauth-panel { padding: 2rem 1.5rem 1.5rem; }
     .unauth-title { font-size: 1.375rem; }

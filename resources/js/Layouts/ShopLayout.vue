@@ -5,15 +5,15 @@ import ShopFooter from '@/Components/ShopFooter.vue';
 
 <template>
     <div class="shop-layout">
-        <!-- Shop Navbar -->
+        <!-- Veikala navigācijas josla -->
         <ShopNavbar />
 
-        <!-- Page Content -->
+        <!-- Lapas saturs -->
         <main class="shop-content">
             <slot />
         </main>
 
-        <!-- Shop Footer -->
+        <!-- Veikala kājene -->
         <ShopFooter />
     </div>
 </template>

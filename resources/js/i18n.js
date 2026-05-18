@@ -918,7 +918,7 @@ const messages = {
             manage_preferences: 'Pārvaldīt preferences',
             view_offers: 'Skatīt piedāvājumus',
 
-            // Expiry
+            // Derīguma termiņš
             subscription_expired: 'Abonēšana ir beigusies',
             expires_soon: 'Beidzas pēc {days} dienām',
             expires_at: 'Derīgs līdz: {date}',
@@ -1494,14 +1494,14 @@ const messages = {
                 print: 'Drukāt',
             },
             content: {
-                // Index page
+                // Indeksa lapa
                 index: {
                     title: 'Saturs',
                     subtitle: 'Pārvaldiet video, emuārus, ziņas un paziņojumus!',
                     newContent: 'Jauns saturs',
                 },
 
-                // Types
+                // Tipi
                 types: {
                     videos: 'Video',
                     video: 'Video',
@@ -1513,12 +1513,12 @@ const messages = {
                     announcement: 'Paziņojums',
                 },
 
-                // Filters
+                // Filtri
                 searchPlaceholder: 'Meklēt saturu...',
                 allTypes: 'Visi veidi',
                 allStatuses: 'Visi statusi',
 
-                // Status
+                // Statuss
                 status: {
                     published: 'Publicēts',
                     draft: 'Melnraksts',
@@ -1529,12 +1529,12 @@ const messages = {
                 likes: 'Patīk',
                 date: 'Datums',
 
-                // Actions
+                // Darbības
                 clickToPublish: 'Klikšķini, lai publicētu',
                 clickToDraft: 'Klikšķini, lai paslēptu',
                 deleteConfirm: 'Vai tiešām vēlaties dzēst "{name}"?',
 
-                // Empty state
+                // Tukšs stāvoklis
                 noContent: 'Nav atrasts neviens saturs',
                 addFirstContent: 'Pievienot pirmo saturu',
 
@@ -1548,7 +1548,7 @@ const messages = {
                     subtitle: 'Mainiet satura informāciju',
                 },
 
-                // Form fields
+                // Veidlapas lauki
                 form: {
                     type: 'Satura veids',
                     selectType: 'Izvēlieties veidu',
@@ -1693,7 +1693,7 @@ const messages = {
                 confirmDelete: 'Vai tiešām vēlaties dzēst šo ziņojumu?',
                 repliedAt: 'Atbildēts',
 
-                // Show page
+                // Rādīšanas lapa
                 received: 'Saņemts',
                 senderInfo: 'Sūtītāja informācija',
                 email: 'E-pasts',
@@ -1707,7 +1707,7 @@ const messages = {
                 markedAsRead: 'Atzīmēts kā izlasīts',
                 replySent: 'Atbilde nosūtīta',
 
-                // Reply
+                // Atbildei
                 replyTo: 'Atbildēt',
                 originalMessage: 'Oriģinālais ziņojums',
                 yourReply: 'Jūsu atbilde',
@@ -1721,7 +1721,7 @@ const messages = {
                 willSendTo: 'Tiks nosūtīts uz',
                 repliedBy: 'Atbildēja',
 
-                // Misc
+                // Dažādi
                 copied: '{type} nokopēts!',
             },
             users: {
@@ -1771,7 +1771,7 @@ const messages = {
                 openEmailClient: 'Atvērt e-pasta klientu',
                 emailOpened: 'E-pasta klients atvērts',
 
-                // Ban/Unban
+                // Aizliegt/atbloķēt
                 ban: 'Bloķēt',
                 unban: 'Atbloķēt',
                 banUser: 'Bloķēt lietotāju',
@@ -1788,7 +1788,7 @@ const messages = {
                 userUnbanned: 'Lietotājs veiksmīgi atbloķēts!',
                 banError: 'Kļūda bloķējot lietotāju',
 
-                // Delete
+                // Dzēst
                 deleteUser: 'Dzēst lietotāju',
                 confirmDeleteBtn: 'Jā, dzēst',
                 deleteWarningTitle: 'Bīstama darbība!',
@@ -1854,7 +1854,7 @@ const messages = {
                     description: 'Apraksts',
                     ip: 'IP adrese',
                 },
-                // Activity types translations
+                // Darbības veidu tulkojumi
                 types: {
                     login: 'Pieslēgšanās',
                     logout: 'Atslēgšanās',
@@ -2858,7 +2858,7 @@ const messages = {
             manage_preferences: 'Manage preferences',
             view_offers: 'View offers',
 
-            // Expiry
+            // Derīguma termiņš
             subscription_expired: 'Subscription has expired',
             expires_soon: 'Expires in {days} days',
             expires_at: 'Valid until: {date}',
@@ -3434,14 +3434,14 @@ const messages = {
                 print: 'Print',
             },
             content: {
-                // Index page
+                // Indeksa lapa
                 index: {
                     title: 'Content',
                     subtitle: 'Manage videos, blogs, posts and announcements!',
                     newContent: 'New content',
                 },
 
-                // Types
+                // Tipi
                 types: {
                     videos: 'Videos',
                     video: 'Video',
@@ -3453,12 +3453,12 @@ const messages = {
                     announcement: 'Announcement',
                 },
 
-                // Filters
+                // Filtri
                 searchPlaceholder: 'Search content...',
                 allTypes: 'All types',
                 allStatuses: 'All statuses',
 
-                // Status
+                // Statuss
                 status: {
                     published: 'Published',
                     draft: 'Draft',
@@ -3469,12 +3469,12 @@ const messages = {
                 likes: 'Likes',
                 date: 'Date',
 
-                // Actions
+                // Darbības
                 clickToPublish: 'Click to publish',
                 clickToDraft: 'Click to unpublish',
                 deleteConfirm: 'Are you sure you want to delete "{name}"?',
 
-                // Empty state
+                // Tukšs stāvoklis
                 noContent: 'No content found',
                 addFirstContent: 'Add first content',
 
@@ -3633,7 +3633,7 @@ const messages = {
                 confirmDelete: 'Are you sure you want to delete this message?',
                 repliedAt: 'Replied',
 
-                // Show page
+                // Rādīšanas lapai
                 received: 'Received',
                 senderInfo: 'Sender Information',
                 email: 'Email',
@@ -3647,7 +3647,7 @@ const messages = {
                 markedAsRead: 'Marked as read',
                 replySent: 'Reply sent',
 
-                // Reply
+                // Atbildei
                 replyTo: 'Reply to',
                 originalMessage: 'Original message',
                 yourReply: 'Your reply',
@@ -3661,7 +3661,7 @@ const messages = {
                 willSendTo: 'Will be sent to',
                 repliedBy: 'Replied by',
 
-                // Misc
+                // Dažādi
                 copied: '{type} copied!',
             },
             users: {
@@ -3711,7 +3711,7 @@ const messages = {
                 openEmailClient: 'Open email client',
                 emailOpened: 'Email client opened',
 
-                // Ban/Unban
+                // Aizliegt/atbloķēt
                 ban: 'Block',
                 unban: 'Unblock',
                 banUser: 'Block user',
@@ -3728,7 +3728,7 @@ const messages = {
                 userUnbanned: 'User successfully unblocked!',
                 banError: 'Error blocking user',
 
-                // Delete
+                // Dzēst
                 deleteUser: 'Delete user',
                 confirmDeleteBtn: 'Yes, delete',
                 deleteWarningTitle: 'Dangerous action!',
@@ -3794,7 +3794,7 @@ const messages = {
                     description: 'Description',
                     ip: 'IP Address',
                 },
-                // Activity types translations
+                // Darbības veidu tulkojumi
                 types: {
                     login: 'Login',
                     logout: 'Logout',

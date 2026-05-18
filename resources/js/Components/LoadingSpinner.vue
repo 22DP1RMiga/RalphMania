@@ -28,13 +28,13 @@ const sizeClasses = {
         :class="{ 'loading-fullscreen': fullscreen }"
     >
         <div class="loading-spinner-container">
-            <!-- Outer Ring -->
+            <!-- Ārējais gredzens -->
             <div
                 class="spinner-ring"
                 :class="sizeClasses[size]"
             ></div>
 
-            <!-- Logo in Center -->
+            <!-- Zīmols centrā -->
             <div
                 class="spinner-logo"
                 :class="sizeClasses[size]"
@@ -42,14 +42,14 @@ const sizeClasses = {
                 <img src="/img/RoltonsLV_Icon.png" alt="Loading..." class="logo-image">
             </div>
 
-            <!-- Loading Text -->
+            <!-- Notiek teksta ielāde -->
             <p v-if="text" class="loading-text">{{ text }}</p>
         </div>
     </div>
 </template>
 
 <style scoped>
-/* ========== LOADING SPINNER WRAPPER ========== */
+/* ========== IELĀDES GRIEŠANAS IEPAKOJUMS ========== */
 .loading-spinner-wrapper {
     display: flex;
     align-items: center;
@@ -73,7 +73,7 @@ const sizeClasses = {
     gap: 1.5rem;
 }
 
-/* ========== SPINNER RING ========== */
+/* ========== GRIEZUĻA GREDZENU ========== */
 .spinner-ring {
     position: relative;
     border-radius: 50%;
@@ -116,7 +116,7 @@ const sizeClasses = {
     }
 }
 
-/* ========== SPINNER LOGO ========== */
+/* ========== GRIEZUĻA ZĪMOLS ========== */
 .spinner-logo {
     position: absolute;
     top: 50%;
@@ -169,7 +169,7 @@ const sizeClasses = {
     }
 }
 
-/* ========== LOADING TEXT ========== */
+/* ========== LĀDĒJAMAIS TEKSTS ========== */
 .loading-text {
     font-size: 1rem;
     font-weight: 500;

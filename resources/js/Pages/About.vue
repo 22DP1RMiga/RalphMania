@@ -10,13 +10,13 @@ const { t } = useI18n();
     <Head :title="$t('nav.about')" />
 
     <MainLayout>
-        <!-- About Hero Section -->
+        <!-- "Par mums" HERO sadaļa -->
         <section class="about-hero">
             <div class="hero-container">
                 <h1 class="hero-title">{{ $t('about.hero.title') }}</h1>
                 <p class="hero-subtitle">{{ $t('about.hero.subtitle') }}</p>
             </div>
-            <!-- Wave -->
+            <!-- Vilnis -->
             <div class="hero-wave">
                 <svg viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
                     <path
@@ -27,7 +27,7 @@ const { t } = useI18n();
             </div>
         </section>
 
-        <!-- Story Section -->
+        <!-- Stāstu sadaļa -->
         <section class="story-section">
             <div class="section-container">
                 <div class="story-content">
@@ -44,7 +44,7 @@ const { t } = useI18n();
             </div>
         </section>
 
-        <!-- Mission Section -->
+        <!-- Misijas sadaļa -->
         <section class="mission-section">
             <div class="section-container">
                 <h2 class="section-title-center">{{ $t('about.mission.title') }}</h2>
@@ -74,7 +74,7 @@ const { t } = useI18n();
             </div>
         </section>
 
-        <!-- Values Section -->
+        <!-- Vērtību sadaļa -->
         <section class="values-section">
             <div class="section-container">
                 <h2 class="section-title-center">{{ $t('about.values.title') }}</h2>
@@ -103,7 +103,7 @@ const { t } = useI18n();
             </div>
         </section>
 
-        <!-- CTA Section -->
+        <!-- CTA sadaļa -->
         <section class="cta-section">
             <div class="section-container">
                 <div class="cta-content">
@@ -124,7 +124,7 @@ const { t } = useI18n();
 </template>
 
 <style scoped>
-/* Hero Section */
+/* Hero sadaļa */
 .about-hero {
     position: relative;
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
@@ -179,7 +179,7 @@ const { t } = useI18n();
     height: 120px;
 }
 
-/* Story Section */
+/* Stāstu sadaļa */
 .story-section {
     padding: 4rem 2rem;
 }
@@ -224,7 +224,7 @@ const { t } = useI18n();
     }
 }
 
-/* Mission Section */
+/* Misijas sadaļa */
 .mission-section {
     padding: 4rem 2rem;
     background-color: #f9fafb;
@@ -290,7 +290,7 @@ const { t } = useI18n();
     }
 }
 
-/* Values Section */
+/* Vērtību sadaļa */
 .values-section {
     padding: 4rem 2rem;
 }
@@ -335,7 +335,7 @@ const { t } = useI18n();
     }
 }
 
-/* CTA Section */
+/* CTA sadaļa */
 .cta-section {
     padding: 4rem 2rem;
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);

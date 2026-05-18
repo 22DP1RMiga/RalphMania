@@ -6,7 +6,7 @@ const props = defineProps({
     message: String,
     type: {
         type: String,
-        default: 'success', // success, error, info
+        default: 'success', // panākums, kļūda, informācija
     },
     duration: {
         type: Number,
@@ -123,7 +123,7 @@ const close = () => {
     color: #1f2937;
 }
 
-/* Transition animations */
+/* Pārejas animācijas */
 .toast-enter-active,
 .toast-leave-active {
     transition: all 0.3s ease;
@@ -139,7 +139,7 @@ const close = () => {
     transform: translateX(100px);
 }
 
-/* Mobile responsive */
+/* Responsīvs uz mobilajām ierīcēm */
 @media (max-width: 640px) {
     .toast-notification {
         top: 70px;

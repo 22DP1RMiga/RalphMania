@@ -139,7 +139,7 @@ const getRoleBadge = (user) => {
     const name = user.role.name;
     if (name === 'administrator') return { label: locale.value === 'lv' ? 'Admins' : 'Admin', cls: 'role-admin' };
     if (name === 'courier')       return { label: locale.value === 'lv' ? 'Kurjers' : 'Courier', cls: 'role-courier' };
-    return null; // parasts lietotājs — nerāda badge
+    return { label: locale.value === 'lv' ? 'Lietotājs' : 'User', cls: 'role-user' };
 };
 
 // Toast / success message
@@ -1811,6 +1811,7 @@ onMounted(() => {
 }
 .role-admin   { background: rgba(220,38,38,0.12); color: #b91c1c; border: 1px solid rgba(220,38,38,0.25); }
 .role-courier { background: rgba(37,99,235,0.12);  color: #1d4ed8; border: 1px solid rgba(37,99,235,0.25); }
+.role-user { background: rgba(107,114,128,0.12); color: #374151; border: 1px solid rgba(107,114,128,0.25); }
 
 /* ── EMOJI SLIDER (per-user) ── */
 .comment-bottom-bar {

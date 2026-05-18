@@ -4,7 +4,7 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import ToastNotification from '@/Components/ToastNotification.vue';
 
-// Click outside directive
+// Klikšķina ārpus direktīvas
 const vClickOutside = {
     beforeMount(el, binding) {
         el.clickOutsideEvent = (event) => {
@@ -22,11 +22,11 @@ const vClickOutside = {
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
-// Role checks
+// Lomu pārbaudes
 const isAdministrator = computed(() => user.value?.is_administrator || false);
 const isCourier = computed(() => user.value?.is_courier || false);
 
-// Get user avatar with correct path
+// Iegūst lietotāja avatāru ar pareizo ceļu
 const userAvatar = computed(() => {
     if (!user.value?.profile_picture) {
         return '/img/default-avatar.png';
@@ -37,7 +37,7 @@ const userAvatar = computed(() => {
     return `/storage/${user.value.profile_picture}`;
 });
 
-// i18n setup
+// i18n uzstādīšana
 const { t, locale } = useI18n({ useScope: 'global' });
 const currentLocale = ref(localStorage.getItem('lang') || 'lv');
 locale.value = currentLocale.value;
@@ -98,16 +98,16 @@ const goToCourierDashboard = () => {
         @close="toast.show = false"
     />
     <div class="authenticated-layout">
-        <!-- Header -->
+        <!-- Galvene -->
         <header class="auth-header">
             <div class="auth-header-container">
-                <!-- Left: Logo -->
+                <!-- Pa kreisi: Zīmols -->
                 <Link href="/" class="auth-brand">
                     <img src="/img/RoltonsLV_Icon.png" alt="RalphMania Logo" class="auth-logo">
                     <img src="/img/name_logo2.png" alt="RalphMania" class="auth-brand-name">
                 </Link>
 
-                <!-- Center: Dashboard Button -->
+                <!-- Centrs: Informācijas paneļa poga -->
                 <div class="auth-nav">
                     <Link
                         :href="route('dashboard')"
@@ -119,9 +119,9 @@ const goToCourierDashboard = () => {
                     </Link>
                 </div>
 
-                <!-- Right: User Menu & Locale -->
+                <!-- Labajā pusē: Lietotāja izvēlne un lokalizācija -->
                 <div class="auth-right">
-                    <!-- User Dropdown -->
+                    <!-- Lietotāja nolaižamā izvēlne (dropdown) -->
                     <div class="auth-user-dropdown" v-click-outside="closeUserDropdown">
                         <button @click="toggleUserDropdown" class="auth-user-btn">
                             <img
@@ -133,10 +133,10 @@ const goToCourierDashboard = () => {
                             <i class="fas fa-chevron-down" :class="{ 'rotate-180': isUserDropdownOpen }"></i>
                         </button>
 
-                        <!-- Dropdown Menu -->
+                        <!-- Nolaižamā izvēlne (dropdown menu) -->
                         <Transition name="dropdown">
                             <div v-if="isUserDropdownOpen" class="auth-dropdown-menu">
-                                <!-- Admin Panel (if administrator) -->
+                                <!-- Administratora panelis (ja administrators) -->
                                 <button
                                     v-if="isAdministrator"
                                     @click="goToAdminPanel"
@@ -146,7 +146,7 @@ const goToCourierDashboard = () => {
                                     <span>{{ t('dashboard.sections.profile.admin_title') }}</span>
                                 </button>
 
-                                <!-- Courier Dashboard (if courier) -->
+                                <!-- Kurjera vadības panelis (ja kurjers) -->
                                 <button
                                     v-if="isCourier"
                                     @click="goToCourierDashboard"
@@ -175,7 +175,7 @@ const goToCourierDashboard = () => {
                         </Transition>
                     </div>
 
-                    <!-- Locale Switcher -->
+                    <!-- Lokalizācijas pārslēdzējs -->
                     <button @click="toggleLocale" class="auth-locale-switcher">
                         <span class="locale-current">{{ currentLocale.toUpperCase() }}</span>
                         <span class="locale-divider">/</span>
@@ -185,7 +185,7 @@ const goToCourierDashboard = () => {
             </div>
         </header>
 
-        <!-- Main Content -->
+        <!-- Galvenais saturs -->
         <main class="auth-main">
             <slot />
         </main>
@@ -193,13 +193,13 @@ const goToCourierDashboard = () => {
 </template>
 
 <style scoped>
-/* Layout */
+/* Izkārtojums */
 .authenticated-layout {
     min-height: 100vh;
     background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
 }
 
-/* Header */
+/* Galvene */
 .auth-header {
     position: sticky;
     top: 0;
@@ -218,7 +218,7 @@ const goToCourierDashboard = () => {
     gap: 2rem;
 }
 
-/* Logo */
+/* Zīmols */
 .auth-brand {
     display: flex;
     align-items: center;
@@ -240,14 +240,14 @@ const goToCourierDashboard = () => {
     width: auto;
 }
 
-/* Hide brand name on mobile */
+/* Slēpj zīmola nosaukumu mobilajā tālrunī */
 @media (max-width: 768px) {
     .auth-brand-name {
         display: none;
     }
 }
 
-/* Navigation */
+/* Navigācija */
 .auth-nav {
     flex: 1;
     display: flex;
@@ -281,14 +281,14 @@ const goToCourierDashboard = () => {
     font-size: 1.125rem;
 }
 
-/* Right Section */
+/* Labā pusē sadaļa */
 .auth-right {
     display: flex;
     align-items: center;
     gap: 1rem;
 }
 
-/* User Dropdown */
+/* Lietotāja nolaižamā izvēlne (dropdown) */
 .auth-user-dropdown {
     position: relative;
 }
@@ -332,7 +332,7 @@ const goToCourierDashboard = () => {
     transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
+/* Nolaižamā izvēlne (dropdown menu) */
 .auth-dropdown-menu {
     position: absolute;
     top: calc(100% + 0.5rem);
@@ -379,7 +379,7 @@ const goToCourierDashboard = () => {
     background: #fef2f2;
 }
 
-/* Admin item */
+/* Administratora vienums */
 .auth-dropdown-admin {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     color: #92400e;
@@ -394,7 +394,7 @@ const goToCourierDashboard = () => {
     color: #d97706;
 }
 
-/* Courier item */
+/* Kurjera vienums */
 .auth-dropdown-courier {
     background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
     color: #1e3a5f;
@@ -409,7 +409,7 @@ const goToCourierDashboard = () => {
     color: #2563eb;
 }
 
-/* Locale Switcher */
+/* Lokalizācijas pārslēdzējs */
 .auth-locale-switcher {
     display: flex;
     align-items: center;
@@ -441,14 +441,14 @@ const goToCourierDashboard = () => {
     color: rgba(255, 255, 255, 0.6);
 }
 
-/* Main Content */
+/* Galvenais saturs */
 .auth-main {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
 }
 
-/* Dropdown Animation */
+/* Nolaižamā animācija */
 .dropdown-enter-active,
 .dropdown-leave-active {
     transition: all 0.2s ease;
@@ -460,7 +460,7 @@ const goToCourierDashboard = () => {
     transform: translateY(-0.5rem);
 }
 
-/* Responsive */
+/* Responsivitāte */
 @media (max-width: 768px) {
     .auth-header-container {
         padding: 0.625rem 1rem;

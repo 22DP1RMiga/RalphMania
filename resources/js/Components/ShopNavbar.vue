@@ -29,8 +29,8 @@ const isCategoriesOpen   = ref(false);
 const isSearchOpen       = ref(false);
 const isUserDropdownOpen = ref(false);
 
-// Navbar augstums (lai pareizi pozicionētu slideout paneļus)
-const NAVBAR_H = 64; // px — atbilst navbar augstumam
+// Navigācijas joslas augstums (lai pareizi pozicionētu "slideout" paneļus)
+const NAVBAR_H = 64; // px — atbilst navigācijas joslas augstumam
 
 const toast = ref({ show: false, message: '', type: 'success' });
 
@@ -189,7 +189,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                 </Link>
             </div>
 
-            <!-- ── CENTRS: Logo ── -->
+            <!-- ── CENTRS: Zīmols ── -->
             <div class="shop-navbar-center">
                 <Link href="/shop" class="shop-brand">
                     <img src="/img/RoltonsLV_Icon.png" alt="RalphMania" class="shop-logo">
@@ -209,7 +209,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                     <i :class="isSearchOpen ? 'fas fa-times' : 'fas fa-search'"></i>
                 </button>
 
-                <!-- Lietotāja dropdown -->
+                <!-- Lietotāja nolaižamajā izvēlne (dropdown) -->
                 <div v-if="isAuthenticated" class="user-dropdown-wrap">
                     <button @click.stop="toggleUserDropdown" class="user-avatar-btn">
                         <img :src="userAvatar" :alt="user.username" class="user-avatar">
@@ -239,7 +239,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                     </Transition>
                 </div>
 
-                <!-- Guest pogas -->
+                <!-- Viesu pogas -->
                 <div v-else class="navbar-guest">
                     <Link href="/login" class="guest-btn guest-btn-login">
                         {{ $t('auth.login') }}
@@ -264,9 +264,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
             </div>
         </div>
 
-        <!-- ════════════════════════════════════════════════════════
-             KATEGORIJU PANELIS — pilns augstums no kreisās malas
-             ════════════════════════════════════════════════════════ -->
+        <!-- KATEGORIJU PANELIS - pilns augstums no kreisās malas -->
         <Transition name="slide-left">
             <aside v-if="isCategoriesOpen" class="cats-panel" role="dialog" aria-label="Kategorijas">
                 <div class="cats-panel-inner">
@@ -277,7 +275,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                         </button>
                     </div>
 
-                    <!-- Guest pogas mobilajā panelī -->
+                    <!-- Viesu pogas mobilajā panelī -->
                     <div v-if="!isAuthenticated" class="cats-guest-btns">
                         <Link href="/login" class="cats-guest-btn cats-guest-login" @click="closeMenus">
                             <i class="fas fa-sign-in-alt"></i>
@@ -327,7 +325,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
         <!-- MEKLĒŠANAS JOSLA -->
         <Transition name="search-drop">
             <div v-if="isSearchOpen" class="search-bar-wrap">
-                <!-- Josla ar inputu -->
+                <!-- Josla ar ievadi -->
                 <div class="search-bar">
                     <div class="search-field">
                         <i class="fas fa-search search-field-icon"></i>
@@ -355,7 +353,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
                     </div>
                 </div>
 
-                <!-- Live rezultāti -->
+                <!-- Tiešsaistes rezultāti -->
                 <div v-if="hasSearchDropdown" class="search-results-wrap">
                     <div class="search-results-inner">
                         <div v-if="isSearching" class="search-spinner">
@@ -400,7 +398,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
             </div>
         </Transition>
 
-        <!-- Overlay (aizvērt noklikšķinot ārpus) -->
+        <!-- Pārklājums (aizvēr, noklikšķinot ārpus) -->
         <Transition name="fade">
             <div
                 v-if="isCategoriesOpen || isSearchOpen || isUserDropdownOpen"
@@ -413,14 +411,14 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 </template>
 
 <style scoped>
-/* ══ NAVBAR PAMATS ══════════════════════════════════════════════ */
+/* NAVBAR PAMATS */
 .shop-navbar {
     background: white;
     box-shadow: 0 2px 12px rgba(0,0,0,.08);
     position: sticky;
     top: 0;
     z-index: 100;
-    /* Svarīgi: navbar pats par sevi nav relative lai fixed bērni
+    /* Svarīgi: navigācijas josla pati par sevi nav relatīva, lai fixed bērni
        varētu pozicionēties pret viewport */
 }
 
@@ -434,7 +432,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     justify-content: space-between;
 }
 
-/* ══ KREISĀ PUSE ════════════════════════════════════════════════ */
+/* KREISĀ PUSE */
 .shop-navbar-left { display: flex; align-items: center; gap: .5rem; }
 
 .shop-home-btn {
@@ -465,7 +463,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 .nav-chevron { font-size: .75rem; transition: transform .25s ease; }
 .nav-chevron--open { transform: rotate(180deg); }
 
-/* ══ CENTRS ═════════════════════════════════════════════════════ */
+/* CENTRS */
 .shop-navbar-center {
     position: absolute;
     left: 50%; transform: translateX(-50%);
@@ -480,7 +478,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 .shop-brand-name { height: 1.75rem; width: auto; }
 @media (max-width: 640px) { .shop-logo, .shop-brand-name { display: none; } }
 
-/* ══ LABĀ PUSE ══════════════════════════════════════════════════ */
+/* LABĀ PUSE */
 .shop-navbar-right { display: flex; align-items: center; gap: .5rem; }
 
 .shop-icon-btn {
@@ -502,7 +500,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     border-radius: 999px; padding: 0 .2rem;
 }
 
-/* Lietotāja dropdown */
+/* Lietotāja nolaižamajā izvēlne (dropdown) */
 .user-dropdown-wrap { position: relative; }
 .user-avatar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; }
 .user-avatar {
@@ -563,9 +561,9 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 .locale-sep    { color: #d1d5db; }
 .locale-other  { color: #9ca3af; }
 
-/* ══ KATEGORIJU PANELIS — PILNS AUGSTUMS ════════════════════════ */
+/* KATEGORIJU PANELIS - PILNS AUGSTUMS */
 .cats-panel {
-    /* position: fixed lai segtu visu kreiso malu no augšas līdz apakšai */
+    /* pozīcija: fixed, lai segtu visu kreiso malu no augšas līdz apakšai */
     position: fixed;
     top: 0;       /* sākas no paša augšas */
     left: 0;
@@ -574,7 +572,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     max-width: 85vw;
     background: white;
     box-shadow: 4px 0 24px rgba(0,0,0,.12);
-    z-index: 150; /* virs overlay (z:30) bet zem dropdown (z:200) */
+    z-index: 150; /* virs pārklājuma (z:30), bet zem nolaižamajās izvēlnes (z:200) */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -583,7 +581,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 .cats-panel-inner {
     display: flex; flex-direction: column;
     height: 100%;
-    padding-top: 64px; /* rezervē navbar augstumu augšā */
+    padding-top: 64px; /* rezervē navigācijas joslas augstumu augšā */
     overflow-y: auto;
 }
 
@@ -715,7 +713,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     font-size: .9375rem; font-weight: 600;
     cursor: pointer; transition: background .2s;
     white-space: nowrap; flex-shrink: 0;
-    /* Malas — nav noapaļojuma jo parent ir overflow:hidden */
+    /* Malas — nav noapaļojuma, jo parent ir overflow:hidden */
 }
 .search-field-submit:hover { background: #b91c1c; }
 @media (max-width: 480px) {
@@ -723,7 +721,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     .search-field-submit { padding: 0 1rem; }
 }
 
-/* Live rezultāti */
+/* Tiešsaistes rezultāti */
 .search-results-wrap {
     max-width: 860px;
     margin: 0 auto;
@@ -783,7 +781,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 }
 .see-all-btn:hover { background: #fef2f2; }
 
-/* ══ OVERLAY ════════════════════════════════════════════════════ */
+/* PĀRKLĀJUMS */
 .navbar-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,.45);
@@ -791,7 +789,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     backdrop-filter: blur(2px);
 }
 
-/* ══ ANIMĀCIJAS ═════════════════════════════════════════════════ */
+/* ANIMĀCIJAS */
 .dropdown-enter-active, .dropdown-leave-active { transition: all .2s ease; }
 .dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-8px) scale(.97); }
 
@@ -804,7 +802,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 .fade-enter-active, .fade-leave-active { transition: opacity .25s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-/* ══ RESPONSIVS ═════════════════════════════════════════════════ */
+/* RESPONSIVITĀTE */
 @media (max-width: 480px) {
     .shop-navbar-container { padding: 0 1rem; }
     .cats-panel { width: 100%; max-width: 100%; }
@@ -812,7 +810,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 }
 
 
-/* ══ GUEST POGAS — NAVBAR (desktop/tablet) ══════════════════════ */
+/* VIESU POGAS — NAVIGĀCIJAS JOSLA (darbvirsma/planšete) */
 .navbar-guest {
     display: flex;
     align-items: center;
@@ -844,7 +842,7 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
 }
 .guest-btn-register:hover { background-color: #b91c1c; }
 
-/* Tablet (≤768px) — mazāks teksts */
+/* Planšete (≤768px) - mazāks teksts */
 @media (max-width: 768px) {
     .guest-btn {
         padding: 0.4rem 0.75rem;
@@ -852,14 +850,14 @@ onUnmounted(() => window.removeEventListener('cart-updated', handleCartUpdate));
     }
 }
 
-/* Mobilais (≤480px) — paslēpj navbar-guest, rāda cats panelī */
+/* Mobilais (≤480px) - paslēpj navbar-guest, rāda "cats" panelī */
 @media (max-width: 480px) {
     .navbar-guest { display: none; }
 }
 
-/* ══ GUEST POGAS — KATEGORIJU PANELIS (mobilais) ════════════════ */
+/* VIESU POGAS - KATEGORIJU PANELIS (mobilais) */
 .cats-guest-btns {
-    display: none; /* paslēpts uz desktop */
+    display: none; /* paslēpts uz darbvirsmas (desktop) */
     gap: 0.75rem;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid #f3f4f6;

@@ -5,15 +5,15 @@ import MainFooter from '@/Components/MainFooter.vue';
 
 <template>
     <div class="main-layout">
-        <!-- Navbar -->
+        <!-- Navigācijas josla -->
         <MainNavbar />
 
-        <!-- Page Content -->
+        <!-- Lapas saturs -->
         <main class="main-content">
             <slot />
         </main>
 
-        <!-- Footer -->
+        <!-- Kājene -->
         <MainFooter />
     </div>
 </template>

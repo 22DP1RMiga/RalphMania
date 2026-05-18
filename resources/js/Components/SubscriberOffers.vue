@@ -12,7 +12,7 @@ const props = defineProps({
     }
 });
 
-// State
+// Apstākļi
 const isLoading = ref(true);
 const isSubscribed = ref(false);
 const offers = ref([]);
@@ -25,18 +25,18 @@ const copiedCode = ref(null);
 const savingPreferences = ref(false);
 const showPreferences = ref(false);
 
-// Fetch subscription status and offers
+// Ielādē abonementa statusu un piedāvājumus
 const fetchData = async () => {
     isLoading.value = true;
     try {
-        // Get status
+        // Iegūst statusu
         const statusRes = await axios.get('/newsletter/status');
         isSubscribed.value = statusRes.data.subscribed;
         if (statusRes.data.preferences) {
             preferences.value = statusRes.data.preferences;
         }
 
-        // Get offers if subscribed
+        // Saņem piedāvājumus, ja abonē
         if (isSubscribed.value) {
             const offersRes = await axios.get('/newsletter/offers');
             offers.value = offersRes.data.offers || [];
@@ -48,7 +48,7 @@ const fetchData = async () => {
     }
 };
 
-// Subscribe
+// Abonēt
 const subscribe = async () => {
     try {
         const res = await axios.post('/newsletter/subscribe', {
@@ -63,7 +63,7 @@ const subscribe = async () => {
     }
 };
 
-// Save preferences
+// Saglabā preferences
 const savePreferences = async () => {
     savingPreferences.value = true;
     try {
@@ -76,7 +76,7 @@ const savePreferences = async () => {
     }
 };
 
-// Copy discount code
+// Kopē atlaides kodu
 const copyCode = (code) => {
     navigator.clipboard.writeText(code);
     copiedCode.value = code;
@@ -92,7 +92,7 @@ onMounted(() => {
 
 <template>
     <div class="subscriber-section">
-        <!-- Header -->
+        <!-- Galvene -->
         <div class="section-header">
             <div class="header-info">
                 <h3 class="section-title">
@@ -118,12 +118,12 @@ onMounted(() => {
             </button>
         </div>
 
-        <!-- Loading State -->
+        <!-- Lādēšanas stāvoklis -->
         <div v-if="isLoading" class="loading-state">
             <i class="fas fa-spinner fa-spin"></i>
         </div>
 
-        <!-- Not Subscribed State -->
+        <!-- "Nav abonēts" stāvoklis -->
         <div v-else-if="!isSubscribed" class="not-subscribed-card">
             <div class="card-icon">
                 <i class="fas fa-gift"></i>
@@ -138,9 +138,9 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- Subscribed Content -->
+        <!-- Abonēts saturs -->
         <template v-else>
-            <!-- Preferences Panel -->
+            <!-- Preferenču panelis -->
             <Transition name="slide">
                 <div v-if="showPreferences" class="preferences-panel">
                     <h4 class="preferences-title">
@@ -194,7 +194,7 @@ onMounted(() => {
                 </div>
             </Transition>
 
-            <!-- Offers Section -->
+            <!-- Piedāvājumu sadaļa -->
             <div class="offers-section">
                 <h4 class="offers-title">
                     <i class="fas fa-gift"></i>
@@ -202,13 +202,13 @@ onMounted(() => {
                     <span class="offers-badge">{{ t('newsletter.offers.subtitle') }}</span>
                 </h4>
 
-                <!-- No Offers -->
+                <!-- Nav piedāvājumu -->
                 <div v-if="offers.length === 0" class="no-offers">
                     <i class="fas fa-tags"></i>
                     <p>{{ t('newsletter.offers.no_offers') }}</p>
                 </div>
 
-                <!-- Offers Grid -->
+                <!-- Piedāvājumu režģis -->
                 <div v-else class="offers-grid">
                     <div
                         v-for="offer in offers"
@@ -264,7 +264,7 @@ onMounted(() => {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Header */
+/* Galvene */
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -333,7 +333,7 @@ onMounted(() => {
     background: #e5e7eb;
 }
 
-/* Loading */
+/* Lādē */
 .loading-state {
     text-align: center;
     padding: 2rem;
@@ -341,7 +341,7 @@ onMounted(() => {
     font-size: 1.5rem;
 }
 
-/* Not Subscribed Card */
+/* "Nav abonējis" kartiņa */
 .not-subscribed-card {
     display: flex;
     align-items: center;
@@ -397,7 +397,7 @@ onMounted(() => {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
-/* Preferences Panel */
+/* Preferenču panelis */
 .preferences-panel {
     background: #f9fafb;
     border-radius: 0.75rem;
@@ -472,7 +472,7 @@ onMounted(() => {
     cursor: not-allowed;
 }
 
-/* Offers Section */
+/* Piedāvājumu sadaļa */
 .offers-section {
     margin-top: 1rem;
 }
@@ -519,7 +519,7 @@ onMounted(() => {
     margin: 0;
 }
 
-/* Offers Grid */
+/* Piedāvājumu režģis */
 .offers-grid {
     display: flex;
     flex-direction: column;
@@ -654,7 +654,7 @@ onMounted(() => {
     color: #15803d;
 }
 
-/* Slide Animation */
+/* Slīdēšanas animācija */
 .slide-enter-active,
 .slide-leave-active {
     transition: all 0.3s ease;
@@ -666,7 +666,7 @@ onMounted(() => {
     transform: translateY(-10px);
 }
 
-/* Responsive */
+/* Responsivitāte */
 @media (max-width: 768px) {
     .section-header {
         flex-direction: column;
