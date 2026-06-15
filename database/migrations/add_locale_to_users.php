@@ -8,9 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('locale', 5)->default('lv')->after('is_public');
-        });
+        if (!Schema::hasColumn('users', 'locale')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('locale')->default('lv');
+            });
+        }
+//        Schema::table('users', function (Blueprint $table) {
+//            $table->string('locale', 5)->default('lv')->after('is_public');
+//        });
     }
 
     public function down(): void
