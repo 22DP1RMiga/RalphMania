@@ -3,8 +3,9 @@ import { ref } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n({ useScope: 'global' });
 const page = usePage();
 
 defineProps({
@@ -28,13 +29,13 @@ const resendVerification = async () => {
         await axios.post(route('verification.send'));
         verificationSent.value = true;
     } catch (e) {
-        // klusī ignorē
+        // klusi ignorē
     } finally {
         isSendingVerification.value = false;
     }
 };
 
-// Profile info form (without photo)
+// Profila informācijas forma (bez foto)
 const form = useForm({
     username: user.username,
     first_name: user.first_name || '',
@@ -55,6 +56,7 @@ const photoForm = useForm({
 
 const photoInput = ref(null);
 const photoPreview = ref(null);
+const showDeletePhotoModal = ref(false);
 
 const selectNewPhoto = () => {
     photoInput.value.click();
@@ -94,15 +96,14 @@ const uploadPhoto = (photo) => {
 };
 
 const deletePhoto = () => {
-    if (!confirm(t('profile.confirm_delete_photo'))) {
-        return;
-    }
+    showDeletePhotoModal.value = true;
+};
 
+const confirmDeletePhoto = () => {
+    showDeletePhotoModal.value = false;
     router.delete(route('profile.avatar.delete'), {
-        preserveScroll: true,
         onSuccess: () => {
             photoPreview.value = null;
-            clearPhotoFileInput();
         },
     });
 };
@@ -136,6 +137,16 @@ const submit = () => {
         </header>
 
         <form @submit.prevent="submit" class="profile-form">
+            <ConfirmModal
+                :show="showDeletePhotoModal"
+                :title="t('profile.delete_photo')"
+                :message="t('profile.confirm_delete_photo')"
+                :confirmText="locale === 'lv' ? 'Jā, dzēst' : 'Yes, delete'"
+                :cancelText="locale === 'lv' ? 'Atcelt' : 'Cancel'"
+                type="danger"
+                @confirm="confirmDeletePhoto"
+                @cancel="showDeletePhotoModal = false"
+            />
             <!-- Profile Picture -->
             <div class="form-group photo-section">
                 <label class="form-label">
@@ -223,7 +234,7 @@ const submit = () => {
                         autocomplete="username"
                     />
                     <p v-if="form.errors.username" class="form-error">
-                        {{ form.errors.username }}
+                        {{ t(form.errors.username) }}
                     </p>
                 </div>
 
@@ -242,7 +253,7 @@ const submit = () => {
                         autocomplete="email"
                     />
                     <p v-if="form.errors.email" class="form-error">
-                        {{ form.errors.email }}
+                        {{ t(form.errors.email) }}
                     </p>
                 </div>
 
@@ -297,7 +308,7 @@ const submit = () => {
                         autocomplete="tel"
                     />
                     <p v-if="form.errors.phone" class="form-error">
-                        {{ form.errors.phone }}
+                        {{ t(form.errors.phone) }}
                     </p>
                 </div>
 
@@ -315,7 +326,7 @@ const submit = () => {
                         autocomplete="bday"
                     />
                     <p v-if="form.errors.birth_date" class="form-error">
-                        {{ form.errors.birth_date }}
+                        {{ t(form.errors.birth_date) }}
                     </p>
                 </div>
 

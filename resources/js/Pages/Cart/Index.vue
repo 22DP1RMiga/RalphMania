@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Link, router, Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
@@ -76,6 +76,7 @@ const applyCoupon = async () => {
         const res = await axios.post('/coupons/validate', {
             code:         code,
             order_amount: subtotal.value,
+            locale: locale.value,
         });
 
         couponApplied.value    = res.data;
@@ -109,6 +110,17 @@ const checkout = () => {
         : {};
     router.visit('/checkout', { data: params });
 };
+
+watch(subtotal, (newVal) => {
+    if (couponApplied.value && couponApplied.value.min_order !== undefined) {
+        if (newVal < couponApplied.value.min_order) {
+            couponError.value = locale.value === 'lv'
+                ? `Minimālais pasūtījums šim kuponam: €${Number(couponApplied.value.min_order).toFixed(2)}`
+                : `Minimum order for this coupon: €${Number(couponApplied.value.min_order).toFixed(2)}`;
+            removeCoupon();
+        }
+    }
+});
 
 // ── GROZA DARBĪBAS ───────────────────────────────────────────────
 const updateQuantity = async (itemId, quantity) => {

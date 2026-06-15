@@ -20,7 +20,7 @@ class ProfileUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:30',
-                'regex:/^[a-zA-Z0-9_-]+$/',
+                'regex:/^[a-zA-Z0-9_ .-]+$/',
                 Rule::unique('users', 'username')->ignore($this->user()->id),
             ],
             'first_name' => ['nullable', 'string', 'max:50'],
@@ -50,17 +50,31 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'username.required' => 'Lietotājvārds ir obligāts / Username is required',
-            'username.regex' => 'Lietotājvārds var saturēt tikai burtus, ciparus, - un _ / Username can only contain letters, numbers, - and _',
-            'username.unique' => 'Šis lietotājvārds jau tiek izmantots / This username is already taken',
-            'email.required' => 'E-pasts ir obligāts / Email is required',
-            'email.email' => 'Nederīga e-pasta adrese / Invalid email address',
-            'email.unique' => 'Šis e-pasts jau tiek izmantots / This email is already taken',
-            'phone.max' => 'Tālrunis nedrīkst pārsniegt 20 rakstzīmes / Phone must not exceed 20 characters',
-            'birth_date.before' => 'Dzimšanas datumam jābūt pagātnē / Birth date must be in the past',
-            'profile_picture.image' => 'Failam jābūt attēlam / File must be an image',
-            'profile_picture.max' => 'Attēls nedrīkst pārsniegt 2MB / Image must not exceed 2MB',
+        $locale = auth()->user()?->locale ?? app()->getLocale();
+
+        $msgs = [
+            'lv' => [
+                'username.required' => 'Lietotājvārds ir obligāts.',
+                'username.regex'    => 'Lietotājvārds var saturēt tikai burtus, ciparus, atstarpes, - un _.',
+                'username.unique'   => 'Šis lietotājvārds jau tiek izmantots.',
+                'email.required'    => 'E-pasts ir obligāts.',
+                'email.email'       => 'Nederīga e-pasta adrese.',
+                'email.unique'      => 'Šis e-pasts jau tiek izmantots.',
+                'phone.max'         => 'Tālrunis nedrīkst pārsniegt 20 rakstzīmes.',
+                'birth_date.before' => 'Dzimšanas datumam jābūt pagātnē.',
+            ],
+            'en' => [
+                'username.required' => 'Username is required.',
+                'username.regex'    => 'Username can only contain letters, numbers, spaces, - and _.',
+                'username.unique'   => 'This username is already taken.',
+                'email.required'    => 'Email is required.',
+                'email.email'       => 'Invalid email address.',
+                'email.unique'      => 'This email is already taken.',
+                'phone.max'         => 'Phone must not exceed 20 characters.',
+                'birth_date.before' => 'Birth date must be in the past.',
+            ],
         ];
+
+        return $msgs[$locale] ?? $msgs['lv'];
     }
 }

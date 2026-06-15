@@ -679,6 +679,8 @@ const messages = {
             delete_warning: 'Kad jūsu konts tiek izdzēsts, visi tā resursi un dati tiks neatgriezeniski izdzēsti. Pirms konta dzēšanas, lūdzu, lejupielādējiet visus datus vai informāciju, ko vēlaties saglabāt.',
             confirm_deletion: 'Vai tiešām vēlaties dzēst savu kontu?',
             deletion_confirmation_text: 'Kad jūsu konts tiek izdzēsts, visi tā resursi un dati tiks neatgriezeniski izdzēsti. Lūdzu, ievadiet savu paroli, lai apstiprinātu, ka vēlaties neatgriezeniski dzēst savu kontu.',
+            confirm_delete_photo: 'Vai tiešām vēlaties dzēst savu profila bildi?',
+            // -------------------
             username: 'Lietotājvārds',
             email: 'E-pasts',
             phone: 'Tālrunis',
@@ -1940,6 +1942,25 @@ const messages = {
                 logout: 'Iziet',
             },
         },
+        // validācijai
+        validation: {
+            username: {
+                required: 'Lietotājvārds ir obligāts.',
+                regex:    'Lietotājvārds var saturēt tikai burtus, ciparus, atstarpes, punktus, - un _.',
+                unique:   'Šis lietotājvārds jau tiek izmantots.',
+            },
+            email: {
+                required: 'E-pasts ir obligāts.',
+                email:    'Nederīga e-pasta adrese.',
+                unique:   'Šis e-pasts jau tiek izmantots.',
+            },
+            phone: {
+                max: 'Tālrunis nedrīkst pārsniegt 20 rakstzīmes.',
+            },
+            birth_date: {
+                before: 'Dzimšanas datumam jābūt pagātnē.',
+            },
+        },
     },
     en: {
         nav: {
@@ -2618,6 +2639,7 @@ const messages = {
             delete_warning: 'Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.',
             confirm_deletion: 'Are you sure you want to delete your account?',
             deletion_confirmation_text: 'Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.',
+            confirm_delete_photo: 'Are you sure you want to delete your profile picture?',
             // -------------------
             username: 'Username',
             email: 'Email',
@@ -3878,6 +3900,25 @@ const messages = {
             user: {
                 myProfile: 'My Profile',
                 logout: 'Log out',
+            },
+        },
+        // validācijai
+        validation: {
+            username: {
+                required: 'Username is required.',
+                regex:    'Username can only contain letters, numbers, spaces, dots, - and _.',
+                unique:   'This username is already taken.',
+            },
+            email: {
+                required: 'Email is required.',
+                email:    'Invalid email address.',
+                unique:   'This email is already taken.',
+            },
+            phone: {
+                max: 'Phone must not exceed 20 characters.',
+            },
+            birth_date: {
+                before: 'Birth date must be in the past.',
             },
         },
     },
