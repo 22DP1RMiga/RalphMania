@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Link, router, Head, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import ShopLayout from '@/Layouts/ShopLayout.vue';
@@ -47,6 +47,7 @@ const couponDiscount     = ref(0);
 const couponError        = ref('');
 const couponSuccess      = ref('');
 const isApplyingCoupon   = ref(false);
+const couponDescription = ref('');
 
 // Nolasīt kuponu no URL (padots no Cart lapas)
 onMounted(() => {
@@ -131,6 +132,7 @@ const applyCoupon = async (codeOverride = null) => {
         const res = await axios.post('/coupons/validate', {
             code,
             order_amount: subtotal.value,
+            locale: locale.value,
         });
 
         couponApplied.value      = res.data;
@@ -138,10 +140,11 @@ const applyCoupon = async (codeOverride = null) => {
         couponInputCode.value    = res.data.code;
         form.value.coupon_code   = res.data.code;
         couponSuccess.value      = res.data.message;
+        couponDescription.value  = res.data.description || '';
     } catch (err) {
+        removeCoupon();
         couponError.value  = err.response?.data?.message
             || (locale.value === 'lv' ? 'Kupons nav derīgs.' : 'Invalid coupon.');
-        removeCoupon();
     } finally {
         isApplyingCoupon.value = false;
     }
@@ -153,8 +156,19 @@ const removeCoupon = () => {
     couponError.value       = '';
     couponSuccess.value     = '';
     form.value.coupon_code  = '';
+    couponDescription.value = '';
 };
 
+watch(subtotal, (newVal) => {
+    if (couponApplied.value && couponApplied.value.min_order !== undefined) {
+        if (newVal < couponApplied.value.min_order) {
+            couponError.value = locale.value === 'lv'
+                ? `Minimālais pasūtījums šim kuponam: €${Number(couponApplied.value.min_order).toFixed(2)}`
+                : `Minimum order for this coupon: €${Number(couponApplied.value.min_order).toFixed(2)}`;
+            removeCoupon();
+        }
+    }
+});
 // ── HELPERS ──────────────────────────────────────────────────────
 const formatPrice = (price) => parseFloat(price || 0).toFixed(2);
 
@@ -458,7 +472,7 @@ const placeOrder = async () => {
 
                             <!-- Products -->
                             <div class="summary-products">
-                                <div v-for="item in cart.items" :key="item.id" class="summary-product">
+                                <div v-for="item in cart?.items" :key="item.id" class="summary-product">
                                     <img :src="getProductImage(item.product)" :alt="getProductName(item.product)">
                                     <div class="product-info">
                                         <p class="product-name">{{ getProductName(item.product) }}</p>
@@ -532,6 +546,7 @@ const placeOrder = async () => {
                                                 : `-€${formatPrice(couponApplied.value)}`
                                                 }}
                                             </span>
+                                            <p v-if="couponApplied.description" class="coupon-desc">{{ couponApplied.description }}</p>
                                         </div>
                                     </div>
                                     <button @click="removeCoupon" class="coupon-remove">
@@ -561,7 +576,7 @@ const placeOrder = async () => {
                                 <p v-if="couponError" class="coupon-msg error-msg">
                                     <i class="fas fa-exclamation-circle"></i> {{ couponError }}
                                 </p>
-                                <p v-if="couponSuccess && couponApplied" class="coupon-msg success-msg">
+                                <p v-if="couponSuccess && !couponApplied" class="coupon-msg success-msg">
                                     <i class="fas fa-check-circle"></i> {{ couponSuccess }}
                                 </p>
                             </div>
@@ -709,6 +724,8 @@ textarea { width: 100%; resize: vertical; }
 .coupon-discount-badge { margin-left: 8px; background: #10b981; color: white; padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 .coupon-remove { background: none; border: none; color: #6b7280; cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s; }
 .coupon-remove:hover { color: #dc2626; background: #fee2e2; }
+
+.coupon-desc { font-size: 12px; color: #047857; margin: 4px 0 0; }
 
 .coupon-msg { font-size: 12px; margin: 7px 0 0; display: flex; align-items: center; gap: 4px; }
 .error-msg { color: #dc2626; }
