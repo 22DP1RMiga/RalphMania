@@ -22,18 +22,23 @@ class HomeController extends Controller
             ->limit(3)
             ->get()
             ->map(function ($product) {
+                $vatRate = \App\Models\Product::vatRate();
                 return [
-                    'id' => $product->id,
-                    'slug' => $product->slug,
-                    'name_lv' => $product->name_lv,
-                    'name_en' => $product->name_en,
-                    'description_lv' => $product->description_lv,
-                    'description_en' => $product->description_en,
-                    'price' => $product->price,
-                    'sale_price' => $product->sale_price,
-                    'image' => $product->image,
-                    'rating' => $product->rating ?? 0,
-                    'is_featured' => $product->is_featured,
+                    'id'            => $product->id,
+                    'slug'          => $product->slug,
+                    'name_lv'       => $product->name_lv,
+                    'name_en'       => $product->name_en,
+                    'description_lv'=> $product->description_lv,
+                    'description_en'=> $product->description_en,
+                    'price'         => (float) $product->price,
+                    'compare_price' => $product->compare_price ? (float) $product->compare_price : null,
+                    'price_ex_vat'  => $product->price_ex_vat,
+                    'vat_amount'    => $product->vat_amount,
+                    'vat_rate'      => $vatRate,
+                    'image'         => $product->image,
+                    'is_featured'   => $product->is_featured,
+                    'has_sizes'     => (bool) $product->has_sizes,
+                    'stock_quantity'=> $product->stock_quantity,
                 ];
             });
 
