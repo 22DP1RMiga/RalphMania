@@ -62,6 +62,13 @@ const formatDate = (dateString) => {
         { year: 'numeric', month: 'long', day: 'numeric' }
     );
 };
+
+const getDiscountPct = (p) => {
+    const price = toNumber(p.price), comp = toNumber(p.compare_price);
+    if (!comp || price >= comp) return 0;
+    return Math.round((1 - price / comp) * 100);
+};
+const toNumber = (v) => parseFloat(v) || 0;
 </script>
 
 <template>
@@ -220,14 +227,19 @@ const formatDate = (dateString) => {
                                 <span class="rating-text">{{ product.rating }}/5</span>
                             </div>
 
+                            <span v-if="getDiscountPct(product) > 0" class="badge badge-sale">
+                                -{{ getDiscountPct(product) }}%
+                            </span>
                             <!-- Price -->
-                            <div class="product-price">
-                                <span v-if="product.sale_price" class="price-original">{{ formatPrice(product.price) }}</span>
-                                <span class="price-current">{{ formatPrice(product.sale_price || product.price) }}</span>
+                            <div class="card-price">
+                                <span v-if="product.compare_price" class="price-old">
+                                    €{{ formatPrice(product.compare_price) }}
+                                </span>
+                                <span class="price-now">€{{ formatPrice(product.price) }}</span>
                             </div>
-                            <div v-if="product.vat_amount" class="price-vat-note">
+                            <p v-if="product.vat_amount" class="price-vat">
                                 t.sk. PVN: €{{ formatPrice(product.vat_amount) }}
-                            </div>
+                            </p>
                         </div>
                     </Link>
                 </div>
@@ -694,6 +706,12 @@ const formatDate = (dateString) => {
     color: #9ca3af;
     margin-top: 0.1rem;
 }
+
+.card-price { display: flex; align-items: center; gap: .5rem; }
+.price-old  { text-decoration: line-through; color: #9ca3af; font-size: .8125rem; }
+.price-now  { font-size: 1.175rem; font-weight: 800; color: #dc2626; }
+.price-vat  { font-size: .7rem; color: #9ca3af; margin-top: .2rem; }
+.badge-sale { background: #dc2626; color: white; padding: 2px 8px; border-radius: 4px; font-size: .75rem; font-weight: 700; }
 
 /* About Section */
 .about-section {
