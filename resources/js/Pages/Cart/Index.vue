@@ -158,9 +158,10 @@ const confirmRemoveItem = async () => {
             detail: { count: response.data.cart.total_items }
         }));
         router.reload({ only: ['cart', 'items'] });
-    } catch (error) {
-        alert(locale.value === 'lv' ? 'Kļūda izņemot produktu!' : 'Error removing item!');
+    } catch (e) {
+        console.error(e);
     } finally {
+        showRemoveModal.value = false;
         itemToRemove.value = null;
     }
 };
